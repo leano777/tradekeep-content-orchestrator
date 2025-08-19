@@ -62,7 +62,7 @@ module.exports = {
         }
       },
       fontFamily: {
-        'sans': ['Inter', 'SF Pro Display', 'Roboto', 'system-ui', 'sans-serif'],
+        'sans': ['var(--font-sf-pro-display)', 'SF Pro Display', 'Inter', 'system-ui', 'sans-serif'],
         'mono': ['SF Mono', 'Monaco', 'Cascadia Code', 'Roboto Mono', 'monospace'],
       },
       fontSize: {

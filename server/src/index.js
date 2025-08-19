@@ -11,6 +11,7 @@ const authRoutes = require('./routes/auth');
 const contentRoutes = require('./routes/content');
 const campaignRoutes = require('./routes/campaigns');
 const assetRoutes = require('./routes/assets');
+const cloudAssetRoutes = require('./routes/cloudAssets');
 const analyticsRoutes = require('./routes/analytics');
 const userRoutes = require('./routes/users');
 
@@ -109,6 +110,7 @@ app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/content', authMiddleware, contentRoutes);
 app.use('/api/v1/campaigns', authMiddleware, campaignRoutes);
 app.use('/api/v1/assets', authMiddleware, assetRoutes);
+app.use('/api/v1/cloud-assets', authMiddleware, cloudAssetRoutes);
 app.use('/api/v1/analytics', authMiddleware, analyticsRoutes);
 app.use('/api/v1/users', authMiddleware, userRoutes);
 

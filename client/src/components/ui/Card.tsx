@@ -33,9 +33,9 @@ export const Card: FC<CardProps> = ({
   return (
     <div
       className={clsx(
-        'card',
+        'bg-tk-gray-900 border border-tk-gray-800 rounded-lg',
         padding && 'p-6',
-        hover && 'hover:shadow-tk-xl transition-shadow duration-200',
+        hover && 'hover:shadow-lg transition-shadow duration-200',
         className
       )}
     >
@@ -50,7 +50,7 @@ export const CardHeader: FC<CardHeaderProps> = ({
   actions 
 }) => {
   return (
-    <div className={clsx('card-header', actions && 'flex items-center justify-between', className)}>
+    <div className={clsx('p-6 border-b border-tk-gray-800', actions && 'flex items-center justify-between', className)}>
       <div>{children}</div>
       {actions && <div className="flex items-center space-x-2">{actions}</div>}
     </div>
@@ -59,7 +59,7 @@ export const CardHeader: FC<CardHeaderProps> = ({
 
 export const CardBody: FC<CardBodyProps> = ({ children, className }) => {
   return (
-    <div className={clsx('card-body', className)}>
+    <div className={clsx('p-6', className)}>
       {children}
     </div>
   );
@@ -67,7 +67,7 @@ export const CardBody: FC<CardBodyProps> = ({ children, className }) => {
 
 export const CardFooter: FC<CardFooterProps> = ({ children, className }) => {
   return (
-    <div className={clsx('card-footer', className)}>
+    <div className={clsx('p-6 border-t border-tk-gray-800', className)}>
       {children}
     </div>
   );

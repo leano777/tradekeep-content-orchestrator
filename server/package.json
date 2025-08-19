@@ -37,7 +37,9 @@
     "express-validator": "^7.0.1",
     "socket.io": "^4.7.4",
     "redis": "^4.6.10",
-    "ioredis": "^5.3.2"
+    "ioredis": "^5.3.2",
+    "googleapis": "^128.0.0",
+    "@microsoft/microsoft-graph-client": "^3.0.7"
   },
   "devDependencies": {
     "nodemon": "^3.0.1",
