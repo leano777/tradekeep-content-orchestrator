@@ -1,0 +1,30 @@
+{
+  "name": "tradekeep-content-orchestrator",
+  "version": "1.0.0",
+  "description": "TradeKeep Content Management System - Content strategy and creation optimization platform",
+  "main": "server/index.js",
+  "scripts": {
+    "dev": "concurrently \"npm run server:dev\" \"npm run client:dev\"",
+    "server:dev": "cd server && npm run dev",
+    "client:dev": "cd client && npm run dev",
+    "build": "cd client && npm run build",
+    "start": "cd server && npm start",
+    "install:all": "npm install && cd server && npm install && cd ../client && npm install",
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
+    "test": "jest"
+  },
+  "keywords": [
+    "content-management",
+    "social-media",
+    "email-marketing",
+    "brand-strategy",
+    "tradekeep"
+  ],
+  "author": "TradeKeep",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "eslint": "^8.54.0",
+    "jest": "^29.7.0"
+  }
+}

@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TradeKeep Content Management System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-black: #000000;
+            --primary-blue: #3B82F6;
+            --dark-gray: #1a1a1a;
+            --medium-gray: #2d2d2d;
+            --light-gray: #404040;
+            --text-gray: #b0b0b0;
+            --white: #ffffff;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --error: #ef4444;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: var(--primary-black);
+            color: var(--white);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar Navigation */
+        .sidebar {
+            width: 280px;
+            background: var(--dark-gray);
+            border-right: 1px solid var(--light-gray);
+            padding: 2rem 0;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 100;
+        }
+
+        .logo {
+            padding: 0 2rem 2rem;
+            border-bottom: 1px solid var(--light-gray);
+            margin-bottom: 2rem;
+        }
+
+        .logo h1 {
+            font-size: 1.5rem;
+            color: var(--primary-blue);
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .logo p {
+            color: var(--text-gray);
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+        }
+
+        .nav-section {
+            margin-bottom: 2rem;
+        }
+
+        .nav-section h3 {
+            padding: 0 2rem;
+            color: var(--text-gray);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.5rem;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 2rem;
+            color: var(--white);
+            text-decoration: none;
+            transition: all 0.2s;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .nav-item:hover {
+            background: var(--medium-gray);
+            color: var(--primary-blue);
+        }
+
+        .nav-item.active {
+            background: var(--medium-gray);
+            color: var(--primary-blue);
+        }
+
+        .nav-item.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 3px;
+            background: var(--primary-blue);
+        }
+
+        .nav-icon {
+            margin-right: 1rem;
+            width: 20px;
+            height: 20px;
+        }
+
+        .badge {
+            margin-left: auto;
+            background: var(--primary-blue);
+            color: var(--white);
+            padding: 0.125rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        /* Main Content Area */
+        .main-content {
+            flex: 1;
+            margin-left: 280px;
+            padding: 2rem;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid var(--light-gray);
+        }
+
+        .header h2 {
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn {
+            padding: 0.5rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: var(--primary-blue);
+            color: var(--white);
+        }
+
+        .btn-primary:hover {
+            background: #2563eb;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: var(--medium-gray);
+            color: var(--white);
+            border: 1px solid var(--light-gray);
+        }
+
+        .btn-secondary:hover {
+            background: var(--light-gray);
+        }
+
+        /* Search Bar */
+        .search-bar {
+            position: relative;
+            margin-bottom: 2rem;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 1rem 1rem 1rem 3rem;
+            background: var(--dark-gray);
+            border: 1px solid var(--light-gray);
+            border-radius: 8px;
+            color: var(--white);
+            font-size: 1rem;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-gray);
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .stat-card {
+            background: var(--dark-gray);
+            padding: 1.5rem;
+            border-radius: 12px;
+            border: 1px solid var(--light-gray);
+        }
+
+        .stat-label {
+            color: var(--text-gray);
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--white);
+        }
+
+        .stat-change {
+            display: inline-flex;
+            align-items: center;
+            margin-top: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .stat-change.positive {
+            color: var(--success);
+        }
+
+        .stat-change.negative {
+            color: var(--error);
+        }
+
+        /* Content Grid */
+        .content-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .content-card {
+            background: var(--dark-gray);
+            border: 1px solid var(--light-gray);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .content-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--primary-blue);
+            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.2);
+        }
+
+        .content-preview {
+            height: 200px;
+            background: var(--medium-gray);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .content-type-badge {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            padding: 0.25rem 0.75rem;
+            background: var(--primary-blue);
+            color: var(--white);
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .content-details {
+            padding: 1.5rem;
+        }
+
+        .content-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--white);
+        }
+
+        .content-meta {
+            display: flex;
+            gap: 1rem;
+            color: var(--text-gray);
+            font-size: 0.875rem;
+            margin-bottom: 1rem;
+        }
+
+        .content-description {
+            color: var(--text-gray);
+            font-size: 0.875rem;
+            line-height: 1.5;
+        }
+
+        .content-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--light-gray);
+        }
+
+        .action-btn {
+            padding: 0.5rem 1rem;
+            background: transparent;
+            border: 1px solid var(--light-gray);
+            color: var(--white);
+            border-radius: 6px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .action-btn:hover {
+            background: var(--light-gray);
+            border-color: var(--primary-blue);
+            color: var(--primary-blue);
+        }
+
+        /* Filters */
+        .filters {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-chip {
+            padding: 0.5rem 1rem;
+            background: var(--medium-gray);
+            border: 1px solid var(--light-gray);
+            border-radius: 20px;
+            color: var(--white);
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .filter-chip:hover {
+            background: var(--light-gray);
+        }
+
+        .filter-chip.active {
+            background: var(--primary-blue);
+            border-color: var(--primary-blue);
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--dark-gray);
+            border-radius: 12px;
+            max-width: 90%;
+            max-height: 90%;
+            width: 800px;
+            overflow: auto;
+            position: relative;
+        }
+
+        .modal-header {
+            padding: 2rem;
+            border-bottom: 1px solid var(--light-gray);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-body {
+            padding: 2rem;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            color: var(--text-gray);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .close-modal:hover {
+            color: var(--white);
+        }
+
+        /* Loading State */
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 4rem;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--light-gray);
+            border-top-color: var(--primary-blue);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s;
+            }
+
+            .sidebar.active {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar">
+            <div class="logo">
+                <h1>TradeKeep CMS</h1>
+                <p>Content Orchestrator</p>
+            </div>
+
+            <div class="nav-section">
+                <h3>Content Management</h3>
+                <a href="#" class="nav-item active" data-section="overview">
+                    <span class="nav-icon">📊</span>
+                    <span>Overview</span>
+                    <span class="badge">3</span>
+                </a>
+                <a href="#" class="nav-item" data-section="marketing">
+                    <span class="nav-icon">🚀</span>
+                    <span>Marketing Campaigns</span>
+                </a>
+                <a href="#" class="nav-item" data-section="technical">
+                    <span class="nav-icon">⚙️</span>
+                    <span>Technical Docs</span>
+                </a>
+                <a href="#" class="nav-item" data-section="visual">
+                    <span class="nav-icon">🎨</span>
+                    <span>Visual Assets</span>
+                </a>
+                <a href="#" class="nav-item" data-section="automation">
+                    <span class="nav-icon">🤖</span>
+                    <span>Automations</span>
+                </a>
+            </div>
+
+            <div class="nav-section">
+                <h3>Brand Resources</h3>
+                <a href="#" class="nav-item" data-section="brand">
+                    <span class="nav-icon">💎</span>
+                    <span>Brand Guidelines</span>
+                </a>
+                <a href="#" class="nav-item" data-section="templates">
+                    <span class="nav-icon">📝</span>
+                    <span>Templates</span>
+                </a>
+                <a href="#" class="nav-item" data-section="logos">
+                    <span class="nav-icon">🏷️</span>
+                    <span>Logos & Media</span>
+                </a>
+            </div>
+
+            <div class="nav-section">
+                <h3>Analytics</h3>
+                <a href="#" class="nav-item" data-section="performance">
+                    <span class="nav-icon">📈</span>
+                    <span>Performance</span>
+                </a>
+                <a href="#" class="nav-item" data-section="insights">
+                    <span class="nav-icon">💡</span>
+                    <span>Insights</span>
+                </a>
+            </div>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <div class="header">
+                <h2>Content Overview</h2>
+                <div class="header-actions">
+                    <button class="btn btn-secondary" onclick="refreshContent()">
+                        <span>🔄</span> Refresh
+                    </button>
+                    <button class="btn btn-primary" onclick="showUploadModal()">
+                        <span>➕</span> Add Content
+                    </button>
+                </div>
+            </div>
+
+            <!-- Search Bar -->
+            <div class="search-bar">
+                <span class="search-icon">🔍</span>
+                <input type="text" class="search-input" placeholder="Search content, campaigns, or assets..." id="searchInput">
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Total Content Items</div>
+                    <div class="stat-value">247</div>
+                    <div class="stat-change positive">↑ 12% this week</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Active Campaigns</div>
+                    <div class="stat-value">5</div>
+                    <div class="stat-change positive">↑ 2 new</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Automation Scripts</div>
+                    <div class="stat-value">18</div>
+                    <div class="stat-change">→ No change</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Visual Assets</div>
+                    <div class="stat-value">89</div>
+                    <div class="stat-change positive">↑ 15 new</div>
+                </div>
+            </div>
+
+            <!-- Content Filters -->
+            <div class="filters">
+                <div class="filter-chip active" data-filter="all">All Content</div>
+                <div class="filter-chip" data-filter="marketing">Marketing</div>
+                <div class="filter-chip" data-filter="technical">Technical</div>
+                <div class="filter-chip" data-filter="visual">Visual</div>
+                <div class="filter-chip" data-filter="email">Email</div>
+                <div class="filter-chip" data-filter="social">Social Media</div>
+                <div class="filter-chip" data-filter="automation">Automation</div>
+            </div>
+
+            <!-- Content Grid -->
+            <div class="content-grid" id="contentGrid">
+                <!-- Content cards will be dynamically loaded here -->
+            </div>
+        </main>
+    </div>
+
+    <!-- Content Preview Modal -->
+    <div class="modal" id="contentModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Content Preview</h3>
+                <button class="close-modal" onclick="closeModal()">×</button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Content preview will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Content database
+        const contentDatabase = {
+            marketing: [
+                {
+                    id: 1,
+                    title: "Email Campaign Sequences",
+                    type: "Email",
+                    category: "marketing",
+                    description: "14-email psychology-first campaign with Resend automation",
+                    path: "02-Marketing-Campaign/Email-Sequences/",
+                    lastModified: "2025-01-18",
+                    status: "active"
+                },
+                {
+                    id: 2,
+                    title: "Instagram Content Calendar",
+                    type: "Social",
+                    category: "marketing",
+                    description: "15-day launch campaign with quote cards and carousels",
+                    path: "02-Marketing-Campaign/Instagram-Content/",
+                    lastModified: "2025-01-17",
+                    status: "active"
+                },
+                {
+                    id: 3,
+                    title: "Premium Landing Page",
+                    type: "Web",
+                    category: "technical",
+                    description: "Ultra-premium SaaS framework with conversion optimization",
+                    path: "03-Technical-Implementation/premium-landing-page.html",
+                    lastModified: "2025-01-16",
+                    status: "ready"
+                },
+                {
+                    id: 4,
+                    title: "50K Mistake Map Lead Magnet",
+                    type: "Lead Gen",
+                    category: "marketing",
+                    description: "High-converting lead magnet for trader education",
+                    path: "05-Lead-Magnet/50k-mistake-map-v2.html",
+                    lastModified: "2025-01-15",
+                    status: "active"
+                }
+            ],
+            automation: [
+                {
+                    id: 5,
+                    title: "Instagram Publishing Automation",
+                    type: "Script",
+                    category: "automation",
+                    description: "Automated Instagram content publishing with Make.com",
+                    path: "03-Scripts/instagram-publishing-scenario.js",
+                    lastModified: "2025-01-18",
+                    status: "active"
+                },
+                {
+                    id: 6,
+                    title: "Weekly Content Planner",
+                    type: "Script",
+                    category: "automation",
+                    description: "Automated weekly content planning with error handling",
+                    path: "03-Scripts/core-scenarios/weekly-content-planner.js",
+                    lastModified: "2025-01-17",
+                    status: "active"
+                },
+                {
+                    id: 7,
+                    title: "X/Twitter Publishing",
+                    type: "Script",
+                    category: "automation",
+                    description: "Automated X/Twitter content publishing workflow",
+                    path: "03-Scripts/x-twitter-publishing-scenario.js",
+                    lastModified: "2025-01-16",
+                    status: "testing"
+                }
+            ],
+            visual: [
+                {
+                    id: 8,
+                    title: "TK Logo Collection",
+                    type: "Logo",
+                    category: "visual",
+                    description: "Complete TradeKeep logo set - black, white, transparent variations",
+                    path: "Branding/TK LOGO V2/",
+                    lastModified: "2025-01-10",
+                    status: "active"
+                },
+                {
+                    id: 9,
+                    title: "Discipline Mode Screenshots",
+                    type: "Image",
+                    category: "visual",
+                    description: "App screenshots showing discipline tracking features",
+                    path: "04-Visual-Assets/app-screenshot-discipline-mode.png",
+                    lastModified: "2025-01-12",
+                    status: "active"
+                },
+                {
+                    id: 10,
+                    title: "Instagram Content Templates",
+                    type: "Template",
+                    category: "visual",
+                    description: "Reusable Instagram post templates with brand styling",
+                    path: "02-Marketing-Campaign/Visual-Assets/instagram-content-templates.html",
+                    lastModified: "2025-01-18",
+                    status: "active"
+                }
+            ],
+            documentation: [
+                {
+                    id: 11,
+                    title: "Brand Analysis Summary",
+                    type: "Doc",
+                    category: "documentation",
+                    description: "Complete TradeKeep brand voice and positioning analysis",
+                    path: "01-Documentation/REAL-Brand-Analysis-Summary.md",
+                    lastModified: "2025-01-14",
+                    status: "complete"
+                },
+                {
+                    id: 12,
+                    title: "Implementation Guide",
+                    type: "Doc",
+                    category: "documentation",
+                    description: "Step-by-step implementation guide for all systems",
+                    path: "01-Documentation/Complete-Implementation-Guide.md",
+                    lastModified: "2025-01-15",
+                    status: "complete"
+                }
+            ]
+        };
+
+        // Initialize content
+        let currentFilter = 'all';
+        let searchTerm = '';
+
+        function loadContent() {
+            const grid = document.getElementById('contentGrid');
+            grid.innerHTML = '';
+
+            // Combine all content
+            const allContent = [
+                ...contentDatabase.marketing,
+                ...contentDatabase.automation,
+                ...contentDatabase.visual,
+                ...contentDatabase.documentation
+            ];
+
+            // Filter content
+            let filteredContent = allContent;
+            
+            if (currentFilter !== 'all') {
+                filteredContent = filteredContent.filter(item => 
+                    item.category === currentFilter || 
+                    item.type.toLowerCase().includes(currentFilter)
+                );
+            }
+
+            if (searchTerm) {
+                filteredContent = filteredContent.filter(item =>
+                    item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    item.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    item.type.toLowerCase().includes(searchTerm.toLowerCase())
+                );
+            }
+
+            // Create content cards
+            filteredContent.forEach(item => {
+                const card = createContentCard(item);
+                grid.appendChild(card);
+            });
+
+            if (filteredContent.length === 0) {
+                grid.innerHTML = '<div class="loading"><p style="color: var(--text-gray);">No content found</p></div>';
+            }
+        }
+
+        function createContentCard(item) {
+            const card = document.createElement('div');
+            card.className = 'content-card';
+            card.onclick = () => showContentDetails(item);
+
+            const statusColor = item.status === 'active' ? 'var(--success)' : 
+                              item.status === 'testing' ? 'var(--warning)' : 
+                              'var(--text-gray)';
+
+            card.innerHTML = `
+                <div class="content-preview">
+                    <span class="content-type-badge">${item.type}</span>
+                    ${getPreviewIcon(item.type)}
+                </div>
+                <div class="content-details">
+                    <h3 class="content-title">${item.title}</h3>
+                    <div class="content-meta">
+                        <span>📅 ${item.lastModified}</span>
+                        <span style="color: ${statusColor}">● ${item.status}</span>
+                    </div>
+                    <p class="content-description">${item.description}</p>
+                    <div class="content-actions">
+                        <button class="action-btn" onclick="event.stopPropagation(); viewContent('${item.path}')">View</button>
+                        <button class="action-btn" onclick="event.stopPropagation(); editContent(${item.id})">Edit</button>
+                        <button class="action-btn" onclick="event.stopPropagation(); shareContent(${item.id})">Share</button>
+                    </div>
+                </div>
+            `;
+
+            return card;
+        }
+
+        function getPreviewIcon(type) {
+            const icons = {
+                'Email': '<span style="font-size: 3rem;">📧</span>',
+                'Social': '<span style="font-size: 3rem;">📱</span>',
+                'Web': '<span style="font-size: 3rem;">🌐</span>',
+                'Lead Gen': '<span style="font-size: 3rem;">🎯</span>',
+                'Script': '<span style="font-size: 3rem;">⚙️</span>',
+                'Logo': '<span style="font-size: 3rem;">🎨</span>',
+                'Image': '<span style="font-size: 3rem;">🖼️</span>',
+                'Template': '<span style="font-size: 3rem;">📋</span>',
+                'Doc': '<span style="font-size: 3rem;">📄</span>'
+            };
+            return icons[type] || '<span style="font-size: 3rem;">📁</span>';
+        }
+
+        function showContentDetails(item) {
+            const modal = document.getElementById('contentModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalBody = document.getElementById('modalBody');
+
+            modalTitle.textContent = item.title;
+            modalBody.innerHTML = `
+                <div style="padding: 1rem;">
+                    <div style="margin-bottom: 2rem;">
+                        <h4 style="color: var(--primary-blue); margin-bottom: 1rem;">Content Details</h4>
+                        <p style="color: var(--text-gray); line-height: 1.8;">${item.description}</p>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 2rem; margin-bottom: 2rem;">
+                        <div>
+                            <p style="color: var(--text-gray); font-size: 0.875rem;">Type</p>
+                            <p style="color: var(--white); font-weight: 600;">${item.type}</p>
+                        </div>
+                        <div>
+                            <p style="color: var(--text-gray); font-size: 0.875rem;">Category</p>
+                            <p style="color: var(--white); font-weight: 600;">${item.category}</p>
+                        </div>
+                        <div>
+                            <p style="color: var(--text-gray); font-size: 0.875rem;">Status</p>
+                            <p style="color: var(--white); font-weight: 600;">${item.status}</p>
+                        </div>
+                        <div>
+                            <p style="color: var(--text-gray); font-size: 0.875rem;">Last Modified</p>
+                            <p style="color: var(--white); font-weight: 600;">${item.lastModified}</p>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-bottom: 2rem;">
+                        <p style="color: var(--text-gray); font-size: 0.875rem; margin-bottom: 0.5rem;">File Path</p>
+                        <code style="background: var(--medium-gray); padding: 0.75rem; border-radius: 6px; display: block; color: var(--primary-blue);">
+                            ${item.path}
+                        </code>
+                    </div>
+                    
+                    <div style="display: flex; gap: 1rem;">
+                        <button class="btn btn-primary" onclick="viewContent('${item.path}')">Open Content</button>
+                        <button class="btn btn-secondary" onclick="editContent(${item.id})">Edit</button>
+                        <button class="btn btn-secondary" onclick="duplicateContent(${item.id})">Duplicate</button>
+                    </div>
+                </div>
+            `;
+
+            modal.classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('contentModal').classList.remove('active');
+        }
+
+        function viewContent(path) {
+            console.log('Opening content at:', path);
+            alert(`Opening: ${path}`);
+        }
+
+        function editContent(id) {
+            console.log('Editing content:', id);
+            alert(`Edit functionality for content ID: ${id}`);
+        }
+
+        function shareContent(id) {
+            console.log('Sharing content:', id);
+            alert(`Share functionality for content ID: ${id}`);
+        }
+
+        function duplicateContent(id) {
+            console.log('Duplicating content:', id);
+            alert(`Duplicate functionality for content ID: ${id}`);
+        }
+
+        function refreshContent() {
+            const grid = document.getElementById('contentGrid');
+            grid.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+            setTimeout(() => {
+                loadContent();
+            }, 500);
+        }
+
+        function showUploadModal() {
+            alert('Upload/Add content functionality');
+        }
+
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            loadContent();
+
+            // Search functionality
+            document.getElementById('searchInput').addEventListener('input', (e) => {
+                searchTerm = e.target.value;
+                loadContent();
+            });
+
+            // Filter chips
+            document.querySelectorAll('.filter-chip').forEach(chip => {
+                chip.addEventListener('click', () => {
+                    document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+                    chip.classList.add('active');
+                    currentFilter = chip.getAttribute('data-filter');
+                    loadContent();
+                });
+            });
+
+            // Navigation items
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+                    item.classList.add('active');
+                    const section = item.getAttribute('data-section');
+                    loadSection(section);
+                });
+            });
+        });
+
+        function loadSection(section) {
+            const header = document.querySelector('.header h2');
+            const sectionTitles = {
+                'overview': 'Content Overview',
+                'marketing': 'Marketing Campaigns',
+                'technical': 'Technical Documentation',
+                'visual': 'Visual Assets',
+                'automation': 'Automation Scripts',
+                'brand': 'Brand Guidelines',
+                'templates': 'Content Templates',
+                'logos': 'Logos & Media',
+                'performance': 'Performance Analytics',
+                'insights': 'Content Insights'
+            };
+            
+            header.textContent = sectionTitles[section] || 'Content Overview';
+            
+            // Filter content based on section
+            if (section === 'marketing') {
+                currentFilter = 'marketing';
+            } else if (section === 'technical') {
+                currentFilter = 'technical';
+            } else if (section === 'visual') {
+                currentFilter = 'visual';
+            } else if (section === 'automation') {
+                currentFilter = 'automation';
+            } else {
+                currentFilter = 'all';
+            }
+            
+            // Update filter chips
+            document.querySelectorAll('.filter-chip').forEach(chip => {
+                chip.classList.remove('active');
+                if (chip.getAttribute('data-filter') === currentFilter) {
+                    chip.classList.add('active');
+                }
+            });
+            
+            loadContent();
+        }
+
+        // Close modal on escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeModal();
+            }
+        });
+
+        // Close modal on background click
+        document.getElementById('contentModal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('contentModal')) {
+                closeModal();
+            }
+        });
+    </script>
+</body>
+</html>
