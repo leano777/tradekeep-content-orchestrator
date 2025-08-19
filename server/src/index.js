@@ -107,12 +107,12 @@ app.get('/api/v1/status', (req, res) => {
 });
 
 app.use('/api/v1/auth', authRoutes);
-app.use('/api/v1/content', authMiddleware, contentRoutes);
-app.use('/api/v1/campaigns', authMiddleware, campaignRoutes);
-app.use('/api/v1/assets', authMiddleware, assetRoutes);
-app.use('/api/v1/cloud-assets', authMiddleware, cloudAssetRoutes);
-app.use('/api/v1/analytics', authMiddleware, analyticsRoutes);
-app.use('/api/v1/users', authMiddleware, userRoutes);
+app.use('/api/v1/content', contentRoutes);
+app.use('/api/v1/campaigns', campaignRoutes);
+app.use('/api/v1/assets', assetRoutes);
+app.use('/api/v1/cloud-assets', cloudAssetRoutes);
+app.use('/api/v1/analytics', analyticsRoutes);
+app.use('/api/v1/users', userRoutes);
 
 app.use(expressWinston.errorLogger({
   winstonInstance: logger

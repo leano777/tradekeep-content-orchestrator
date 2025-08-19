@@ -1,1 +1,25 @@
-'use client';\n\nimport { useAuth } from '@/hooks/useAuth';\nimport { DashboardLayout } from '@/components/layout/DashboardLayout';\nimport { AuthLayout } from '@/components/layout/AuthLayout';\nimport { Dashboard } from '@/components/dashboard/Dashboard';\nimport { LoginForm } from '@/components/auth/LoginForm';\nimport { LoadingSpinner } from '@/components/ui/LoadingSpinner';\n\nexport default function HomePage() {\n  const { user, isLoading } = useAuth();\n\n  if (isLoading) {\n    return (\n      <div className=\"min-h-screen bg-tk-black flex items-center justify-center\">\n        <LoadingSpinner size=\"lg\" />\n      </div>\n    );\n  }\n\n  if (!user) {\n    return (\n      <AuthLayout>\n        <LoginForm />\n      </AuthLayout>\n    );\n  }\n\n  return (\n    <DashboardLayout>\n      <Dashboard />\n    </DashboardLayout>\n  );\n}
+export default function HomePage() {
+  return (
+    <div className="min-h-screen bg-gray-950 text-white flex items-center justify-center">
+      <div className="text-center">
+        <h1 className="text-4xl font-bold mb-4">TradeKeep Content Orchestrator</h1>
+        <p className="text-xl text-gray-400 mb-8">Content management system ready</p>
+        <div className="space-y-4">
+          <a 
+            href="/content/create" 
+            className="inline-block bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
+          >
+            Create Content
+          </a>
+          <br />
+          <a 
+            href="/assets" 
+            className="inline-block bg-gray-800 hover:bg-gray-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
+          >
+            Manage Assets
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+}
