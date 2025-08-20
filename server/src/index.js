@@ -5,6 +5,7 @@ const rateLimit = require('express-rate-limit');
 const compression = require('compression');
 const winston = require('winston');
 const expressWinston = require('express-winston');
+const http = require('http');
 require('dotenv').config();
 
 const authRoutes = require('./routes/auth');
@@ -14,12 +15,19 @@ const assetRoutes = require('./routes/assets');
 const cloudAssetRoutes = require('./routes/cloudAssets');
 const analyticsRoutes = require('./routes/analytics');
 const userRoutes = require('./routes/users');
+const commentsRoutes = require('./routes/comments');
+const activitiesRoutes = require('./routes/activities');
+const notificationsRoutes = require('./routes/notifications');
 
 const errorHandler = require('./middleware/errorHandler');
-const authMiddleware = require('./middleware/auth');
+const { SocketServer } = require('./websocket/socketServer');
 
 const app = express();
+const server = http.createServer(app);
 const PORT = process.env.PORT || 8000;
+
+// Initialize Socket.io server
+let socketServer = null;
 
 const logger = winston.createLogger({
   level: 'info',
@@ -113,6 +121,9 @@ app.use('/api/v1/assets', assetRoutes);
 app.use('/api/v1/cloud-assets', cloudAssetRoutes);
 app.use('/api/v1/analytics', analyticsRoutes);
 app.use('/api/v1/users', userRoutes);
+app.use('/api/v1', commentsRoutes);
+app.use('/api/v1/activities', activitiesRoutes);
+app.use('/api/v1/notifications', notificationsRoutes);
 
 app.use(expressWinston.errorLogger({
   winstonInstance: logger
@@ -130,7 +141,7 @@ app.use('*', (req, res) => {
 });
 
 if (process.env.NODE_ENV !== 'test') {
-  app.listen(PORT, () => {
+  server.listen(PORT, async () => {
     logger.info(`🚀 TradeKeep CMS Server running on port ${PORT}`);
     logger.info(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
     logger.info(`🔗 Health check: http://localhost:${PORT}/health`);
@@ -144,6 +155,15 @@ if (process.env.NODE_ENV !== 'test') {
     }
     if (process.env.ENABLE_SOCIAL_PUBLISHING === 'true') {
       logger.info('📱 Social Publishing: Enabled');
+    }
+    if (process.env.ENABLE_COLLABORATION === 'true') {
+      logger.info('🤝 Real-time Collaboration: Enabled');
+      try {
+        socketServer = new SocketServer(server);
+        logger.info('📡 WebSocket server initialized');
+      } catch (error) {
+        logger.error('Failed to initialize WebSocket server:', error);
+      }
     }
   });
 }

@@ -24,6 +24,9 @@ model User {
   emailCampaigns EmailCampaign[]
   emailTemplates EmailTemplate[]
   contentTemplates ContentTemplate[]
+  comments Comment[]
+  activities Activity[]
+  notifications Notification[]
 
   @@map("users")
 }
@@ -46,6 +49,9 @@ model Content {
   // Relations
   assets      ContentAsset[]
   campaigns   CampaignContent[]
+  comments    Comment[]
+  activities  Activity[]
+  notifications Notification[]
   
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
@@ -239,4 +245,47 @@ model ContentTemplate {
   updatedAt   DateTime  @updatedAt
   
   @@map("content_templates")
+}
+
+model Comment {
+  id        String    @id @default(cuid())
+  text      String
+  contentId String
+  content   Content   @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User      @relation(fields: [userId], references: [id])
+  parentId  String?
+  parent    Comment?  @relation("CommentReplies", fields: [parentId], references: [id])
+  replies   Comment[] @relation("CommentReplies")
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@map("comments")
+}
+
+model Activity {
+  id        String   @id @default(cuid())
+  type      String
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  contentId String?
+  content   Content? @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  details   String?
+  createdAt DateTime @default(now())
+
+  @@map("activities")
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  type      String   // MENTION, COMMENT, ASSIGNMENT, STATUS_CHANGE, DEADLINE
+  message   String
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  contentId String?
+  content   Content? @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@map("notifications")
 }
