@@ -1,0 +1,109 @@
+{
+  "report_location": "both",
+  "privacy_level": "personal",
+  "report_template": "comprehensive",
+  "session_timeout_hours": 4,
+  "auto_categorize": true,
+  "include_test_analysis": true,
+  "productivity_weight": {
+    "commits": 0.25,
+    "lines_changed": 0.25,
+    "tests": 0.25,
+    "files": 0.25
+  },
+  "git_integration": {
+    "auto_commit_session_markers": true,
+    "include_branch_analysis": true,
+    "commit_analysis_depth": 50
+  },
+  "work_log_directory": "~/work-logs/claude-sessions",
+  "project_docs_directory": "docs/sessions",
+  "min_session_duration_minutes": 15,
+  "max_session_duration_hours": 8,
+  "task_extraction_keywords": {
+    "completed": [
+      "fix",
+      "implement",
+      "add",
+      "complete",
+      "finish",
+      "done",
+      "resolve",
+      "feat"
+    ],
+    "in_progress": [
+      "wip",
+      "progress",
+      "partial",
+      "start",
+      "begin",
+      "working"
+    ],
+    "blocked": [
+      "block",
+      "stuck",
+      "issue",
+      "problem",
+      "error",
+      "fail"
+    ],
+    "backlog": [
+      "todo",
+      "plan",
+      "draft",
+      "sketch",
+      "outline"
+    ]
+  },
+  "file_category_patterns": {
+    "backend": [
+      "*.py",
+      "app/**",
+      "api/**",
+      "services/**",
+      "models/**"
+    ],
+    "frontend": [
+      "*.tsx",
+      "*.jsx",
+      "*.ts",
+      "*.js",
+      "components/**",
+      "pages/**",
+      "src/**"
+    ],
+    "tests": [
+      "test_*.py",
+      "*_test.py",
+      "tests/**",
+      "*.test.ts",
+      "*.spec.ts"
+    ],
+    "docs": [
+      "*.md",
+      "*.rst",
+      "docs/**",
+      "README*"
+    ],
+    "config": [
+      "*.json",
+      "*.yaml",
+      "*.yml",
+      "*.toml",
+      "*.ini",
+      "*.env",
+      "alembic/**"
+    ]
+  },
+  "insights_enabled": {
+    "commit_frequency": true,
+    "session_duration": true,
+    "test_coverage": true,
+    "task_completion": true,
+    "file_diversity": true,
+    "productivity_trends": true
+  },
+  "setup_date": "2025-08-20T01:54:58.293838",
+  "project_name": "TK CONTENT ORCHESTRATOR",
+  "project_path": "C:\\Users\\Marco - ESDC\\OneDrive - Elite SD Construction\\Documents\\TK\\TK CONTENT ORCHESTRATOR"
+}
