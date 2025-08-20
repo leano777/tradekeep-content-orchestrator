@@ -796,6 +796,220 @@ app.get('/api/v1/cloud-assets/files', (req, res) => {
   });
 });
 
+// Campaign Routes
+app.get('/api/v1/campaigns', requireAuth, async (req, res) => {
+  try {
+    const { status, page = 1, limit = 20 } = req.query;
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    const where = {};
+
+    if (status) where.status = status;
+
+    const [campaigns, total] = await Promise.all([
+      prisma.campaign.findMany({
+        where,
+        include: {
+          createdBy: {
+            select: { id: true, name: true }
+          },
+          content: {
+            include: {
+              content: {
+                select: { id: true, title: true, status: true }
+              }
+            }
+          }
+        },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: parseInt(limit)
+      }),
+      prisma.campaign.count({ where })
+    ]);
+
+    res.json({
+      status: 'success',
+      results: campaigns.length,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total,
+        pages: Math.ceil(total / parseInt(limit))
+      },
+      data: campaigns
+    });
+  } catch (error) {
+    console.error('Get campaigns error:', error);
+    res.status(500).json({ error: 'Failed to get campaigns' });
+  }
+});
+
+app.post('/api/v1/campaigns', requirePermission('campaigns:create'), async (req, res) => {
+  try {
+    const { name, description, status = 'draft', startDate, endDate } = req.body;
+
+    if (!name || !startDate) {
+      return res.status(400).json({ error: 'Name and start date are required' });
+    }
+
+    const campaign = await prisma.campaign.create({
+      data: {
+        name,
+        description,
+        status,
+        startDate: new Date(startDate),
+        endDate: endDate ? new Date(endDate) : null,
+        createdById: req.user.id
+      },
+      include: {
+        createdBy: {
+          select: { id: true, name: true }
+        },
+        content: {
+          include: {
+            content: {
+              select: { id: true, title: true, status: true }
+            }
+          }
+        }
+      }
+    });
+
+    res.json({ status: 'success', data: campaign });
+  } catch (error) {
+    console.error('Create campaign error:', error);
+    res.status(500).json({ error: 'Failed to create campaign' });
+  }
+});
+
+app.get('/api/v1/campaigns/:id', requireAuth, async (req, res) => {
+  try {
+    const campaign = await prisma.campaign.findUnique({
+      where: { id: req.params.id },
+      include: {
+        createdBy: {
+          select: { id: true, name: true }
+        },
+        content: {
+          include: {
+            content: {
+              select: { id: true, title: true, status: true, type: true, createdAt: true }
+            }
+          },
+          orderBy: { order: 'asc' }
+        }
+      }
+    });
+
+    if (!campaign) {
+      return res.status(404).json({ error: 'Campaign not found' });
+    }
+
+    res.json({ status: 'success', data: campaign });
+  } catch (error) {
+    console.error('Get campaign error:', error);
+    res.status(500).json({ error: 'Failed to get campaign' });
+  }
+});
+
+app.put('/api/v1/campaigns/:id', requirePermission('campaigns:edit'), async (req, res) => {
+  try {
+    const { name, description, status, startDate, endDate } = req.body;
+
+    const updateData = {};
+    if (name) updateData.name = name;
+    if (description !== undefined) updateData.description = description;
+    if (status) updateData.status = status;
+    if (startDate) updateData.startDate = new Date(startDate);
+    if (endDate !== undefined) updateData.endDate = endDate ? new Date(endDate) : null;
+
+    const campaign = await prisma.campaign.update({
+      where: { id: req.params.id },
+      data: updateData,
+      include: {
+        createdBy: {
+          select: { id: true, name: true }
+        },
+        content: {
+          include: {
+            content: {
+              select: { id: true, title: true, status: true }
+            }
+          }
+        }
+      }
+    });
+
+    res.json({ status: 'success', data: campaign });
+  } catch (error) {
+    console.error('Update campaign error:', error);
+    res.status(500).json({ error: 'Failed to update campaign' });
+  }
+});
+
+app.delete('/api/v1/campaigns/:id', requirePermission('campaigns:delete'), async (req, res) => {
+  try {
+    await prisma.campaign.delete({
+      where: { id: req.params.id }
+    });
+
+    res.json({ status: 'success', message: 'Campaign deleted successfully' });
+  } catch (error) {
+    console.error('Delete campaign error:', error);
+    res.status(500).json({ error: 'Failed to delete campaign' });
+  }
+});
+
+app.post('/api/v1/campaigns/:id/content', requirePermission('campaigns:edit'), async (req, res) => {
+  try {
+    const { contentIds } = req.body;
+    
+    if (!Array.isArray(contentIds)) {
+      return res.status(400).json({ error: 'Content IDs must be an array' });
+    }
+
+    // Remove existing content
+    await prisma.campaignContent.deleteMany({
+      where: { campaignId: req.params.id }
+    });
+
+    // Add new content with order
+    if (contentIds.length > 0) {
+      const campaignContent = contentIds.map((contentId, index) => ({
+        campaignId: req.params.id,
+        contentId,
+        order: index
+      }));
+
+      await prisma.campaignContent.createMany({
+        data: campaignContent
+      });
+    }
+
+    const updatedCampaign = await prisma.campaign.findUnique({
+      where: { id: req.params.id },
+      include: {
+        createdBy: {
+          select: { id: true, name: true }
+        },
+        content: {
+          include: {
+            content: {
+              select: { id: true, title: true, status: true }
+            }
+          },
+          orderBy: { order: 'asc' }
+        }
+      }
+    });
+
+    res.json({ status: 'success', data: updatedCampaign });
+  } catch (error) {
+    console.error('Update campaign content error:', error);
+    res.status(500).json({ error: 'Failed to update campaign content' });
+  }
+});
+
 // 404 handler
 app.use('*', (req, res) => {
   res.status(404).json({
