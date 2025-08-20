@@ -29,7 +29,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      const response = await fetch('http://localhost:9001/api/v1/auth/me', {
+      const response = await fetch('http://localhost:9002/api/v1/auth/me', {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -49,7 +49,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const login = async (email: string, password: string) => {
-    const response = await fetch('http://localhost:9001/api/v1/auth/login', {
+    const response = await fetch('http://localhost:9002/api/v1/auth/login', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -70,7 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const token = localStorage.getItem('token');
       if (token) {
-        await fetch('http://localhost:9001/api/v1/auth/logout', {
+        await fetch('http://localhost:9002/api/v1/auth/logout', {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -84,7 +84,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const register = async (email: string, password: string, name: string) => {
-    const response = await fetch('http://localhost:9001/api/v1/auth/register', {
+    const response = await fetch('http://localhost:9002/api/v1/auth/register', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

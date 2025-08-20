@@ -2,46 +2,127 @@ export interface User {
   id: string;
   email: string;
   name: string;
-  role: 'admin' | 'editor' | 'viewer';
-  avatar?: string;
-  createdAt: Date;
-  updatedAt: Date;
+  role: 'VIEWER' | 'EDITOR' | 'ADMIN' | 'SUPER_ADMIN';
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Content {
   id: string;
   title: string;
-  body: string;
-  type: 'post' | 'email' | 'social';
-  status: 'draft' | 'review' | 'approved' | 'scheduled' | 'published';
-  pillar: 'internal-os' | 'psychology' | 'discipline' | 'systems';
-  platform?: 'instagram' | 'twitter' | 'linkedin' | 'email';
-  scheduledAt?: Date;
-  publishedAt?: Date;
-  author: User;
-  createdAt: Date;
-  updatedAt: Date;
+  content: string;
+  type: 'POST' | 'ARTICLE' | 'STORY';
+  status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
+  scheduledAt?: string;
+  platforms: string[];
+  tags: string[];
+  authorId: string;
+  author?: User;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Campaign {
   id: string;
   name: string;
-  description: string;
-  startDate: Date;
-  endDate: Date;
-  content: Content[];
-  status: 'planning' | 'active' | 'completed';
-  createdAt: Date;
-  updatedAt: Date;
+  description?: string;
+  startDate: string;
+  endDate?: string;
+  status: 'ACTIVE' | 'PAUSED' | 'COMPLETED';
+  authorId: string;
+  author?: User;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Asset {
   id: string;
-  name: string;
-  type: 'image' | 'video' | 'document';
-  url: string;
+  filename: string;
+  originalName: string;
+  mimeType: string;
   size: number;
-  metadata?: Record<string, any>;
-  createdAt: Date;
-  updatedAt: Date;
+  url: string;
+  uploadedBy: string;
+  uploader?: User;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface EmailSubscriber {
+  id: string;
+  email: string;
+  name?: string;
+  status: 'ACTIVE' | 'UNSUBSCRIBED';
+  tags?: string;
+  metadata?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface EmailCampaign {
+  id: string;
+  subject: string;
+  content: string;
+  status: 'DRAFT' | 'SCHEDULED' | 'SENT';
+  scheduledAt?: string;
+  sentAt?: string;
+  authorId: string;
+  author?: User;
+  recipients?: EmailCampaignRecipient[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface EmailCampaignRecipient {
+  id: string;
+  campaignId: string;
+  subscriberId: string;
+  status: 'PENDING' | 'SENT' | 'FAILED';
+  sentAt?: string;
+  subscriber?: EmailSubscriber;
+}
+
+export interface SocialMediaConnection {
+  platform: string;
+  connected: boolean;
+  accountInfo?: {
+    username?: string;
+    displayName?: string;
+    profileImage?: string;
+  };
+}
+
+export interface AnalyticsData {
+  period: string;
+  metrics: {
+    totalViews: number;
+    totalEngagement: number;
+    contentCount: number;
+    conversionRate: number;
+  };
+  platformStats: Array<{
+    platform: string;
+    posts: number;
+    engagement: number;
+  }>;
+  topContent: Array<{
+    id: string;
+    title: string;
+    views: number;
+    engagement: number;
+    platform: string;
+  }>;
+}
+
+export interface DashboardStats {
+  totalContent: number;
+  totalUsers: number;
+  totalAssets: number;
+  recentActivity: Array<{
+    id: string;
+    type: string;
+    description: string;
+    timestamp: string;
+    user?: string;
+  }>;
 }

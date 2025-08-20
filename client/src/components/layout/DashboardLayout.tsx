@@ -19,6 +19,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     { name: 'Dashboard', href: '/dashboard', icon: '📊' },
     { name: 'Content', href: '/content', icon: '📝' },
     { name: 'Create', href: '/content/create', icon: '✍️' },
+    { name: 'Analytics', href: '/analytics', icon: '📈' },
     { name: 'Calendar', href: '/calendar', icon: '📅' },
     { name: 'Assets', href: '/assets', icon: '📁' },
   ];
