@@ -260,6 +260,9 @@ model Comment {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 
+  @@index([contentId, createdAt])
+  @@index([userId])
+  @@index([parentId])
   @@map("comments")
 }
 
@@ -273,6 +276,9 @@ model Activity {
   details   String?
   createdAt DateTime @default(now())
 
+  @@index([contentId, createdAt])
+  @@index([userId, createdAt])
+  @@index([type])
   @@map("activities")
 }
 
@@ -287,5 +293,7 @@ model Notification {
   read      Boolean  @default(false)
   createdAt DateTime @default(now())
 
+  @@index([userId, read, createdAt])
+  @@index([contentId])
   @@map("notifications")
 }

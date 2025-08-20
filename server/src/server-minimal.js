@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+const http = require('http');
 const prisma = require('./db');
 const passwordResetRoutes = require('./routes/passwordReset');
 const { validateRegistration, validateLogin, loginRateLimit, passwordResetRateLimit } = require('./middleware/validation');
@@ -16,11 +17,20 @@ const {
 const publishingService = require('./services/socialMedia/publishingService');
 const emailService = require('./services/email/resendService');
 const emailTemplates = require('./services/email/templates');
+const { SocketServer } = require('./websocket/socketServer');
 require('dotenv').config();
 
 const app = express();
+const server = http.createServer(app);
 const PORT = process.env.PORT || 9001;
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-key-change-in-production';
+
+// Initialize WebSocket server if collaboration is enabled
+let socketServer = null;
+if (process.env.ENABLE_COLLABORATION === 'true') {
+  socketServer = new SocketServer(server);
+  console.log('🤝 Real-time collaboration enabled');
+}
 
 // Basic middleware
 app.use(cors({
@@ -114,6 +124,17 @@ app.post('/api/v1/auth/logout', (req, res) => {
 
 // Password reset routes
 app.use('/api/v1/auth', passwordResetRateLimit, passwordResetRoutes);
+
+// Collaboration routes (if enabled)
+if (process.env.ENABLE_COLLABORATION === 'true') {
+  const commentsRoutes = require('./routes/comments');
+  const activitiesRoutes = require('./routes/activities');
+  const notificationsRoutes = require('./routes/notifications');
+  
+  app.use('/api/v1', commentsRoutes);
+  app.use('/api/v1/activities', activitiesRoutes);
+  app.use('/api/v1/notifications', notificationsRoutes);
+}
 
 // Dashboard stats
 app.get('/api/v1/dashboard/stats', requirePermission('dashboard:view'), async (req, res) => {
@@ -1164,8 +1185,11 @@ app.use((err, req, res, next) => {
   });
 });
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`🚀 TradeKeep CMS Server running on port ${PORT}`);
   console.log(`📊 Health check: http://localhost:${PORT}/health`);
   console.log(`🔗 API Status: http://localhost:${PORT}/api/v1/status`);
+  if (socketServer) {
+    console.log(`📡 WebSocket server initialized for real-time collaboration`);
+  }
 });

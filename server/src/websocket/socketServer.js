@@ -1,12 +1,15 @@
 const { Server: SocketIOServer } = require('socket.io');
 const jwt = require('jsonwebtoken');
 const { PrismaClient } = require('@prisma/client');
+const { sanitizeComment, sanitizeActivityDetails } = require('../utils/sanitizer');
+const { EventRateLimiters } = require('../utils/rateLimiter');
 
 const prisma = new PrismaClient();
 
 class SocketServer {
   constructor(server) {
     this.rooms = new Map();
+    this.rateLimiters = new EventRateLimiters();
     this.io = new SocketIOServer(server, {
       cors: {
         origin: process.env.CLIENT_URL || 'http://localhost:3000',
@@ -55,6 +58,12 @@ class SocketServer {
 
       // Join content editing room
       socket.on('join-content', async (contentId) => {
+        // Rate limiting check
+        if (!this.rateLimiters.checkEvent('join-content', socket.id)) {
+          socket.emit('error', { message: 'Rate limit exceeded. Please try again later.' });
+          return;
+        }
+        
         socket.join(`content:${contentId}`);
         
         if (!this.rooms.has(contentId)) {
@@ -92,6 +101,12 @@ class SocketServer {
 
       // Handle content changes (collaborative editing)
       socket.on('content-change', async (data) => {
+        // Rate limiting check
+        if (!this.rateLimiters.checkEvent('content-change', socket.id)) {
+          socket.emit('error', { message: 'Too many changes. Please slow down.' });
+          return;
+        }
+        
         // Broadcast changes to all other users in the room
         socket.to(`content:${data.contentId}`).emit('content-update', {
           userId: user.userId,
@@ -117,6 +132,12 @@ class SocketServer {
 
       // Handle cursor position updates
       socket.on('cursor-update', (data) => {
+        // Rate limiting check
+        if (!this.rateLimiters.checkEvent('cursor-update', socket.id)) {
+          // Silently drop cursor updates when rate limited (too frequent to show errors)
+          return;
+        }
+        
         const room = this.rooms.get(data.contentId);
         if (room && room.users.has(user.userId)) {
           room.users.get(user.userId).cursor = {
@@ -135,10 +156,19 @@ class SocketServer {
 
       // Handle comments
       socket.on('add-comment', async (data) => {
+        // Rate limiting check
+        if (!this.rateLimiters.checkEvent('add-comment', socket.id)) {
+          socket.emit('error', { message: 'Too many comments. Please wait before posting again.' });
+          return;
+        }
+        
         try {
+          // Sanitize comment text to prevent XSS
+          const sanitizedText = sanitizeComment(data.text);
+          
           const comment = await prisma.comment.create({
             data: {
-              text: data.text,
+              text: sanitizedText,
               contentId: data.contentId,
               userId: user.userId,
               parentId: data.parentId
@@ -190,13 +220,22 @@ class SocketServer {
 
       // Handle activity tracking
       socket.on('activity', async (data) => {
+        // Rate limiting check
+        if (!this.rateLimiters.checkEvent('activity', socket.id)) {
+          // Silently drop activity tracking when rate limited
+          return;
+        }
+        
         try {
+          // Sanitize activity details
+          const sanitizedDetails = sanitizeActivityDetails(data.details || {});
+          
           const activity = await prisma.activity.create({
             data: {
               type: data.type,
               userId: user.userId,
               contentId: data.contentId,
-              details: JSON.stringify(data.details || {})
+              details: JSON.stringify(sanitizedDetails)
             },
             include: {
               user: {
@@ -220,6 +259,9 @@ class SocketServer {
       // Handle disconnection
       socket.on('disconnect', () => {
         console.log(`User ${user.email} disconnected`);
+        
+        // Clean up rate limiter for this client
+        this.rateLimiters.resetClient(socket.id);
         
         // Remove user from all rooms
         this.rooms.forEach((room, contentId) => {

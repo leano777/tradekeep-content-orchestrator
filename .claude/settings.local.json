@@ -21,7 +21,9 @@
       "Bash(npx prisma:*)",
       "Bash(docker-compose up:*)",
       "Bash(PORT=9002 node src/server-minimal.js)",
-      "Bash(npm run type-check:*)"
+      "Bash(npm run type-check:*)",
+      "Bash(git rm:*)",
+      "Bash(del \"server\\src\\websocket\\socketServer.ts\")"
     ],
     "deny": [],
     "ask": []
