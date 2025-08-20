@@ -21,6 +21,8 @@ model User {
   content Content[]
   campaigns Campaign[]
   assets Asset[]
+  emailCampaigns EmailCampaign[]
+  emailTemplates EmailTemplate[]
 
   @@map("users")
 }
@@ -114,4 +116,107 @@ model CampaignContent {
   
   @@unique([campaignId, contentId])
   @@map("campaign_content")
+}
+
+model EmailSubscriber {
+  id          String    @id @default(cuid())
+  email       String    @unique
+  name        String?
+  status      String    @default("active") // active, unsubscribed, bounced
+  tags        String?   // JSON string of tags
+  metadata    String?   // JSON string of additional data
+  
+  subscribedAt   DateTime  @default(now())
+  unsubscribedAt DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  
+  // Relations
+  emailsSent     EmailCampaignRecipient[]
+  
+  @@map("email_subscribers")
+}
+
+model EmailCampaign {
+  id          String    @id @default(cuid())
+  name        String
+  subject     String
+  content     String    // HTML content
+  plainText   String?   // Plain text version
+  fromName    String
+  fromEmail   String
+  replyTo     String?
+  
+  status      String    @default("draft") // draft, scheduled, sending, sent, failed
+  scheduledAt DateTime?
+  sentAt      DateTime?
+  
+  // Stats
+  totalRecipients Int      @default(0)
+  sentCount       Int      @default(0)
+  openCount       Int      @default(0)
+  clickCount      Int      @default(0)
+  bounceCount     Int      @default(0)
+  unsubscribeCount Int     @default(0)
+  
+  // Metadata
+  tags        String?   // JSON string of tags for filtering
+  metadata    String?   // JSON string of campaign metadata
+  
+  createdById String
+  createdBy   User      @relation(fields: [createdById], references: [id])
+  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  // Relations
+  recipients  EmailCampaignRecipient[]
+  
+  @@map("email_campaigns")
+}
+
+model EmailCampaignRecipient {
+  id            String    @id @default(cuid())
+  campaignId    String
+  subscriberId  String
+  
+  status        String    @default("pending") // pending, sent, opened, clicked, bounced, unsubscribed
+  sentAt        DateTime?
+  openedAt      DateTime?
+  clickedAt     DateTime?
+  bouncedAt     DateTime?
+  unsubscribedAt DateTime?
+  
+  // Tracking
+  openCount     Int       @default(0)
+  clickCount    Int       @default(0)
+  
+  campaign      EmailCampaign    @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  subscriber    EmailSubscriber  @relation(fields: [subscriberId], references: [id], onDelete: Cascade)
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  @@unique([campaignId, subscriberId])
+  @@map("email_campaign_recipients")
+}
+
+model EmailTemplate {
+  id          String    @id @default(cuid())
+  name        String
+  subject     String
+  content     String    // HTML template with variables
+  plainText   String?   // Plain text template
+  category    String    @default("general") // newsletter, announcement, promotion, etc.
+  
+  variables   String?   // JSON string of available variables
+  thumbnail   String?   // Preview image URL
+  
+  createdById String
+  createdBy   User      @relation(fields: [createdById], references: [id])
+  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  @@map("email_templates")
 }

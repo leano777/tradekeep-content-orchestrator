@@ -14,6 +14,8 @@ const {
   getContentOwnerId 
 } = require('./middleware/permissions');
 const publishingService = require('./services/socialMedia/publishingService');
+const emailService = require('./services/email/resendService');
+const emailTemplates = require('./services/email/templates');
 require('dotenv').config();
 
 const app = express();
@@ -453,6 +455,322 @@ app.delete('/api/v1/social/:platform/posts/:postId', requirePermission('content:
   } catch (error) {
     console.error('Delete post error:', error);
     res.status(500).json({ error: error.message || 'Failed to delete post' });
+  }
+});
+
+// Email Campaign Routes
+
+// Get all email subscribers
+app.get('/api/v1/email/subscribers', requirePermission('users:read'), async (req, res) => {
+  try {
+    const { status, limit = 100 } = req.query;
+    
+    const where = status ? { status } : {};
+    
+    const subscribers = await prisma.emailSubscriber.findMany({
+      where,
+      take: parseInt(limit),
+      orderBy: { subscribedAt: 'desc' }
+    });
+    
+    res.json({ status: 'success', data: subscribers });
+  } catch (error) {
+    console.error('Get subscribers error:', error);
+    res.status(500).json({ error: 'Failed to get subscribers' });
+  }
+});
+
+// Add email subscriber
+app.post('/api/v1/email/subscribers', async (req, res) => {
+  try {
+    const { email, name, tags, metadata } = req.body;
+    
+    const subscriber = await prisma.emailSubscriber.create({
+      data: {
+        email,
+        name,
+        tags: tags ? JSON.stringify(tags) : null,
+        metadata: metadata ? JSON.stringify(metadata) : null
+      }
+    });
+    
+    // Send welcome email
+    if (emailService.isConfigured || process.env.NODE_ENV === 'development') {
+      const welcomeHtml = emailTemplates.welcomeTemplate({ subscriberName: name });
+      await emailService.sendEmail(
+        email,
+        'Welcome to TradeKeep!',
+        welcomeHtml,
+        { fromName: 'TradeKeep Team' }
+      );
+    }
+    
+    res.json({ status: 'success', data: subscriber });
+  } catch (error) {
+    console.error('Add subscriber error:', error);
+    if (error.code === 'P2002') {
+      return res.status(400).json({ error: 'Email already subscribed' });
+    }
+    res.status(500).json({ error: 'Failed to add subscriber' });
+  }
+});
+
+// Unsubscribe
+app.post('/api/v1/email/unsubscribe', async (req, res) => {
+  try {
+    const { email } = req.body;
+    const result = await emailService.handleUnsubscribe(email);
+    
+    if (result.success) {
+      res.json({ status: 'success', message: result.message });
+    } else {
+      res.status(400).json({ error: result.error });
+    }
+  } catch (error) {
+    console.error('Unsubscribe error:', error);
+    res.status(500).json({ error: 'Failed to unsubscribe' });
+  }
+});
+
+// Get email campaigns
+app.get('/api/v1/email/campaigns', requireAuth, async (req, res) => {
+  try {
+    const { status, limit = 20 } = req.query;
+    
+    const where = status ? { status } : {};
+    
+    const campaigns = await prisma.emailCampaign.findMany({
+      where,
+      take: parseInt(limit),
+      include: {
+        createdBy: {
+          select: { id: true, name: true, email: true }
+        },
+        _count: {
+          select: { recipients: true }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+    
+    res.json({ status: 'success', data: campaigns });
+  } catch (error) {
+    console.error('Get campaigns error:', error);
+    res.status(500).json({ error: 'Failed to get campaigns' });
+  }
+});
+
+// Create email campaign
+app.post('/api/v1/email/campaigns', requirePermission('campaigns:create'), async (req, res) => {
+  try {
+    const { 
+      name, 
+      subject, 
+      content, 
+      plainText,
+      fromName = 'TradeKeep',
+      fromEmail = process.env.EMAIL_FROM || 'noreply@tradekeep.com',
+      replyTo,
+      tags,
+      subscriberTags
+    } = req.body;
+    
+    // Create campaign
+    const campaign = await prisma.emailCampaign.create({
+      data: {
+        name,
+        subject,
+        content,
+        plainText,
+        fromName,
+        fromEmail,
+        replyTo,
+        tags: tags ? JSON.stringify(tags) : null,
+        createdById: req.user.id
+      }
+    });
+    
+    // Add recipients based on subscriber tags
+    if (subscriberTags && subscriberTags.length > 0) {
+      const subscribers = await prisma.emailSubscriber.findMany({
+        where: {
+          status: 'active',
+          OR: subscriberTags.map(tag => ({
+            tags: { contains: tag }
+          }))
+        }
+      });
+      
+      if (subscribers.length > 0) {
+        await prisma.emailCampaignRecipient.createMany({
+          data: subscribers.map(sub => ({
+            campaignId: campaign.id,
+            subscriberId: sub.id
+          }))
+        });
+        
+        await prisma.emailCampaign.update({
+          where: { id: campaign.id },
+          data: { totalRecipients: subscribers.length }
+        });
+      }
+    } else {
+      // Add all active subscribers if no tags specified
+      const subscribers = await prisma.emailSubscriber.findMany({
+        where: { status: 'active' }
+      });
+      
+      if (subscribers.length > 0) {
+        await prisma.emailCampaignRecipient.createMany({
+          data: subscribers.map(sub => ({
+            campaignId: campaign.id,
+            subscriberId: sub.id
+          }))
+        });
+        
+        await prisma.emailCampaign.update({
+          where: { id: campaign.id },
+          data: { totalRecipients: subscribers.length }
+        });
+      }
+    }
+    
+    res.json({ status: 'success', data: campaign });
+  } catch (error) {
+    console.error('Create campaign error:', error);
+    res.status(500).json({ error: 'Failed to create campaign' });
+  }
+});
+
+// Send email campaign
+app.post('/api/v1/email/campaigns/:id/send', requirePermission('campaigns:create'), async (req, res) => {
+  try {
+    const result = await emailService.sendCampaign(req.params.id);
+    
+    if (result.success) {
+      res.json({ status: 'success', data: result });
+    } else {
+      res.status(400).json({ error: result.error });
+    }
+  } catch (error) {
+    console.error('Send campaign error:', error);
+    res.status(500).json({ error: 'Failed to send campaign' });
+  }
+});
+
+// Schedule email campaign
+app.post('/api/v1/email/campaigns/:id/schedule', requirePermission('campaigns:create'), async (req, res) => {
+  try {
+    const { scheduledAt } = req.body;
+    
+    if (!scheduledAt) {
+      return res.status(400).json({ error: 'Scheduled time is required' });
+    }
+    
+    const campaign = await prisma.emailCampaign.update({
+      where: { id: req.params.id },
+      data: {
+        status: 'scheduled',
+        scheduledAt: new Date(scheduledAt)
+      }
+    });
+    
+    // In production, you'd set up a job queue here
+    const delay = new Date(scheduledAt).getTime() - Date.now();
+    if (delay > 0) {
+      setTimeout(async () => {
+        console.log(`⏰ Sending scheduled email campaign ${req.params.id}`);
+        await emailService.sendCampaign(req.params.id);
+      }, delay);
+    }
+    
+    res.json({ status: 'success', data: campaign });
+  } catch (error) {
+    console.error('Schedule campaign error:', error);
+    res.status(500).json({ error: 'Failed to schedule campaign' });
+  }
+});
+
+// Get campaign statistics
+app.get('/api/v1/email/campaigns/:id/stats', requireAuth, async (req, res) => {
+  try {
+    const stats = await emailService.getCampaignStats(req.params.id);
+    res.json({ status: 'success', data: stats });
+  } catch (error) {
+    console.error('Get campaign stats error:', error);
+    res.status(500).json({ error: 'Failed to get campaign statistics' });
+  }
+});
+
+// Track email open (pixel tracking)
+app.get('/api/v1/email/track/open/:campaignId/:subscriberId', async (req, res) => {
+  const { campaignId, subscriberId } = req.params;
+  await emailService.trackOpen(campaignId, subscriberId);
+  
+  // Return 1x1 transparent pixel
+  const pixel = Buffer.from('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7', 'base64');
+  res.writeHead(200, {
+    'Content-Type': 'image/gif',
+    'Content-Length': pixel.length,
+    'Cache-Control': 'no-store, no-cache, must-revalidate, private'
+  });
+  res.end(pixel);
+});
+
+// Track email click
+app.get('/api/v1/email/track/click/:campaignId/:subscriberId', async (req, res) => {
+  const { campaignId, subscriberId } = req.params;
+  const { url } = req.query;
+  
+  await emailService.trackClick(campaignId, subscriberId, url);
+  
+  if (url) {
+    res.redirect(url);
+  } else {
+    res.status(400).json({ error: 'No redirect URL provided' });
+  }
+});
+
+// Get email templates
+app.get('/api/v1/email/templates', requireAuth, async (req, res) => {
+  try {
+    const templates = await prisma.emailTemplate.findMany({
+      include: {
+        createdBy: {
+          select: { id: true, name: true, email: true }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+    
+    res.json({ status: 'success', data: templates });
+  } catch (error) {
+    console.error('Get templates error:', error);
+    res.status(500).json({ error: 'Failed to get templates' });
+  }
+});
+
+// Create email template
+app.post('/api/v1/email/templates', requirePermission('campaigns:create'), async (req, res) => {
+  try {
+    const { name, subject, content, plainText, category, variables } = req.body;
+    
+    const template = await prisma.emailTemplate.create({
+      data: {
+        name,
+        subject,
+        content,
+        plainText,
+        category,
+        variables: variables ? JSON.stringify(variables) : null,
+        createdById: req.user.id
+      }
+    });
+    
+    res.json({ status: 'success', data: template });
+  } catch (error) {
+    console.error('Create template error:', error);
+    res.status(500).json({ error: 'Failed to create template' });
   }
 });
 
