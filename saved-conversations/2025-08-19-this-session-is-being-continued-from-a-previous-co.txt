@@ -1,0 +1,39 @@
+ ✻ Welcome to Claude Code!
+
+   /help for help, /status for your current setup
+
+   cwd: C:\Users\Marco - ESDC
+● Compact summary (ctrl+r to expand)
+  ⎿ Read OneDrive - Elite SD 
+    Construction\Documents\Marco 
+    Projects\Subscription Tracking 
+    App\subtracker-ai\ENHANCED_PAY_IN
+    PUT.md (186 lines)
+  ⎿ Read OneDrive - Elite SD 
+    Construction\Documents\Marco 
+    Projects\Subscription Tracking 
+    App\subtracker-ai\src\components\
+    wizard\IncomeSetupWizard.tsx (921
+     lines)
+  ⎿ Read OneDrive - Elite SD 
+    Construction\Documents\Marco 
+    Projects\Subscription Tracking Ap
+    p\subtracker-ai\API_ERROR_FIX.md 
+    (54 lines)
+  ⎿ Read OneDrive - Elite SD 
+    Construction\Documents\Marco 
+    Projects\Subscription Tracking 
+    App\subtracker-ai\src\components\
+    settings\APIIntegrations.tsx (594
+     lines)
+  ⎿ Read OneDrive - Elite SD 
+    Construction\Documents\Marco 
+    Projects\Subscription Tracking 
+    App\subtracker-ai\src\services\ap
+    i\base.ts (261 lines)
+  ⎿  Todo list read (5 items)
+
+> /compact 
+  ⎿ Compacted. ctrl+r to see full 
+    summary
+

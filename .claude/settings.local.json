@@ -14,7 +14,13 @@
       "Bash(npm install)",
       "Bash(npm run build:*)",
       "Bash(npx tsc:*)",
-      "Bash(npm start)"
+      "Bash(npm start)",
+      "Bash(npm run dev:*)",
+      "Bash(npm install:*)",
+      "Bash(curl:*)",
+      "Bash(npx prisma:*)",
+      "Bash(docker-compose up:*)",
+      "Bash(PORT=9002 node src/server-minimal.js)"
     ],
     "deny": [],
     "ask": []

@@ -1,9 +1,7 @@
-import './globals.css';
+'use client';
 
-export const metadata = {
-  title: 'TradeKeep Content Orchestrator',
-  description: 'Content management system for TradeKeep construction company',
-};
+import './globals.css';
+import { AuthProvider } from '@/hooks/useAuth';
 
 export default function RootLayout({
   children,
@@ -12,8 +10,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="bg-gray-950 text-white">
-        {children}
+      <body>
+        <AuthProvider>
+          {children}
+        </AuthProvider>
       </body>
     </html>
   );

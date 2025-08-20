@@ -91,4 +91,39 @@ module.exports = {
         'tk-lg': '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
         'tk-xl': '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
       },
-      backdropBlur: {\n        'xs': '2px',\n      },\n      animation: {\n        'slide-up': 'slideUp 0.2s ease-out',\n        'slide-down': 'slideDown 0.2s ease-out',\n        'fade-in': 'fadeIn 0.15s ease-out',\n        'scale-in': 'scaleIn 0.15s ease-out',\n        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',\n      },\n      keyframes: {\n        slideUp: {\n          '0%': { transform: 'translateY(10px)', opacity: '0' },\n          '100%': { transform: 'translateY(0)', opacity: '1' },\n        },\n        slideDown: {\n          '0%': { transform: 'translateY(-10px)', opacity: '0' },\n          '100%': { transform: 'translateY(0)', opacity: '1' },\n        },\n        fadeIn: {\n          '0%': { opacity: '0' },\n          '100%': { opacity: '1' },\n        },\n        scaleIn: {\n          '0%': { transform: 'scale(0.95)', opacity: '0' },\n          '100%': { transform: 'scale(1)', opacity: '1' },\n        },\n      },\n    },\n  },\n  plugins: [\n    require('@tailwindcss/forms'),\n    require('@tailwindcss/typography'),\n    require('@tailwindcss/aspect-ratio'),\n  ],\n};
+      backdropBlur: {
+        'xs': '2px',
+      },
+      animation: {
+        'slide-up': 'slideUp 0.2s ease-out',
+        'slide-down': 'slideDown 0.2s ease-out',
+        'fade-in': 'fadeIn 0.15s ease-out',
+        'scale-in': 'scaleIn 0.15s ease-out',
+        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+      },
+      keyframes: {
+        slideUp: {
+          '0%': { transform: 'translateY(10px)', opacity: '0' },
+          '100%': { transform: 'translateY(0)', opacity: '1' },
+        },
+        slideDown: {
+          '0%': { transform: 'translateY(-10px)', opacity: '0' },
+          '100%': { transform: 'translateY(0)', opacity: '1' },
+        },
+        fadeIn: {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
+        },
+        scaleIn: {
+          '0%': { transform: 'scale(0.95)', opacity: '0' },
+          '100%': { transform: 'scale(1)', opacity: '1' },
+        },
+      },
+    },
+  },
+  plugins: [
+    require('@tailwindcss/forms'),
+    require('@tailwindcss/typography'),
+    require('@tailwindcss/aspect-ratio'),
+  ],
+};

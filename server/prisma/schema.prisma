@@ -3,489 +3,115 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider = "sqlite"
+  url      = "file:./dev.db"
 }
 
 model User {
-  id            String   @id @default(cuid())
-  email         String   @unique
-  username      String   @unique
-  firstName     String
-  lastName      String
-  password      String
-  role          Role     @default(EDITOR)
-  avatar        String?
-  isActive      Boolean  @default(true)
-  emailVerified Boolean  @default(false)
-  lastLoginAt   DateTime?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  password  String
+  role      String   @default("EDITOR")
+  avatar    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
-  contentItems     ContentItem[]
-  campaigns        Campaign[]
-  assets           Asset[]
-  comments         Comment[]
-  notifications    Notification[]
-  activityLogs     ActivityLog[]
-  userPreferences  UserPreference[]
-  assignedContent  ContentItem[] @relation("AssignedContent")
-  
+  content Content[]
+  campaigns Campaign[]
+  assets Asset[]
+
   @@map("users")
 }
 
-model UserPreference {
-  id         String @id @default(cuid())
-  userId     String
-  key        String
-  value      Json
-  user       User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+model Content {
+  id          String    @id @default(cuid())
+  title       String
+  body        String
+  type        String    @default("post")
+  status      String    @default("draft")
+  pillar      String    @default("internal-os")
+  platform    String?
+  scheduledAt DateTime?
+  publishedAt DateTime?
   
-  @@unique([userId, key])
-  @@map("user_preferences")
-}
-
-model ContentItem {
-  id             String        @id @default(cuid())
-  title          String
-  content        String?
-  description    String?
-  type           ContentType
-  platform       Platform
-  status         ContentStatus @default(DRAFT)
-  brandPillar    BrandPillar?
-  contentFormat  ContentFormat
-  scheduledAt    DateTime?
-  publishedAt    DateTime?
-  expiresAt      DateTime?
-  priority       Priority      @default(MEDIUM)
-  tags           String[]
-  metadata       Json?
-  aiGenerated    Boolean       @default(false)
-  parentId       String?
-  version        Int           @default(1)
-  
-  // Author and assignment
-  authorId       String
-  assignedToId   String?
-  author         User          @relation(fields: [authorId], references: [id])
-  assignedTo     User?         @relation("AssignedContent", fields: [assignedToId], references: [id])
+  // Author
+  authorId    String
+  author      User      @relation(fields: [authorId], references: [id])
   
   // Relations
-  parent         ContentItem?  @relation("ContentVersions", fields: [parentId], references: [id])
-  versions       ContentItem[] @relation("ContentVersions")
-  assets         ContentAsset[]
-  comments       Comment[]
-  analytics      Analytics[]
-  campaignItems  CampaignContent[]
+  assets      ContentAsset[]
+  campaigns   CampaignContent[]
   
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
-  
-  @@map("content_items")
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@map("content")
 }
 
 model Asset {
-  id           String      @id @default(cuid())
-  fileName     String
-  originalName String
-  filePath     String
-  fileSize     Int
-  mimeType     String
-  width        Int?
-  height       Int?
-  duration     Int?        // for videos
-  description  String?
-  tags         String[]
-  category     AssetCategory
+  id          String    @id @default(cuid())
+  name        String
+  url         String
+  type        String    @default("image")
+  size        Int
+  metadata    String?
+  
+  // Upload info
   uploadedById String
-  uploadedBy   User        @relation(fields: [uploadedById], references: [id])
+  uploadedBy   User     @relation(fields: [uploadedById], references: [id])
   
   // Relations
   contentAssets ContentAsset[]
   
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
-  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
   @@map("assets")
 }
 
 model ContentAsset {
-  id            String      @id @default(cuid())
-  contentId     String
-  assetId       String
-  role          AssetRole   @default(PRIMARY)
-  order         Int         @default(0)
+  id        String  @id @default(cuid())
+  contentId String
+  assetId   String
   
-  content       ContentItem @relation(fields: [contentId], references: [id], onDelete: Cascade)
-  asset         Asset       @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  content   Content @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  asset     Asset   @relation(fields: [assetId], references: [id], onDelete: Cascade)
   
   @@unique([contentId, assetId])
   @@map("content_assets")
 }
 
 model Campaign {
-  id            String          @id @default(cuid())
-  name          String
-  description   String?
-  type          CampaignType
-  status        CampaignStatus  @default(DRAFT)
-  startDate     DateTime
-  endDate       DateTime
-  goal          String?
-  targetMetrics Json?
-  settings      Json?
+  id          String    @id @default(cuid())
+  name        String
+  description String?
+  status      String    @default("draft")
+  startDate   DateTime
+  endDate     DateTime
   
-  createdById   String
-  createdBy     User            @relation(fields: [createdById], references: [id])
+  createdById String
+  createdBy   User      @relation(fields: [createdById], references: [id])
   
   // Relations
-  content       CampaignContent[]
-  emailSequence EmailSequence?
-  analytics     CampaignAnalytics[]
+  content     CampaignContent[]
   
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
-  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
   @@map("campaigns")
 }
 
 model CampaignContent {
-  id         String      @id @default(cuid())
+  id         String   @id @default(cuid())
   campaignId String
   contentId  String
-  order      Int
-  scheduled  Boolean     @default(false)
+  order      Int      @default(0)
   
-  campaign   Campaign    @relation(fields: [campaignId], references: [id], onDelete: Cascade)
-  content    ContentItem @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  content    Content  @relation(fields: [contentId], references: [id], onDelete: Cascade)
   
   @@unique([campaignId, contentId])
   @@map("campaign_content")
-}
-
-model EmailSequence {
-  id          String       @id @default(cuid())
-  campaignId  String       @unique
-  name        String
-  description String?
-  trigger     EmailTrigger
-  settings    Json?
-  
-  campaign    Campaign     @relation(fields: [campaignId], references: [id], onDelete: Cascade)
-  emails      Email[]
-  
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  
-  @@map("email_sequences")
-}
-
-model Email {
-  id           String        @id @default(cuid())
-  sequenceId   String
-  subject      String
-  preheader    String?
-  htmlContent  String
-  textContent  String?
-  templateId   String?
-  delayDays    Int           @default(0)
-  order        Int
-  isActive     Boolean       @default(true)
-  
-  sequence     EmailSequence @relation(fields: [sequenceId], references: [id], onDelete: Cascade)
-  sends        EmailSend[]
-  
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  
-  @@map("emails")
-}
-
-model EmailSend {
-  id          String     @id @default(cuid())
-  emailId     String
-  recipient   String
-  status      EmailStatus @default(PENDING)
-  sentAt      DateTime?
-  deliveredAt DateTime?
-  openedAt    DateTime?
-  clickedAt   DateTime?
-  unsubscribedAt DateTime?
-  errorMessage String?
-  
-  email       Email      @relation(fields: [emailId], references: [id], onDelete: Cascade)
-  
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-  
-  @@map("email_sends")
-}
-
-model Comment {
-  id          String      @id @default(cuid())
-  contentId   String
-  authorId    String
-  parentId    String?
-  text        String
-  isResolved  Boolean     @default(false)
-  
-  content     ContentItem @relation(fields: [contentId], references: [id], onDelete: Cascade)
-  author      User        @relation(fields: [authorId], references: [id])
-  parent      Comment?    @relation("CommentReplies", fields: [parentId], references: [id])
-  replies     Comment[]   @relation("CommentReplies")
-  
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  
-  @@map("comments")
-}
-
-model Notification {
-  id        String            @id @default(cuid())
-  userId    String
-  type      NotificationType
-  title     String
-  message   String
-  data      Json?
-  read      Boolean           @default(false)
-  readAt    DateTime?
-  
-  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  createdAt DateTime          @default(now())
-  
-  @@map("notifications")
-}
-
-model ActivityLog {
-  id        String       @id @default(cuid())
-  userId    String
-  action    String
-  resource  String
-  resourceId String?
-  details   Json?
-  ipAddress String?
-  userAgent String?
-  
-  user      User         @relation(fields: [userId], references: [id])
-  
-  createdAt DateTime     @default(now())
-  
-  @@map("activity_logs")
-}
-
-model Analytics {
-  id          String      @id @default(cuid())
-  contentId   String
-  platform    Platform
-  metric      String
-  value       Float
-  timestamp   DateTime
-  metadata    Json?
-  
-  content     ContentItem @relation(fields: [contentId], references: [id], onDelete: Cascade)
-  
-  @@map("analytics")
-}
-
-model CampaignAnalytics {
-  id         String   @id @default(cuid())
-  campaignId String
-  metric     String
-  value      Float
-  timestamp  DateTime
-  metadata   Json?
-  
-  campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
-  
-  @@map("campaign_analytics")
-}
-
-model BrandGuideline {
-  id          String   @id @default(cuid())
-  category    String
-  key         String
-  value       Json
-  description String?
-  isActive    Boolean  @default(true)
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
-  @@unique([category, key])
-  @@map("brand_guidelines")
-}
-
-model ContentTemplate {
-  id          String        @id @default(cuid())
-  name        String
-  description String?
-  type        ContentType
-  format      ContentFormat
-  brandPillar BrandPillar?
-  template    Json
-  variables   String[]
-  isActive    Boolean       @default(true)
-  
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-  
-  @@map("content_templates")
-}
-
-model Changelog {
-  id          String        @id @default(cuid())
-  version     String
-  title       String
-  description String
-  type        ChangelogType
-  isPublished Boolean       @default(false)
-  publishedAt DateTime?
-  
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-  
-  @@map("changelog")
-}
-
-// Enums
-enum Role {
-  ADMIN
-  MANAGER
-  EDITOR
-  VIEWER
-}
-
-enum ContentType {
-  SOCIAL_POST
-  EMAIL
-  BLOG_POST
-  VIDEO_SCRIPT
-  CAROUSEL
-  STORY
-  REEL
-  THREAD
-}
-
-enum Platform {
-  INSTAGRAM
-  TWITTER
-  LINKEDIN
-  EMAIL
-  BLOG
-  YOUTUBE
-  TIKTOK
-}
-
-enum ContentStatus {
-  DRAFT
-  REVIEW
-  APPROVED
-  SCHEDULED
-  PUBLISHED
-  ARCHIVED
-  REJECTED
-}
-
-enum BrandPillar {
-  INTERNAL_OPERATING_SYSTEM
-  PSYCHOLOGY_OVER_STRATEGY
-  DISCIPLINE_OVER_DOPAMINE
-  SYSTEMS_VS_REACTIVE_TRADING
-}
-
-enum ContentFormat {
-  TEXT
-  IMAGE
-  VIDEO
-  CAROUSEL
-  STORY
-  REEL
-  THREAD
-  EMAIL_TEMPLATE
-  BLOG_ARTICLE
-}
-
-enum Priority {
-  LOW
-  MEDIUM
-  HIGH
-  URGENT
-}
-
-enum AssetCategory {
-  IMAGE
-  VIDEO
-  DOCUMENT
-  TEMPLATE
-  LOGO
-  ICON
-  FONT
-  OTHER
-}
-
-enum AssetRole {
-  PRIMARY
-  SECONDARY
-  BACKGROUND
-  THUMBNAIL
-  ATTACHMENT
-}
-
-enum CampaignType {
-  PRODUCT_LAUNCH
-  AWARENESS
-  ENGAGEMENT
-  CONVERSION
-  RETENTION
-  EMAIL_SEQUENCE
-}
-
-enum CampaignStatus {
-  DRAFT
-  ACTIVE
-  PAUSED
-  COMPLETED
-  ARCHIVED
-}
-
-enum EmailTrigger {
-  SIGNUP
-  PURCHASE
-  ABANDON_CART
-  BIRTHDAY
-  ANNIVERSARY
-  CUSTOM
-}
-
-enum EmailStatus {
-  PENDING
-  SENT
-  DELIVERED
-  BOUNCED
-  OPENED
-  CLICKED
-  UNSUBSCRIBED
-  FAILED
-}
-
-enum NotificationType {
-  CONTENT_ASSIGNED
-  CONTENT_APPROVED
-  CONTENT_REJECTED
-  CONTENT_PUBLISHED
-  COMMENT_ADDED
-  CAMPAIGN_STARTED
-  CAMPAIGN_COMPLETED
-  SYSTEM_ALERT
-}
-
-enum ChangelogType {
-  FEATURE
-  IMPROVEMENT
-  BUG_FIX
-  BREAKING_CHANGE
-  DEPRECATED
 }

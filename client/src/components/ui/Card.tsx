@@ -1,74 +1,60 @@
-import { FC, ReactNode } from 'react';
-import { clsx } from 'clsx';
+'use client';
+
+import { ReactNode } from 'react';
 
 interface CardProps {
   children: ReactNode;
   className?: string;
-  padding?: boolean;
-  hover?: boolean;
+  onClick?: () => void;
 }
 
-interface CardHeaderProps {
-  children: ReactNode;
-  className?: string;
-  actions?: ReactNode;
-}
-
-interface CardBodyProps {
-  children: ReactNode;
-  className?: string;
-}
-
-interface CardFooterProps {
-  children: ReactNode;
-  className?: string;
-}
-
-export const Card: FC<CardProps> = ({ 
-  children, 
-  className, 
-  padding = false,
-  hover = false 
-}) => {
+export function Card({ children, className = '', onClick }: CardProps) {
   return (
-    <div
-      className={clsx(
-        'bg-tk-gray-900 border border-tk-gray-800 rounded-lg',
-        padding && 'p-6',
-        hover && 'hover:shadow-lg transition-shadow duration-200',
-        className
-      )}
+    <div 
+      className={`bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 ${className}`}
+      onClick={onClick}
     >
       {children}
     </div>
   );
-};
+}
 
-export const CardHeader: FC<CardHeaderProps> = ({ 
-  children, 
-  className,
-  actions 
-}) => {
+export function CardHeader({ children, className = '' }: { children: ReactNode; className?: string }) {
   return (
-    <div className={clsx('p-6 border-b border-tk-gray-800', actions && 'flex items-center justify-between', className)}>
-      <div>{children}</div>
-      {actions && <div className="flex items-center space-x-2">{actions}</div>}
-    </div>
-  );
-};
-
-export const CardBody: FC<CardBodyProps> = ({ children, className }) => {
-  return (
-    <div className={clsx('p-6', className)}>
+    <div className={`mb-4 ${className}`}>
       {children}
     </div>
   );
-};
+}
 
-export const CardFooter: FC<CardFooterProps> = ({ children, className }) => {
+export function CardTitle({ children, className = '' }: { children: ReactNode; className?: string }) {
   return (
-    <div className={clsx('p-6 border-t border-tk-gray-800', className)}>
+    <h3 className={`text-lg font-semibold text-gray-900 dark:text-white ${className}`}>
+      {children}
+    </h3>
+  );
+}
+
+export function CardDescription({ children, className = '' }: { children: ReactNode; className?: string }) {
+  return (
+    <p className={`text-sm text-gray-600 dark:text-gray-400 mt-1 ${className}`}>
+      {children}
+    </p>
+  );
+}
+
+export function CardContent({ children, className = '' }: { children: ReactNode; className?: string }) {
+  return (
+    <div className={`${className}`}>
       {children}
     </div>
   );
-};
+}
+
+export function CardFooter({ children, className = '' }: { children: ReactNode; className?: string }) {
+  return (
+    <div className={`mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 ${className}`}>
+      {children}
+    </div>
+  );
+}

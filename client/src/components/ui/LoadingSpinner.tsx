@@ -1,52 +1,25 @@
-import { FC } from 'react';
-import { clsx } from 'clsx';
+'use client';
 
 interface LoadingSpinnerProps {
-  size?: 'sm' | 'md' | 'lg' | 'xl';
+  size?: 'sm' | 'md' | 'lg';
   className?: string;
-  color?: 'primary' | 'white' | 'gray';
 }
 
-const sizeClasses = {
+const sizes = {
   sm: 'w-4 h-4',
-  md: 'w-6 h-6', 
-  lg: 'w-8 h-8',
-  xl: 'w-12 h-12'
+  md: 'w-8 h-8',
+  lg: 'w-12 h-12',
 };
 
-const colorClasses = {
-  primary: 'text-tk-blue-600',
-  white: 'text-white',
-  gray: 'text-tk-gray-400'
-};
-
-export const LoadingSpinner: FC<LoadingSpinnerProps> = ({ 
-  size = 'md', 
-  className,
-  color = 'primary' 
-}) => {
+export function LoadingSpinner({ size = 'md', className = '' }: LoadingSpinnerProps) {
   return (
-    <div className={clsx('animate-spin', sizeClasses[size], colorClasses[color], className)}>
-      <svg
-        className="w-full h-full"
-        xmlns="http://www.w3.org/2000/svg"
-        fill="none"
-        viewBox="0 0 24 24"
-      >
-        <circle
-          className="opacity-25"
-          cx="12"
-          cy="12"
-          r="10"
-          stroke="currentColor"
-          strokeWidth="4"
-        />
-        <path
-          className="opacity-75"
-          fill="currentColor"
-          d="m4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 0 1 4 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-        />
-      </svg>
+    <div className={`flex justify-center items-center ${className}`}>
+      <div className={`
+        ${sizes[size]}
+        border-4 border-gray-200 dark:border-gray-700
+        border-t-blue-500 dark:border-t-blue-400
+        rounded-full animate-spin
+      `} />
     </div>
   );
-};
+}

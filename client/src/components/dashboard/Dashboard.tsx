@@ -1,1 +1,227 @@
-'use client';\n\nimport { FC } from 'react';\nimport { \n  DocumentTextIcon,\n  CalendarDaysIcon,\n  EnvelopeIcon,\n  ChartBarIcon,\n  ClockIcon,\n  TrendingUpIcon\n} from '@heroicons/react/24/outline';\nimport { Card, CardHeader, CardBody } from '@/components/ui/Card';\nimport { Badge } from '@/components/ui/Badge';\nimport { Button } from '@/components/ui/Button';\n\nexport const Dashboard: FC = () => {\n  return (\n    <div className=\"space-y-8\">\n      {/* Welcome Section */}\n      <div className=\"\">\n        <h1 className=\"text-2xl font-bold text-white mb-2\">\n          Welcome back, Marco!\n        </h1>\n        <p className=\"text-tk-gray-400\">\n          Here's what's happening with your content strategy today.\n        </p>\n      </div>\n\n      {/* Stats Grid */}\n      <div className=\"grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6\">\n        <StatsCard\n          title=\"Total Content\"\n          value=\"247\"\n          change=\"+12\"\n          changeType=\"increase\"\n          icon={DocumentTextIcon}\n        />\n        <StatsCard\n          title=\"Scheduled Posts\"\n          value=\"18\"\n          change=\"+3\"\n          changeType=\"increase\"\n          icon={CalendarDaysIcon}\n        />\n        <StatsCard\n          title=\"Active Campaigns\"\n          value=\"4\"\n          change=\"+1\"\n          changeType=\"increase\"\n          icon={EnvelopeIcon}\n        />\n        <StatsCard\n          title=\"Avg. Engagement\"\n          value=\"4.2%\"\n          change=\"+0.8%\"\n          changeType=\"increase\"\n          icon={ChartBarIcon}\n        />\n      </div>\n\n      <div className=\"grid grid-cols-1 lg:grid-cols-3 gap-8\">\n        {/* Recent Content */}\n        <div className=\"lg:col-span-2\">\n          <Card>\n            <CardHeader>\n              <h3 className=\"text-lg font-semibold text-white\">Recent Content</h3>\n            </CardHeader>\n            <CardBody>\n              <div className=\"space-y-4\">\n                <ContentItem\n                  title=\"The Psychology of Risk Management\"\n                  platform=\"INSTAGRAM\"\n                  status=\"PUBLISHED\"\n                  pillar=\"PSYCHOLOGY_OVER_STRATEGY\"\n                  author=\"You\"\n                  publishedAt=\"2 hours ago\"\n                />\n                <ContentItem\n                  title=\"Building Your Trading System\"\n                  platform=\"LINKEDIN\"\n                  status=\"SCHEDULED\"\n                  pillar=\"SYSTEMS_VS_REACTIVE_TRADING\"\n                  author=\"Sarah Johnson\"\n                  scheduledAt=\"Tomorrow at 9:00 AM\"\n                />\n                <ContentItem\n                  title=\"Discipline Beats Dopamine Every Time\"\n                  platform=\"TWITTER\"\n                  status=\"DRAFT\"\n                  pillar=\"DISCIPLINE_OVER_DOPAMINE\"\n                  author=\"Mike Chen\"\n                  updatedAt=\"Yesterday\"\n                />\n              </div>\n            </CardBody>\n          </Card>\n        </div>\n\n        {/* Quick Actions & Upcoming */}\n        <div className=\"space-y-6\">\n          {/* Quick Actions */}\n          <Card>\n            <CardHeader>\n              <h3 className=\"text-lg font-semibold text-white\">Quick Actions</h3>\n            </CardHeader>\n            <CardBody>\n              <div className=\"space-y-3\">\n                <Button variant=\"primary\" fullWidth>\n                  Create New Content\n                </Button>\n                <Button variant=\"secondary\" fullWidth>\n                  Schedule Campaign\n                </Button>\n                <Button variant=\"ghost\" fullWidth>\n                  View Calendar\n                </Button>\n              </div>\n            </CardBody>\n          </Card>\n\n          {/* Upcoming Deadlines */}\n          <Card>\n            <CardHeader>\n              <h3 className=\"text-lg font-semibold text-white flex items-center\">\n                <ClockIcon className=\"w-5 h-5 mr-2\" />\n                Upcoming\n              </h3>\n            </CardHeader>\n            <CardBody>\n              <div className=\"space-y-3\">\n                <div className=\"flex items-center justify-between\">\n                  <div>\n                    <p className=\"text-sm font-medium text-white\">Email Campaign</p>\n                    <p className=\"text-xs text-tk-gray-400\">\"Psychology Series\" launch</p>\n                  </div>\n                  <Badge variant=\"scheduled\" size=\"sm\">2 days</Badge>\n                </div>\n                <div className=\"flex items-center justify-between\">\n                  <div>\n                    <p className=\"text-sm font-medium text-white\">Content Review</p>\n                    <p className=\"text-xs text-tk-gray-400\">5 posts pending approval</p>\n                  </div>\n                  <Badge variant=\"review\" size=\"sm\">Today</Badge>\n                </div>\n                <div className=\"flex items-center justify-between\">\n                  <div>\n                    <p className=\"text-sm font-medium text-white\">Analytics Report</p>\n                    <p className=\"text-xs text-tk-gray-400\">Monthly performance</p>\n                  </div>\n                  <Badge variant=\"draft\" size=\"sm\">5 days</Badge>\n                </div>\n              </div>\n            </CardBody>\n          </Card>\n        </div>\n      </div>\n\n      {/* Brand Pillar Performance */}\n      <Card>\n        <CardHeader>\n          <h3 className=\"text-lg font-semibold text-white\">Brand Pillar Performance</h3>\n          <p className=\"text-sm text-tk-gray-400\">Content distribution across your core messaging pillars</p>\n        </CardHeader>\n        <CardBody>\n          <div className=\"grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4\">\n            <PillarCard\n              pillar=\"Internal Operating System\"\n              percentage={28}\n              count={69}\n              color=\"blue\"\n            />\n            <PillarCard\n              pillar=\"Psychology Over Strategy\"\n              percentage={31}\n              count={77}\n              color=\"purple\"\n            />\n            <PillarCard\n              pillar=\"Discipline Over Dopamine\"\n              percentage={25}\n              count={62}\n              color=\"red\"\n            />\n            <PillarCard\n              pillar=\"Systems vs Reactive Trading\"\n              percentage={16}\n              count={39}\n              color=\"green\"\n            />\n          </div>\n        </CardBody>\n      </Card>\n    </div>\n  );\n};\n\ninterface StatsCardProps {\n  title: string;\n  value: string;\n  change: string;\n  changeType: 'increase' | 'decrease';\n  icon: React.ComponentType<{ className?: string }>;\n}\n\nfunction StatsCard({ title, value, change, changeType, icon: Icon }: StatsCardProps) {\n  return (\n    <Card>\n      <CardBody>\n        <div className=\"flex items-center\">\n          <div className=\"flex-1\">\n            <p className=\"text-sm font-medium text-tk-gray-400\">{title}</p>\n            <p className=\"text-2xl font-bold text-white\">{value}</p>\n            <div className=\"flex items-center mt-1\">\n              <TrendingUpIcon className={`w-4 h-4 mr-1 ${\n                changeType === 'increase' ? 'text-green-400' : 'text-red-400'\n              }`} />\n              <span className={`text-sm ${\n                changeType === 'increase' ? 'text-green-400' : 'text-red-400'\n              }`}>\n                {change}\n              </span>\n            </div>\n          </div>\n          <div className=\"w-12 h-12 bg-tk-gray-800 rounded-lg flex items-center justify-center\">\n            <Icon className=\"w-6 h-6 text-tk-blue-400\" />\n          </div>\n        </div>\n      </CardBody>\n    </Card>\n  );\n}\n\ninterface ContentItemProps {\n  title: string;\n  platform: string;\n  status: string;\n  pillar: string;\n  author: string;\n  publishedAt?: string;\n  scheduledAt?: string;\n  updatedAt?: string;\n}\n\nfunction ContentItem({ \n  title, \n  platform, \n  status, \n  pillar, \n  author, \n  publishedAt, \n  scheduledAt, \n  updatedAt \n}: ContentItemProps) {\n  const getPillarBadge = (pillar: string) => {\n    switch (pillar) {\n      case 'INTERNAL_OPERATING_SYSTEM':\n        return <Badge pillar=\"internal\" size=\"sm\">Internal</Badge>;\n      case 'PSYCHOLOGY_OVER_STRATEGY':\n        return <Badge pillar=\"psychology\" size=\"sm\">Psychology</Badge>;\n      case 'DISCIPLINE_OVER_DOPAMINE':\n        return <Badge pillar=\"discipline\" size=\"sm\">Discipline</Badge>;\n      case 'SYSTEMS_VS_REACTIVE_TRADING':\n        return <Badge pillar=\"systems\" size=\"sm\">Systems</Badge>;\n      default:\n        return null;\n    }\n  };\n\n  const getStatusBadge = (status: string) => {\n    switch (status) {\n      case 'PUBLISHED':\n        return <Badge variant=\"published\" size=\"sm\">Published</Badge>;\n      case 'SCHEDULED':\n        return <Badge variant=\"scheduled\" size=\"sm\">Scheduled</Badge>;\n      case 'DRAFT':\n        return <Badge variant=\"draft\" size=\"sm\">Draft</Badge>;\n      default:\n        return <Badge variant=\"draft\" size=\"sm\">{status}</Badge>;\n    }\n  };\n\n  return (\n    <div className=\"flex items-center justify-between p-3 border border-tk-gray-800 rounded-lg\">\n      <div className=\"flex-1\">\n        <h4 className=\"text-sm font-medium text-white mb-1\">{title}</h4>\n        <div className=\"flex items-center space-x-2 mb-2\">\n          {getPillarBadge(pillar)}\n          {getStatusBadge(status)}\n          <Badge variant=\"draft\" size=\"sm\">{platform}</Badge>\n        </div>\n        <div className=\"flex items-center text-xs text-tk-gray-400\">\n          <span>{author}</span>\n          <span className=\"mx-2\">•</span>\n          <span>\n            {publishedAt && `Published ${publishedAt}`}\n            {scheduledAt && `Scheduled for ${scheduledAt}`}\n            {updatedAt && `Updated ${updatedAt}`}\n          </span>\n        </div>\n      </div>\n    </div>\n  );\n}\n\ninterface PillarCardProps {\n  pillar: string;\n  percentage: number;\n  count: number;\n  color: 'blue' | 'purple' | 'red' | 'green';\n}\n\nfunction PillarCard({ pillar, percentage, count, color }: PillarCardProps) {\n  const colorClasses = {\n    blue: 'bg-tk-blue-600',\n    purple: 'bg-purple-600',\n    red: 'bg-red-600',\n    green: 'bg-green-600'\n  };\n\n  return (\n    <div className=\"border border-tk-gray-800 rounded-lg p-4\">\n      <div className=\"flex items-center mb-2\">\n        <div className={`w-3 h-3 rounded-full mr-2 ${colorClasses[color]}`} />\n        <h4 className=\"text-sm font-medium text-white\">{pillar}</h4>\n      </div>\n      <p className=\"text-2xl font-bold text-white mb-1\">{percentage}%</p>\n      <p className=\"text-sm text-tk-gray-400\">{count} posts</p>\n    </div>\n  );\n}
+'use client';
+
+import { useState, useEffect } from 'react';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
+import { Badge } from '@/components/ui/Badge';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { Content } from '@/types';
+
+interface DashboardStats {
+  totalContent: number;
+  publishedContent: number;
+  scheduledContent: number;
+  draftContent: number;
+}
+
+export function Dashboard() {
+  const [stats, setStats] = useState<DashboardStats>({
+    totalContent: 0,
+    publishedContent: 0,
+    scheduledContent: 0,
+    draftContent: 0,
+  });
+  const [recentContent, setRecentContent] = useState<Content[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  const fetchDashboardData = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+
+      const [statsRes, contentRes] = await Promise.all([
+        fetch('http://localhost:9001/api/v1/dashboard/stats', { headers }),
+        fetch('http://localhost:9001/api/v1/content?limit=5', { headers }),
+      ]);
+
+      if (statsRes.ok) {
+        const statsData = await statsRes.json();
+        setStats(statsData.data || stats);
+      }
+
+      if (contentRes.ok) {
+        const contentData = await contentRes.json();
+        setRecentContent(contentData.data || []);
+      }
+    } catch (error) {
+      console.error('Failed to fetch dashboard data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const pillarColors = {
+    'internal-os': 'bg-blue-500',
+    'psychology': 'bg-purple-500',
+    'discipline': 'bg-red-500',
+    'systems': 'bg-green-500',
+  };
+
+  const statusVariants = {
+    'draft': 'default',
+    'review': 'warning',
+    'approved': 'info',
+    'scheduled': 'info',
+    'published': 'success',
+  } as const;
+
+  if (loading) {
+    return <LoadingSpinner size="lg" className="mt-12" />;
+  }
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
+        <p className="text-gray-600 dark:text-gray-400 mt-2">
+          Welcome to TradeKeep Content Orchestrator
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">
+              Total Content
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-gray-900 dark:text-white">
+              {stats.totalContent}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">
+              Published
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+              {stats.publishedContent}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">
+              Scheduled
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+              {stats.scheduledContent}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">
+              Drafts
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-gray-600 dark:text-gray-400">
+              {stats.draftContent}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Recent Content</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {recentContent.length === 0 ? (
+            <p className="text-gray-500 dark:text-gray-400 text-center py-8">
+              No content yet. Create your first piece of content to get started.
+            </p>
+          ) : (
+            <div className="space-y-4">
+              {recentContent.map((content) => (
+                <div
+                  key={content.id}
+                  className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg"
+                >
+                  <div className="flex-1">
+                    <h3 className="font-medium text-gray-900 dark:text-white">
+                      {content.title}
+                    </h3>
+                    <div className="flex items-center gap-2 mt-2">
+                      <div className={`w-3 h-3 rounded-full ${pillarColors[content.pillar]}`} />
+                      <span className="text-sm text-gray-600 dark:text-gray-400">
+                        {content.pillar.replace('-', ' ').toUpperCase()}
+                      </span>
+                      <Badge variant={statusVariants[content.status]}>
+                        {content.status}
+                      </Badge>
+                    </div>
+                  </div>
+                  <div className="text-sm text-gray-500 dark:text-gray-400">
+                    {new Date(content.createdAt).toLocaleDateString()}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Content by Pillar</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {Object.entries(pillarColors).map(([pillar, color]) => (
+                <div key={pillar} className="flex items-center gap-3">
+                  <div className={`w-4 h-4 rounded-full ${color}`} />
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    {pillar.replace('-', ' ').toUpperCase()}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Quick Actions</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <a
+                href="/content/create"
+                className="block w-full px-4 py-2 text-center bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+              >
+                Create New Content
+              </a>
+              <a
+                href="/calendar"
+                className="block w-full px-4 py-2 text-center bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+              >
+                View Calendar
+              </a>
+              <a
+                href="/assets"
+                className="block w-full px-4 py-2 text-center bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+              >
+                Manage Assets
+              </a>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}

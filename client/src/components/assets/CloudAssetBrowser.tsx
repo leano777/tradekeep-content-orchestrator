@@ -1,1 +1,231 @@
-'use client';\n\nimport { useState, useEffect } from 'react';\nimport { \n  CloudIcon,\n  FolderIcon,\n  DocumentIcon,\n  PhotoIcon,\n  VideoCameraIcon,\n  MusicalNoteIcon,\n  DocumentTextIcon,\n  MagnifyingGlassIcon,\n  FunnelIcon,\n  LinkIcon,\n  CheckIcon,\n  ExclamationTriangleIcon\n} from '@heroicons/react/24/outline';\nimport { clsx } from 'clsx';\nimport { Card, CardHeader, CardBody } from '@/components/ui/Card';\nimport { Button } from '@/components/ui/Button';\nimport { Input } from '@/components/ui/Input';\nimport { Badge } from '@/components/ui/Badge';\nimport { LoadingSpinner } from '@/components/ui/LoadingSpinner';\n\ninterface CloudFile {\n  id: string;\n  name: string;\n  type: string;\n  mimeType?: string;\n  size: number;\n  sizeFormatted: string;\n  modifiedAt: string;\n  thumbnailUrl?: string;\n  webViewUrl?: string;\n  downloadUrl?: string;\n  provider: 'googledrive' | 'onedrive';\n  isFolder: boolean;\n  parents?: string[];\n  itemCount?: number;\n}\n\ninterface CloudFolder {\n  id: string;\n  name: string;\n  type: 'folder';\n  provider: 'googledrive' | 'onedrive';\n  parents?: string[];\n  itemCount?: number;\n}\n\ninterface CloudAssetBrowserProps {\n  onAssetSelect?: (asset: CloudFile) => void;\n  onMultipleSelect?: (assets: CloudFile[]) => void;\n  multiSelect?: boolean;\n  fileTypes?: string[];\n  className?: string;\n}\n\nconst API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';\n\nexport function CloudAssetBrowser({ \n  onAssetSelect, \n  onMultipleSelect, \n  multiSelect = false,\n  fileTypes,\n  className \n}: CloudAssetBrowserProps) {\n  const [files, setFiles] = useState<CloudFile[]>([]);\n  const [folders, setFolders] = useState<CloudFolder[]>([]);\n  const [selectedAssets, setSelectedAssets] = useState<CloudFile[]>([]);\n  const [currentFolder, setCurrentFolder] = useState<string | null>(null);\n  const [searchQuery, setSearchQuery] = useState('');\n  const [loading, setLoading] = useState(false);\n  const [connectionStatus, setConnectionStatus] = useState<{\n    googledrive: boolean;\n    onedrive: boolean;\n  }>({ googledrive: false, onedrive: false });\n  const [activeProvider, setActiveProvider] = useState<'googledrive' | 'onedrive' | null>(null);\n  const [error, setError] = useState<string | null>(null);\n\n  useEffect(() => {\n    checkConnectionStatus();\n  }, []);\n\n  useEffect(() => {\n    if (connectionStatus.googledrive || connectionStatus.onedrive) {\n      loadFiles();\n      loadFolders();\n    }\n  }, [currentFolder, activeProvider, connectionStatus]);\n\n  const checkConnectionStatus = async () => {\n    try {\n      const token = localStorage.getItem('auth_token');\n      const response = await fetch(`${API_BASE_URL}/api/v1/cloud-assets/status`, {\n        headers: {\n          'Authorization': `Bearer ${token}`,\n          'Content-Type': 'application/json',\n        },\n      });\n      \n      if (response.ok) {\n        const data = await response.json();\n        setConnectionStatus(data.data.connections);\n      }\n    } catch (err) {\n      console.error('Failed to check connection status:', err);\n    }\n  };\n\n  const loadFiles = async () => {\n    if (!connectionStatus.googledrive && !connectionStatus.onedrive) return;\n    \n    setLoading(true);\n    setError(null);\n    \n    try {\n      const token = localStorage.getItem('auth_token');\n      const params = new URLSearchParams();\n      \n      if (activeProvider) {\n        params.append('provider', activeProvider);\n      }\n      if (currentFolder) {\n        params.append('folderId', currentFolder);\n      }\n      if (fileTypes && fileTypes.length > 0) {\n        params.append('fileTypes', fileTypes.join(','));\n      }\n      if (searchQuery) {\n        params.append('search', searchQuery);\n      }\n      \n      const response = await fetch(`${API_BASE_URL}/api/v1/cloud-assets/files?${params}`, {\n        headers: {\n          'Authorization': `Bearer ${token}`,\n          'Content-Type': 'application/json',\n        },\n      });\n      \n      if (response.ok) {\n        const data = await response.json();\n        setFiles(data.data.files);\n      } else {\n        throw new Error('Failed to load files');\n      }\n    } catch (err) {\n      setError('Failed to load files from cloud storage');\n      console.error('Failed to load files:', err);\n    } finally {\n      setLoading(false);\n    }\n  };\n\n  const loadFolders = async () => {\n    if (!connectionStatus.googledrive && !connectionStatus.onedrive) return;\n    \n    try {\n      const token = localStorage.getItem('auth_token');\n      const params = new URLSearchParams();\n      \n      if (activeProvider) {\n        params.append('provider', activeProvider);\n      }\n      \n      const response = await fetch(`${API_BASE_URL}/api/v1/cloud-assets/folders?${params}`, {\n        headers: {\n          'Authorization': `Bearer ${token}`,\n          'Content-Type': 'application/json',\n        },\n      });\n      \n      if (response.ok) {\n        const data = await response.json();\n        setFolders(data.data.folders);\n      }\n    } catch (err) {\n      console.error('Failed to load folders:', err);\n    }\n  };\n\n  const handleSearch = async () => {\n    if (!searchQuery.trim()) {\n      loadFiles();\n      return;\n    }\n    \n    setLoading(true);\n    setError(null);\n    \n    try {\n      const token = localStorage.getItem('auth_token');\n      const params = new URLSearchParams({\n        q: searchQuery,\n      });\n      \n      if (fileTypes && fileTypes.length > 0) {\n        params.append('fileTypes', fileTypes.join(','));\n      }\n      \n      const response = await fetch(`${API_BASE_URL}/api/v1/cloud-assets/search?${params}`, {\n        headers: {\n          'Authorization': `Bearer ${token}`,\n          'Content-Type': 'application/json',\n        },\n      });\n      \n      if (response.ok) {\n        const data = await response.json();\n        setFiles(data.data.files);\n      } else {\n        throw new Error('Search failed');\n      }\n    } catch (err) {\n      setError('Search failed');\n      console.error('Search failed:', err);\n    } finally {\n      setLoading(false);\n    }\n  };\n\n  const handleAssetClick = (asset: CloudFile) => {\n    if (multiSelect) {\n      const isSelected = selectedAssets.some(a => a.id === asset.id && a.provider === asset.provider);\n      let newSelection;\n      \n      if (isSelected) {\n        newSelection = selectedAssets.filter(a => !(a.id === asset.id && a.provider === asset.provider));\n      } else {\n        newSelection = [...selectedAssets, asset];\n      }\n      \n      setSelectedAssets(newSelection);\n      onMultipleSelect?.(newSelection);\n    } else {\n      onAssetSelect?.(asset);\n    }\n  };\n\n  const handleFolderClick = (folder: CloudFolder) => {\n    setCurrentFolder(folder.id);\n    setActiveProvider(folder.provider);\n  };\n\n  const connectGoogleDrive = async () => {\n    try {\n      const token = localStorage.getItem('auth_token');\n      const response = await fetch(`${API_BASE_URL}/api/v1/cloud-assets/google-drive/auth-url`, {\n        headers: {\n          'Authorization': `Bearer ${token}`,\n          'Content-Type': 'application/json',\n        },\n      });\n      \n      if (response.ok) {\n        const data = await response.json();\n        window.open(data.data.authUrl, '_blank', 'width=600,height=600');\n      }\n    } catch (err) {\n      console.error('Failed to get Google Drive auth URL:', err);\n    }\n  };\n\n  const connectOneDrive = async () => {\n    try {\n      const token = localStorage.getItem('auth_token');\n      const response = await fetch(`${API_BASE_URL}/api/v1/cloud-assets/onedrive/auth-url`, {\n        headers: {\n          'Authorization': `Bearer ${token}`,\n          'Content-Type': 'application/json',\n        },\n      });\n      \n      if (response.ok) {\n        const data = await response.json();\n        window.open(data.data.authUrl, '_blank', 'width=600,height=600');\n      }\n    } catch (err) {\n      console.error('Failed to get OneDrive auth URL:', err);\n    }\n  };\n\n  const getFileIcon = (file: CloudFile) => {\n    if (file.isFolder) return FolderIcon;\n    \n    switch (file.type) {\n      case 'image': return PhotoIcon;\n      case 'video': return VideoCameraIcon;\n      case 'audio': return MusicalNoteIcon;\n      case 'pdf': return DocumentTextIcon;\n      case 'document':\n      case 'spreadsheet':\n      case 'presentation':\n        return DocumentIcon;\n      default: return DocumentIcon;\n    }\n  };\n\n  const getProviderIcon = (provider: string) => {\n    switch (provider) {\n      case 'googledrive':\n        return (\n          <div className=\"w-5 h-5 rounded bg-blue-600 flex items-center justify-center\">\n            <span className=\"text-white text-xs font-bold\">G</span>\n          </div>\n        );\n      case 'onedrive':\n        return (\n          <div className=\"w-5 h-5 rounded bg-blue-500 flex items-center justify-center\">\n            <span className=\"text-white text-xs font-bold\">O</span>\n          </div>\n        );\n      default:\n        return <CloudIcon className=\"w-5 h-5\" />;\n    }\n  };\n\n  // If no connections, show connection interface\n  if (!connectionStatus.googledrive && !connectionStatus.onedrive) {\n    return (\n      <Card className={className}>\n        <CardHeader>\n          <h3 className=\"text-lg font-semibold text-white flex items-center\">\n            <CloudIcon className=\"w-6 h-6 mr-2\" />\n            Connect Cloud Storage\n          </h3>\n          <p className=\"text-tk-gray-400 text-sm\">\n            Connect your Google Drive or OneDrive to access your assets without storing them in our database.\n          </p>\n        </CardHeader>\n        <CardBody>\n          <div className=\"space-y-4\">\n            <div className=\"flex items-center justify-between p-4 border border-tk-gray-700 rounded-lg\">\n              <div className=\"flex items-center\">\n                <div className=\"w-8 h-8 rounded bg-blue-600 flex items-center justify-center mr-3\">\n                  <span className=\"text-white text-sm font-bold\">G</span>\n                </div>\n                <div>\n                  <h4 className=\"font-medium text-white\">Google Drive</h4>\n                  <p className=\"text-sm text-tk-gray-400\">Access files from Google Drive</p>\n                </div>\n              </div>\n              <Button onClick={connectGoogleDrive} variant=\"primary\" size=\"sm\">\n                Connect\n              </Button>\n            </div>\n            \n            <div className=\"flex items-center justify-between p-4 border border-tk-gray-700 rounded-lg\">\n              <div className=\"flex items-center\">\n                <div className=\"w-8 h-8 rounded bg-blue-500 flex items-center justify-center mr-3\">\n                  <span className=\"text-white text-sm font-bold\">O</span>\n                </div>\n                <div>\n                  <h4 className=\"font-medium text-white\">OneDrive</h4>\n                  <p className=\"text-sm text-tk-gray-400\">Access files from OneDrive</p>\n                </div>\n              </div>\n              <Button onClick={connectOneDrive} variant=\"primary\" size=\"sm\">\n                Connect\n              </Button>\n            </div>\n          </div>\n        </CardBody>\n      </Card>\n    );\n  }\n\n  return (\n    <Card className={className}>\n      <CardHeader>\n        <div className=\"flex items-center justify-between\">\n          <h3 className=\"text-lg font-semibold text-white flex items-center\">\n            <CloudIcon className=\"w-6 h-6 mr-2\" />\n            Cloud Assets\n            {loading && <LoadingSpinner size=\"sm\" className=\"ml-2\" />}\n          </h3>\n          \n          <div className=\"flex items-center space-x-2\">\n            {connectionStatus.googledrive && (\n              <Button\n                variant={activeProvider === 'googledrive' ? 'primary' : 'ghost'}\n                size=\"sm\"\n                onClick={() => setActiveProvider(activeProvider === 'googledrive' ? null : 'googledrive')}\n              >\n                <div className=\"w-4 h-4 rounded bg-blue-600 flex items-center justify-center mr-2\">\n                  <span className=\"text-white text-xs font-bold\">G</span>\n                </div>\n                Drive\n              </Button>\n            )}\n            \n            {connectionStatus.onedrive && (\n              <Button\n                variant={activeProvider === 'onedrive' ? 'primary' : 'ghost'}\n                size=\"sm\"\n                onClick={() => setActiveProvider(activeProvider === 'onedrive' ? null : 'onedrive')}\n              >\n                <div className=\"w-4 h-4 rounded bg-blue-500 flex items-center justify-center mr-2\">\n                  <span className=\"text-white text-xs font-bold\">O</span>\n                </div>\n                OneDrive\n              </Button>\n            )}\n            \n            <Button variant=\"ghost\" size=\"sm\">\n              <FunnelIcon className=\"w-4 h-4\" />\n            </Button>\n          </div>\n        </div>\n        \n        {/* Search Bar */}\n        <div className=\"mt-4\">\n          <div className=\"flex items-center space-x-2\">\n            <div className=\"flex-1\">\n              <Input\n                placeholder=\"Search files...\"\n                value={searchQuery}\n                onChange={(e) => setSearchQuery(e.target.value)}\n                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}\n                leftIcon={<MagnifyingGlassIcon className=\"w-4 h-4\" />}\n              />\n            </div>\n            <Button onClick={handleSearch} disabled={loading}>\n              Search\n            </Button>\n          </div>\n        </div>\n      </CardHeader>\n      \n      <CardBody>\n        {error && (\n          <div className=\"mb-4 p-3 bg-red-900/50 border border-red-700 rounded-lg flex items-center\">\n            <ExclamationTriangleIcon className=\"w-5 h-5 text-red-400 mr-2\" />\n            <span className=\"text-red-300 text-sm\">{error}</span>\n          </div>\n        )}\n        \n        {/* Breadcrumb */}\n        {currentFolder && (\n          <div className=\"mb-4\">\n            <Button\n              variant=\"ghost\"\n              size=\"sm\"\n              onClick={() => setCurrentFolder(null)}\n            >\n              ← Back to Root\n            </Button>\n          </div>\n        )}\n        \n        {/* Folders */}\n        {folders.length > 0 && (\n          <div className=\"mb-6\">\n            <h4 className=\"text-sm font-medium text-tk-gray-400 mb-3\">Folders</h4>\n            <div className=\"grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3\">\n              {folders.map(folder => (\n                <div\n                  key={`${folder.provider}-${folder.id}`}\n                  className=\"p-3 border border-tk-gray-700 rounded-lg hover:bg-tk-gray-800 cursor-pointer transition-colors\"\n                  onClick={() => handleFolderClick(folder)}\n                >\n                  <div className=\"flex items-center mb-2\">\n                    <FolderIcon className=\"w-5 h-5 text-tk-blue-400 mr-2\" />\n                    {getProviderIcon(folder.provider)}\n                  </div>\n                  <p className=\"text-sm font-medium text-white truncate\">{folder.name}</p>\n                  {folder.itemCount !== undefined && (\n                    <p className=\"text-xs text-tk-gray-400\">{folder.itemCount} items</p>\n                  )}\n                </div>\n              ))}\n            </div>\n          </div>\n        )}\n        \n        {/* Files */}\n        <div>\n          <h4 className=\"text-sm font-medium text-tk-gray-400 mb-3\">\n            Files ({files.length})\n            {multiSelect && selectedAssets.length > 0 && (\n              <span className=\"ml-2 text-tk-blue-400\">({selectedAssets.length} selected)</span>\n            )}\n          </h4>\n          \n          {files.length === 0 && !loading ? (\n            <div className=\"text-center py-8\">\n              <CloudIcon className=\"w-12 h-12 text-tk-gray-600 mx-auto mb-3\" />\n              <p className=\"text-tk-gray-400\">No files found</p>\n              {searchQuery && (\n                <Button\n                  variant=\"ghost\"\n                  size=\"sm\"\n                  onClick={() => {\n                    setSearchQuery('');\n                    loadFiles();\n                  }}\n                  className=\"mt-2\"\n                >\n                  Clear search\n                </Button>\n              )}\n            </div>\n          ) : (\n            <div className=\"grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4\">\n              {files.map(file => {\n                const Icon = getFileIcon(file);\n                const isSelected = multiSelect && selectedAssets.some(a => a.id === file.id && a.provider === file.provider);\n                \n                return (\n                  <div\n                    key={`${file.provider}-${file.id}`}\n                    className={clsx(\n                      'relative p-3 border rounded-lg cursor-pointer transition-all duration-200',\n                      isSelected \n                        ? 'border-tk-blue-500 bg-tk-blue-900/20' \n                        : 'border-tk-gray-700 hover:bg-tk-gray-800 hover:border-tk-gray-600'\n                    )}\n                    onClick={() => handleAssetClick(file)}\n                  >\n                    {multiSelect && isSelected && (\n                      <div className=\"absolute -top-2 -right-2 w-6 h-6 bg-tk-blue-600 rounded-full flex items-center justify-center\">\n                        <CheckIcon className=\"w-4 h-4 text-white\" />\n                      </div>\n                    )}\n                    \n                    <div className=\"aspect-square mb-3 flex items-center justify-center bg-tk-gray-800 rounded-lg\">\n                      {file.thumbnailUrl ? (\n                        <img \n                          src={file.thumbnailUrl} \n                          alt={file.name}\n                          className=\"w-full h-full object-cover rounded-lg\"\n                        />\n                      ) : (\n                        <Icon className=\"w-8 h-8 text-tk-gray-400\" />\n                      )}\n                    </div>\n                    \n                    <div className=\"space-y-1\">\n                      <p className=\"text-sm font-medium text-white truncate\" title={file.name}>\n                        {file.name}\n                      </p>\n                      <div className=\"flex items-center justify-between\">\n                        <p className=\"text-xs text-tk-gray-400\">{file.sizeFormatted}</p>\n                        {getProviderIcon(file.provider)}\n                      </div>\n                      <p className=\"text-xs text-tk-gray-500\">{\n                        new Date(file.modifiedAt).toLocaleDateString()\n                      }</p>\n                    </div>\n                  </div>\n                );\n              })}\n            </div>\n          )}\n        </div>\n        \n        {/* Selected Assets Actions */}\n        {multiSelect && selectedAssets.length > 0 && (\n          <div className=\"mt-6 p-4 bg-tk-gray-800 rounded-lg\">\n            <div className=\"flex items-center justify-between\">\n              <p className=\"text-sm text-white\">\n                {selectedAssets.length} asset{selectedAssets.length === 1 ? '' : 's'} selected\n              </p>\n              <div className=\"flex items-center space-x-2\">\n                <Button\n                  variant=\"ghost\"\n                  size=\"sm\"\n                  onClick={() => {\n                    setSelectedAssets([]);\n                    onMultipleSelect?.([]);\n                  }}\n                >\n                  Clear\n                </Button>\n                <Button\n                  variant=\"primary\"\n                  size=\"sm\"\n                  onClick={() => onMultipleSelect?.(selectedAssets)}\n                >\n                  <LinkIcon className=\"w-4 h-4 mr-2\" />\n                  Use Selected\n                </Button>\n              </div>\n            </div>\n          </div>\n        )}\n      </CardBody>\n    </Card>\n  );\n}"
+'use client';
+
+import { useState, useEffect } from 'react';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+import { Badge } from '@/components/ui/Badge';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { Asset } from '@/types';
+
+interface CloudAssetBrowserProps {
+  onSelectAsset?: (asset: Asset) => void;
+  allowMultiple?: boolean;
+}
+
+export function CloudAssetBrowser({ onSelectAsset, allowMultiple = false }: CloudAssetBrowserProps) {
+  const [assets, setAssets] = useState<Asset[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedAssets, setSelectedAssets] = useState<Asset[]>([]);
+  const [filter, setFilter] = useState<'all' | 'image' | 'video' | 'document'>('all');
+
+  useEffect(() => {
+    fetchAssets();
+  }, []);
+
+  const fetchAssets = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:9001/api/v1/cloud-assets', {
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setAssets(data.data || []);
+      }
+    } catch (error) {
+      console.error('Failed to fetch assets:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredAssets = assets.filter(asset => {
+    const matchesSearch = asset.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesFilter = filter === 'all' || asset.type === filter;
+    return matchesSearch && matchesFilter;
+  });
+
+  const handleAssetSelect = (asset: Asset) => {
+    if (allowMultiple) {
+      const isSelected = selectedAssets.find(a => a.id === asset.id);
+      if (isSelected) {
+        setSelectedAssets(selectedAssets.filter(a => a.id !== asset.id));
+      } else {
+        setSelectedAssets([...selectedAssets, asset]);
+      }
+    } else {
+      setSelectedAssets([asset]);
+      onSelectAsset?.(asset);
+    }
+  };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  const getAssetIcon = (type: string) => {
+    switch (type) {
+      case 'image':
+        return '🖼️';
+      case 'video':
+        return '🎥';
+      case 'document':
+        return '📄';
+      default:
+        return '📁';
+    }
+  };
+
+  const getAssetTypeColor = (type: string) => {
+    switch (type) {
+      case 'image':
+        return 'success';
+      case 'video':
+        return 'info';
+      case 'document':
+        return 'warning';
+      default:
+        return 'default';
+    }
+  };
+
+  if (loading) {
+    return <LoadingSpinner size="lg" className="py-12" />;
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row gap-4">
+        <Input
+          placeholder="Search assets..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="flex-1"
+        />
+        <div className="flex gap-2">
+          <Button
+            variant={filter === 'all' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setFilter('all')}
+          >
+            All
+          </Button>
+          <Button
+            variant={filter === 'image' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setFilter('image')}
+          >
+            Images
+          </Button>
+          <Button
+            variant={filter === 'video' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setFilter('video')}
+          >
+            Videos
+          </Button>
+          <Button
+            variant={filter === 'document' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setFilter('document')}
+          >
+            Documents
+          </Button>
+        </div>
+      </div>
+
+      {filteredAssets.length === 0 ? (
+        <Card>
+          <CardContent className="py-12 text-center">
+            <div className="text-4xl mb-4">📁</div>
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+              No assets found
+            </h3>
+            <p className="text-gray-500 dark:text-gray-400">
+              {searchTerm ? 'Try adjusting your search terms.' : 'Upload some assets to get started.'}
+            </p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {filteredAssets.map((asset) => {
+            const isSelected = selectedAssets.find(a => a.id === asset.id);
+            return (
+              <Card
+                key={asset.id}
+                className={`cursor-pointer transition-all ${
+                  isSelected ? 'ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'hover:shadow-md'
+                }`}
+                onClick={() => handleAssetSelect(asset)}
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="text-2xl">{getAssetIcon(asset.type)}</div>
+                    <Badge variant={getAssetTypeColor(asset.type) as any}>
+                      {asset.type}
+                    </Badge>
+                  </div>
+                  
+                  <h4 className="font-medium text-gray-900 dark:text-white truncate mb-2">
+                    {asset.name}
+                  </h4>
+                  
+                  <div className="text-sm text-gray-500 dark:text-gray-400 space-y-1">
+                    <div>Size: {formatFileSize(asset.size)}</div>
+                    <div>Added: {new Date(asset.createdAt).toLocaleDateString()}</div>
+                  </div>
+                  
+                  {asset.type === 'image' && (
+                    <div className="mt-3 aspect-video bg-gray-100 dark:bg-gray-800 rounded overflow-hidden">
+                      <img
+                        src={asset.url}
+                        alt={asset.name}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+
+      {allowMultiple && selectedAssets.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Selected Assets ({selectedAssets.length})</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-2">
+              {selectedAssets.map((asset) => (
+                <Badge key={asset.id} variant="info">
+                  {asset.name}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedAssets(selectedAssets.filter(a => a.id !== asset.id));
+                    }}
+                    className="ml-2 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200"
+                  >
+                    ×
+                  </button>
+                </Badge>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}

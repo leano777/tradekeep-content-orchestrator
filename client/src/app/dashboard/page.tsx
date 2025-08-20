@@ -1,12 +1,12 @@
 'use client';
 
 import { useAuth } from '@/hooks/useAuth';
-import { ContentCalendar } from '@/components/calendar/ContentCalendar';
+import { Dashboard } from '@/components/dashboard/Dashboard';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { LoginForm } from '@/components/auth/LoginForm';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 
-export default function CalendarPage() {
+export default function DashboardPage() {
   const { user, loading } = useAuth();
 
   if (loading) {
@@ -23,7 +23,7 @@ export default function CalendarPage() {
 
   return (
     <DashboardLayout>
-      <ContentCalendar />
+      <Dashboard />
     </DashboardLayout>
   );
 }

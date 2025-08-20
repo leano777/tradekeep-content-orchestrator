@@ -1,1 +1,238 @@
-'use client';\n\nimport { FC, useState, useMemo } from 'react';\nimport { \n  format, \n  startOfMonth, \n  endOfMonth, \n  startOfWeek, \n  endOfWeek, \n  eachDayOfInterval, \n  isSameMonth, \n  isToday, \n  addMonths, \n  subMonths,\n  isSameDay\n} from 'date-fns';\nimport { \n  ChevronLeftIcon, \n  ChevronRightIcon,\n  PlusIcon,\n  FunnelIcon,\n  ViewColumnsIcon\n} from '@heroicons/react/24/outline';\nimport { DndContext, DragEndEvent, DragOverlay, DragStartEvent } from '@dnd-kit/core';\nimport { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';\nimport { useSortable } from '@dnd-kit/sortable';\nimport { CSS } from '@dnd-kit/utilities';\nimport { clsx } from 'clsx';\nimport { Card, CardHeader, CardBody } from '@/components/ui/Card';\nimport { Button } from '@/components/ui/Button';\nimport { Badge } from '@/components/ui/Badge';\nimport { ContentItem, CalendarEvent } from '@/types';\n\ninterface ContentCalendarProps {\n  events?: CalendarEvent[];\n  onEventMove?: (eventId: string, newDate: Date) => void;\n  onDateSelect?: (date: Date) => void;\n  onCreateContent?: (date: Date) => void;\n}\n\nexport const ContentCalendar: FC<ContentCalendarProps> = ({ \n  events = [], \n  onEventMove, \n  onDateSelect, \n  onCreateContent \n}) => {\n  const [currentDate, setCurrentDate] = useState(new Date());\n  const [selectedDate, setSelectedDate] = useState<Date | null>(null);\n  const [activeId, setActiveId] = useState<string | null>(null);\n  const [viewMode, setViewMode] = useState<'month' | 'week'>('month');\n  const [filters, setFilters] = useState({\n    platform: '',\n    status: '',\n    pillar: ''\n  });\n\n  // Generate calendar days\n  const calendarDays = useMemo(() => {\n    const monthStart = startOfMonth(currentDate);\n    const monthEnd = endOfMonth(currentDate);\n    const calendarStart = startOfWeek(monthStart);\n    const calendarEnd = endOfWeek(monthEnd);\n\n    return eachDayOfInterval({ start: calendarStart, end: calendarEnd });\n  }, [currentDate]);\n\n  // Get events for a specific date\n  const getEventsForDate = (date: Date) => {\n    return events.filter(event => isSameDay(event.start, date));\n  };\n\n  const handlePrevMonth = () => {\n    setCurrentDate(prev => subMonths(prev, 1));\n  };\n\n  const handleNextMonth = () => {\n    setCurrentDate(prev => addMonths(prev, 1));\n  };\n\n  const handleDateClick = (date: Date) => {\n    setSelectedDate(date);\n    onDateSelect?.(date);\n  };\n\n  const handleDragStart = (event: DragStartEvent) => {\n    setActiveId(event.active.id as string);\n  };\n\n  const handleDragEnd = (event: DragEndEvent) => {\n    const { active, over } = event;\n    \n    if (over && active.id !== over.id) {\n      // Handle moving content between dates\n      const eventId = active.id as string;\n      const newDateStr = over.id as string;\n      const newDate = new Date(newDateStr);\n      \n      onEventMove?.(eventId, newDate);\n    }\n    \n    setActiveId(null);\n  };\n\n  const activeEvent = activeId ? events.find(e => e.id === activeId) : null;\n\n  return (\n    <div className=\"space-y-6\">\n      {/* Calendar Header */}\n      <div className=\"flex items-center justify-between\">\n        <div className=\"flex items-center space-x-4\">\n          <div className=\"flex items-center space-x-2\">\n            <Button \n              variant=\"ghost\" \n              size=\"sm\"\n              onClick={handlePrevMonth}\n            >\n              <ChevronLeftIcon className=\"w-4 h-4\" />\n            </Button>\n            \n            <h2 className=\"text-xl font-semibold text-white\">\n              {format(currentDate, 'MMMM yyyy')}\n            </h2>\n            \n            <Button \n              variant=\"ghost\" \n              size=\"sm\"\n              onClick={handleNextMonth}\n            >\n              <ChevronRightIcon className=\"w-4 h-4\" />\n            </Button>\n          </div>\n\n          <Button\n            variant=\"ghost\"\n            size=\"sm\"\n            onClick={() => setCurrentDate(new Date())}\n          >\n            Today\n          </Button>\n        </div>\n\n        <div className=\"flex items-center space-x-2\">\n          <Button variant=\"ghost\" size=\"sm\">\n            <FunnelIcon className=\"w-4 h-4 mr-2\" />\n            Filters\n          </Button>\n          \n          <Button variant=\"ghost\" size=\"sm\">\n            <ViewColumnsIcon className=\"w-4 h-4 mr-2\" />\n            {viewMode === 'month' ? 'Month' : 'Week'}\n          </Button>\n          \n          <Button \n            variant=\"primary\" \n            size=\"sm\"\n            onClick={() => onCreateContent?.(selectedDate || new Date())}\n          >\n            <PlusIcon className=\"w-4 h-4 mr-2\" />\n            Create Content\n          </Button>\n        </div>\n      </div>\n\n      {/* Calendar Grid */}\n      <Card>\n        <CardBody>\n          <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>\n            <div className=\"grid grid-cols-7 gap-px bg-tk-gray-800\">\n              {/* Day headers */}\n              {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (\n                <div key={day} className=\"bg-tk-gray-900 p-3 text-center\">\n                  <span className=\"text-sm font-medium text-tk-gray-400\">{day}</span>\n                </div>\n              ))}\n              \n              {/* Calendar days */}\n              {calendarDays.map(day => {\n                const dayEvents = getEventsForDate(day);\n                const isCurrentMonth = isSameMonth(day, currentDate);\n                const isToday_ = isToday(day);\n                const isSelected = selectedDate && isSameDay(day, selectedDate);\n                \n                return (\n                  <CalendarDay\n                    key={day.toISOString()}\n                    date={day}\n                    events={dayEvents}\n                    isCurrentMonth={isCurrentMonth}\n                    isToday={isToday_}\n                    isSelected={isSelected}\n                    onClick={() => handleDateClick(day)}\n                  />\n                );\n              })}\n            </div>\n            \n            <DragOverlay>\n              {activeEvent && (\n                <ContentEventCard event={activeEvent} isDragging />\n              )}\n            </DragOverlay>\n          </DndContext>\n        </CardBody>\n      </Card>\n\n      {/* Selected Date Details */}\n      {selectedDate && (\n        <Card>\n          <CardHeader>\n            <h3 className=\"text-lg font-semibold text-white\">\n              {format(selectedDate, 'EEEE, MMMM d, yyyy')}\n            </h3>\n          </CardHeader>\n          <CardBody>\n            <SelectedDateEvents \n              date={selectedDate} \n              events={getEventsForDate(selectedDate)}\n              onCreateContent={onCreateContent}\n            />\n          </CardBody>\n        </Card>\n      )}\n    </div>\n  );\n};\n\ninterface CalendarDayProps {\n  date: Date;\n  events: CalendarEvent[];\n  isCurrentMonth: boolean;\n  isToday: boolean;\n  isSelected: boolean;\n  onClick: () => void;\n}\n\nfunction CalendarDay({ \n  date, \n  events, \n  isCurrentMonth, \n  isToday, \n  isSelected, \n  onClick \n}: CalendarDayProps) {\n  return (\n    <SortableContext \n      items={events.map(e => e.id)} \n      strategy={verticalListSortingStrategy}\n      id={date.toISOString()}\n    >\n      <div\n        className={clsx(\n          'calendar-day min-h-[120px] bg-tk-gray-900 cursor-pointer',\n          !isCurrentMonth && 'opacity-50',\n          isToday && 'today',\n          isSelected && 'selected',\n          events.length > 0 && 'has-content'\n        )}\n        onClick={onClick}\n      >\n        <div className=\"p-2\">\n          <span className={clsx(\n            'text-sm',\n            isCurrentMonth ? 'text-white' : 'text-tk-gray-500',\n            isToday && 'font-bold'\n          )}>\n            {format(date, 'd')}\n          </span>\n        </div>\n        \n        <div className=\"px-2 pb-2 space-y-1\">\n          {events.slice(0, 3).map(event => (\n            <ContentEventCard key={event.id} event={event} />\n          ))}\n          \n          {events.length > 3 && (\n            <div className=\"text-xs text-tk-gray-400 px-2\">\n              +{events.length - 3} more\n            </div>\n          )}\n        </div>\n      </div>\n    </SortableContext>\n  );\n}\n\ninterface ContentEventCardProps {\n  event: CalendarEvent;\n  isDragging?: boolean;\n}\n\nfunction ContentEventCard({ event, isDragging = false }: ContentEventCardProps) {\n  const {\n    attributes,\n    listeners,\n    setNodeRef,\n    transform,\n    transition,\n  } = useSortable({ id: event.id });\n\n  const style = {\n    transform: CSS.Transform.toString(transform),\n    transition,\n  };\n\n  const getPillarColor = (pillar?: string) => {\n    switch (pillar) {\n      case 'INTERNAL_OPERATING_SYSTEM': return 'border-l-tk-blue-500';\n      case 'PSYCHOLOGY_OVER_STRATEGY': return 'border-l-purple-500';\n      case 'DISCIPLINE_OVER_DOPAMINE': return 'border-l-red-500';\n      case 'SYSTEMS_VS_REACTIVE_TRADING': return 'border-l-green-500';\n      default: return 'border-l-tk-gray-600';\n    }\n  };\n\n  const getStatusColor = (status: string) => {\n    switch (status) {\n      case 'PUBLISHED': return 'bg-green-900/50';\n      case 'SCHEDULED': return 'bg-blue-900/50';\n      case 'APPROVED': return 'bg-green-800/50';\n      case 'REVIEW': return 'bg-yellow-900/50';\n      case 'DRAFT': return 'bg-tk-gray-800';\n      default: return 'bg-tk-gray-800';\n    }\n  };\n\n  return (\n    <div\n      ref={setNodeRef}\n      style={style}\n      {...attributes}\n      {...listeners}\n      className={clsx(\n        'text-xs p-2 rounded border-l-2 cursor-grab active:cursor-grabbing',\n        getPillarColor(event.contentItem.brandPillar),\n        getStatusColor(event.contentItem.status),\n        isDragging && 'opacity-50 shadow-lg'\n      )}\n    >\n      <div className=\"font-medium text-white truncate mb-1\">\n        {event.title}\n      </div>\n      <div className=\"flex items-center justify-between\">\n        <Badge variant={event.contentItem.status.toLowerCase() as any} size=\"sm\">\n          {event.contentItem.platform}\n        </Badge>\n        <span className=\"text-tk-gray-400\">\n          {format(event.start, 'HH:mm')}\n        </span>\n      </div>\n    </div>\n  );\n}\n\ninterface SelectedDateEventsProps {\n  date: Date;\n  events: CalendarEvent[];\n  onCreateContent?: (date: Date) => void;\n}\n\nfunction SelectedDateEvents({ date, events, onCreateContent }: SelectedDateEventsProps) {\n  if (events.length === 0) {\n    return (\n      <div className=\"text-center py-8\">\n        <p className=\"text-tk-gray-400 mb-4\">No content scheduled for this date</p>\n        <Button \n          variant=\"primary\"\n          onClick={() => onCreateContent?.(date)}\n        >\n          <PlusIcon className=\"w-4 h-4 mr-2\" />\n          Create Content\n        </Button>\n      </div>\n    );\n  }\n\n  return (\n    <div className=\"space-y-4\">\n      {events.map(event => (\n        <div key={event.id} className=\"flex items-center space-x-4 p-3 bg-tk-gray-800 rounded-lg\">\n          <div className=\"flex-1\">\n            <h4 className=\"font-medium text-white\">{event.title}</h4>\n            <div className=\"flex items-center space-x-2 mt-1\">\n              <Badge variant={event.contentItem.status.toLowerCase() as any} size=\"sm\">\n                {event.contentItem.status}\n              </Badge>\n              <Badge variant=\"draft\" size=\"sm\">\n                {event.contentItem.platform}\n              </Badge>\n              {event.contentItem.brandPillar && (\n                <Badge \n                  pillar={event.contentItem.brandPillar.toLowerCase().replace(/_/g, '') as any} \n                  size=\"sm\"\n                >\n                  {event.contentItem.brandPillar.replace(/_/g, ' ')}\n                </Badge>\n              )}\n            </div>\n          </div>\n          <div className=\"text-sm text-tk-gray-400\">\n            {format(event.start, 'h:mm a')}\n          </div>\n        </div>\n      ))}\n    </div>\n  );\n}
+'use client';
+
+import { useState, useEffect } from 'react';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
+import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
+import { Content } from '@/types';
+
+interface CalendarDay {
+  date: Date;
+  content: Content[];
+}
+
+export function ContentCalendar() {
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [calendarDays, setCalendarDays] = useState<CalendarDay[]>([]);
+  const [selectedDay, setSelectedDay] = useState<CalendarDay | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchCalendarContent();
+  }, [currentDate]);
+
+  const fetchCalendarContent = async () => {
+    try {
+      const year = currentDate.getFullYear();
+      const month = currentDate.getMonth();
+      const startDate = new Date(year, month, 1);
+      const endDate = new Date(year, month + 1, 0);
+
+      const token = localStorage.getItem('token');
+      const response = await fetch(
+        `http://localhost:9001/api/v1/content/calendar?start=${startDate.toISOString()}&end=${endDate.toISOString()}`,
+        {
+          headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        generateCalendarDays(data.data || []);
+      }
+    } catch (error) {
+      console.error('Failed to fetch calendar content:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const generateCalendarDays = (content: Content[]) => {
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const startDate = new Date(firstDay);
+    startDate.setDate(startDate.getDate() - firstDay.getDay());
+
+    const days: CalendarDay[] = [];
+    const current = new Date(startDate);
+
+    while (current <= lastDay || current.getDay() !== 0) {
+      const dayContent = content.filter((c) => {
+        const contentDate = new Date(c.scheduledAt || c.publishedAt || c.createdAt);
+        return (
+          contentDate.getDate() === current.getDate() &&
+          contentDate.getMonth() === current.getMonth() &&
+          contentDate.getFullYear() === current.getFullYear()
+        );
+      });
+
+      days.push({
+        date: new Date(current),
+        content: dayContent,
+      });
+
+      current.setDate(current.getDate() + 1);
+    }
+
+    setCalendarDays(days);
+  };
+
+  const navigateMonth = (direction: 'prev' | 'next') => {
+    const newDate = new Date(currentDate);
+    newDate.setMonth(newDate.getMonth() + (direction === 'next' ? 1 : -1));
+    setCurrentDate(newDate);
+  };
+
+  const monthNames = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
+
+  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+  const pillarColors = {
+    'internal-os': 'bg-blue-500',
+    'psychology': 'bg-purple-500',
+    'discipline': 'bg-red-500',
+    'systems': 'bg-green-500',
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Content Calendar</h1>
+        <Button onClick={() => window.location.href = '/content/create'}>
+          Create Content
+        </Button>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle>
+              {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
+            </CardTitle>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigateMonth('prev')}
+              >
+                Previous
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentDate(new Date())}
+              >
+                Today
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigateMonth('next')}
+              >
+                Next
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-7 gap-px bg-gray-200 dark:bg-gray-700 rounded-lg overflow-hidden">
+            {dayNames.map((day) => (
+              <div
+                key={day}
+                className="bg-gray-50 dark:bg-gray-800 p-2 text-center text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
+                {day}
+              </div>
+            ))}
+            {calendarDays.map((day, index) => {
+              const isCurrentMonth = day.date.getMonth() === currentDate.getMonth();
+              const isToday = 
+                day.date.toDateString() === new Date().toDateString();
+
+              return (
+                <div
+                  key={index}
+                  className={`
+                    bg-white dark:bg-gray-900 p-2 min-h-[100px] cursor-pointer
+                    hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors
+                    ${!isCurrentMonth ? 'opacity-50' : ''}
+                    ${isToday ? 'ring-2 ring-blue-500' : ''}
+                  `}
+                  onClick={() => setSelectedDay(day)}
+                >
+                  <div className="text-sm font-medium text-gray-900 dark:text-white mb-1">
+                    {day.date.getDate()}
+                  </div>
+                  <div className="space-y-1">
+                    {day.content.slice(0, 3).map((content) => (
+                      <div
+                        key={content.id}
+                        className={`
+                          h-1.5 rounded-full
+                          ${pillarColors[content.pillar]}
+                        `}
+                        title={content.title}
+                      />
+                    ))}
+                    {day.content.length > 3 && (
+                      <div className="text-xs text-gray-500 dark:text-gray-400">
+                        +{day.content.length - 3} more
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
+
+      {selectedDay && (
+        <Card>
+          <CardHeader>
+            <CardTitle>
+              Content for {selectedDay.date.toLocaleDateString()}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {selectedDay.content.length === 0 ? (
+              <p className="text-gray-500 dark:text-gray-400">
+                No content scheduled for this day.
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {selectedDay.content.map((content) => (
+                  <div
+                    key={content.id}
+                    className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"
+                  >
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-medium text-gray-900 dark:text-white">
+                        {content.title}
+                      </h4>
+                      <Badge>{content.status}</Badge>
+                    </div>
+                    <div className="flex items-center gap-2 mt-2">
+                      <div className={`w-3 h-3 rounded-full ${pillarColors[content.pillar]}`} />
+                      <span className="text-sm text-gray-600 dark:text-gray-400">
+                        {content.pillar.replace('-', ' ').toUpperCase()}
+                      </span>
+                      {content.platform && (
+                        <Badge variant="info">{content.platform}</Badge>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}

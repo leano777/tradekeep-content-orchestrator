@@ -1,1 +1,160 @@
-'use client';\n\nimport { FC, ReactNode, useState } from 'react';\nimport Link from 'next/link';\nimport { usePathname } from 'next/navigation';\nimport { clsx } from 'clsx';\nimport {\n  HomeIcon,\n  CalendarDaysIcon,\n  DocumentTextIcon,\n  CameraIcon,\n  EnvelopeIcon,\n  ChartBarIcon,\n  CogIcon,\n  Bars3Icon,\n  XMarkIcon,\n  BellIcon,\n  UserCircleIcon,\n  ChevronDownIcon\n} from '@heroicons/react/24/outline';\nimport { useAuth } from '@/hooks/useAuth';\nimport { Button } from '@/components/ui/Button';\n\ninterface DashboardLayoutProps {\n  children: ReactNode;\n}\n\ninterface NavigationItem {\n  name: string;\n  href: string;\n  icon: React.ComponentType<{ className?: string }>;\n  badge?: number;\n}\n\nconst navigation: NavigationItem[] = [\n  { name: 'Dashboard', href: '/', icon: HomeIcon },\n  { name: 'Calendar', href: '/calendar', icon: CalendarDaysIcon },\n  { name: 'Content', href: '/content', icon: DocumentTextIcon },\n  { name: 'Assets', href: '/assets', icon: CameraIcon },\n  { name: 'Campaigns', href: '/campaigns', icon: EnvelopeIcon },\n  { name: 'Analytics', href: '/analytics', icon: ChartBarIcon },\n  { name: 'Settings', href: '/settings', icon: CogIcon },\n];\n\nexport const DashboardLayout: FC<DashboardLayoutProps> = ({ children }) => {\n  const [sidebarOpen, setSidebarOpen] = useState(false);\n  const [userMenuOpen, setUserMenuOpen] = useState(false);\n  const pathname = usePathname();\n  const { user, logout } = useAuth();\n\n  return (\n    <div className=\"min-h-screen bg-tk-black\">\n      {/* Mobile sidebar */}\n      <div className={clsx(\n        'fixed inset-0 z-50 lg:hidden',\n        sidebarOpen ? 'block' : 'hidden'\n      )}>\n        <div className=\"fixed inset-0 bg-tk-black/80\" onClick={() => setSidebarOpen(false)} />\n        <div className=\"fixed inset-y-0 left-0 w-64 bg-tk-gray-900 border-r border-tk-gray-800\">\n          <SidebarContent \n            navigation={navigation} \n            pathname={pathname}\n            onLinkClick={() => setSidebarOpen(false)}\n          />\n        </div>\n      </div>\n\n      {/* Desktop sidebar */}\n      <div className=\"hidden lg:fixed lg:inset-y-0 lg:left-0 lg:w-64 lg:block\">\n        <div className=\"h-full bg-tk-gray-900 border-r border-tk-gray-800\">\n          <SidebarContent navigation={navigation} pathname={pathname} />\n        </div>\n      </div>\n\n      {/* Main content */}\n      <div className=\"lg:pl-64\">\n        {/* Top navigation */}\n        <header className=\"sticky top-0 z-40 bg-tk-black/95 backdrop-blur border-b border-tk-gray-800\">\n          <div className=\"px-4 sm:px-6 lg:px-8\">\n            <div className=\"flex h-16 items-center justify-between\">\n              {/* Mobile menu button */}\n              <button\n                type=\"button\"\n                className=\"lg:hidden text-tk-gray-400 hover:text-white\"\n                onClick={() => setSidebarOpen(true)}\n              >\n                <Bars3Icon className=\"h-6 w-6\" />\n              </button>\n\n              {/* Page title */}\n              <div className=\"flex-1 lg:flex-none\">\n                <h1 className=\"text-lg font-semibold text-white capitalize\">\n                  {pathname === '/' ? 'Dashboard' : pathname.slice(1).replace('-', ' ')}\n                </h1>\n              </div>\n\n              {/* Right side - notifications and user menu */}\n              <div className=\"flex items-center space-x-4\">\n                {/* Notifications */}\n                <button className=\"text-tk-gray-400 hover:text-white relative\">\n                  <BellIcon className=\"h-6 w-6\" />\n                  <span className=\"absolute -top-1 -right-1 h-4 w-4 bg-tk-blue-600 text-white text-xs rounded-full flex items-center justify-center\">\n                    3\n                  </span>\n                </button>\n\n                {/* User menu */}\n                <div className=\"relative\">\n                  <button\n                    className=\"flex items-center text-tk-gray-400 hover:text-white\"\n                    onClick={() => setUserMenuOpen(!userMenuOpen)}\n                  >\n                    <UserCircleIcon className=\"h-8 w-8 mr-2\" />\n                    <span className=\"hidden sm:block text-sm font-medium\">\n                      {user?.firstName} {user?.lastName}\n                    </span>\n                    <ChevronDownIcon className=\"h-4 w-4 ml-1\" />\n                  </button>\n\n                  {/* User dropdown */}\n                  {userMenuOpen && (\n                    <div className=\"absolute right-0 mt-2 w-48 bg-tk-gray-900 border border-tk-gray-800 rounded-lg shadow-tk-lg z-50\">\n                      <div className=\"py-1\">\n                        <Link\n                          href=\"/profile\"\n                          className=\"block px-4 py-2 text-sm text-tk-gray-300 hover:bg-tk-gray-800 hover:text-white\"\n                          onClick={() => setUserMenuOpen(false)}\n                        >\n                          Your Profile\n                        </Link>\n                        <Link\n                          href=\"/settings\"\n                          className=\"block px-4 py-2 text-sm text-tk-gray-300 hover:bg-tk-gray-800 hover:text-white\"\n                          onClick={() => setUserMenuOpen(false)}\n                        >\n                          Settings\n                        </Link>\n                        <div className=\"border-t border-tk-gray-800 my-1\" />\n                        <button\n                          onClick={logout}\n                          className=\"block w-full text-left px-4 py-2 text-sm text-tk-gray-300 hover:bg-tk-gray-800 hover:text-white\"\n                        >\n                          Sign out\n                        </button>\n                      </div>\n                    </div>\n                  )}\n                </div>\n              </div>\n            </div>\n          </div>\n        </header>\n\n        {/* Page content */}\n        <main className=\"py-8\">\n          <div className=\"px-4 sm:px-6 lg:px-8\">\n            {children}\n          </div>\n        </main>\n      </div>\n    </div>\n  );\n};\n\ninterface SidebarContentProps {\n  navigation: NavigationItem[];\n  pathname: string;\n  onLinkClick?: () => void;\n}\n\nfunction SidebarContent({ navigation, pathname, onLinkClick }: SidebarContentProps) {\n  return (\n    <div className=\"flex h-full flex-col\">\n      {/* Logo */}\n      <div className=\"flex h-16 items-center px-6 border-b border-tk-gray-800\">\n        <div className=\"flex items-center\">\n          <div className=\"w-8 h-8 bg-tk-blue-600 rounded-lg flex items-center justify-center mr-3\">\n            <span className=\"text-white font-bold text-sm\">TK</span>\n          </div>\n          <div>\n            <div className=\"text-white font-semibold\">TradeKeep</div>\n            <div className=\"text-tk-gray-400 text-xs\">Content Orchestrator</div>\n          </div>\n        </div>\n      </div>\n\n      {/* Navigation */}\n      <nav className=\"flex-1 px-4 py-6 space-y-1\">\n        {navigation.map((item) => {\n          const isActive = pathname === item.href || \n            (item.href !== '/' && pathname.startsWith(item.href));\n          \n          return (\n            <Link\n              key={item.name}\n              href={item.href}\n              className={clsx(\n                'group flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors',\n                isActive\n                  ? 'bg-tk-blue-600 text-white'\n                  : 'text-tk-gray-300 hover:bg-tk-gray-800 hover:text-white'\n              )}\n              onClick={onLinkClick}\n            >\n              <item.icon \n                className={clsx(\n                  'mr-3 h-5 w-5 flex-shrink-0',\n                  isActive ? 'text-white' : 'text-tk-gray-400 group-hover:text-white'\n                )}\n              />\n              {item.name}\n              {item.badge && (\n                <span className=\"ml-auto bg-tk-gray-800 text-tk-gray-300 text-xs px-2 py-0.5 rounded-full\">\n                  {item.badge}\n                </span>\n              )}\n            </Link>\n          );\n        })}\n      </nav>\n\n      {/* Brand pillars indicator */}\n      <div className=\"p-4 border-t border-tk-gray-800\">\n        <div className=\"text-xs font-medium text-tk-gray-400 mb-2\">Brand Pillars</div>\n        <div className=\"grid grid-cols-2 gap-2\">\n          <div className=\"flex items-center text-xs text-tk-gray-300\">\n            <div className=\"w-2 h-2 bg-tk-blue-500 rounded-full mr-2\" />\n            Internal\n          </div>\n          <div className=\"flex items-center text-xs text-tk-gray-300\">\n            <div className=\"w-2 h-2 bg-purple-500 rounded-full mr-2\" />\n            Psychology\n          </div>\n          <div className=\"flex items-center text-xs text-tk-gray-300\">\n            <div className=\"w-2 h-2 bg-red-500 rounded-full mr-2\" />\n            Discipline\n          </div>\n          <div className=\"flex items-center text-xs text-tk-gray-300\">\n            <div className=\"w-2 h-2 bg-green-500 rounded-full mr-2\" />\n            Systems\n          </div>\n        </div>\n      </div>\n    </div>\n  );\n}
+'use client';
+
+import { useState } from 'react';
+import { useAuth } from '@/hooks/useAuth';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { Button } from '@/components/ui/Button';
+
+interface DashboardLayoutProps {
+  children: React.ReactNode;
+}
+
+export function DashboardLayout({ children }: DashboardLayoutProps) {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const pathname = usePathname();
+  const { user, logout } = useAuth();
+
+  const navigation = [
+    { name: 'Dashboard', href: '/dashboard', icon: '📊' },
+    { name: 'Content', href: '/content', icon: '📝' },
+    { name: 'Create', href: '/content/create', icon: '✍️' },
+    { name: 'Calendar', href: '/calendar', icon: '📅' },
+    { name: 'Assets', href: '/assets', icon: '📁' },
+  ];
+
+  const handleLogout = async () => {
+    await logout();
+    window.location.href = '/';
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      {/* Mobile menu button */}
+      <div className="lg:hidden fixed top-4 left-4 z-50">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+        >
+          ☰
+        </Button>
+      </div>
+
+      {/* Sidebar */}
+      <div className={`
+        fixed inset-y-0 left-0 z-40 w-64 bg-white dark:bg-gray-800 shadow-lg transform transition-transform duration-300 lg:translate-x-0
+        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+      `}>
+        <div className="flex h-full flex-col">
+          {/* Logo */}
+          <div className="flex h-16 items-center justify-between px-6 border-b border-gray-200 dark:border-gray-700">
+            <Link href="/dashboard" className="flex items-center">
+              <span className="text-xl font-bold text-blue-600 dark:text-blue-400">
+                TradeKeep
+              </span>
+            </Link>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setSidebarOpen(false)}
+              className="lg:hidden"
+            >
+              ✕
+            </Button>
+          </div>
+
+          {/* Navigation */}
+          <nav className="flex-1 space-y-1 px-3 py-4">
+            {navigation.map((item) => {
+              const isActive = pathname === item.href;
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  className={`
+                    group flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors
+                    ${isActive
+                      ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
+                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                    }
+                  `}
+                  onClick={() => setSidebarOpen(false)}
+                >
+                  <span className="mr-3 text-lg">{item.icon}</span>
+                  {item.name}
+                </Link>
+              );
+            })}
+          </nav>
+
+          {/* User section */}
+          <div className="border-t border-gray-200 dark:border-gray-700 p-4">
+            <div className="flex items-center mb-3">
+              <div className="flex-shrink-0">
+                <div className="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center">
+                  <span className="text-white text-sm font-medium">
+                    {user?.name?.charAt(0).toUpperCase() || 'U'}
+                  </span>
+                </div>
+              </div>
+              <div className="ml-3">
+                <p className="text-sm font-medium text-gray-900 dark:text-white">
+                  {user?.name || 'User'}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {user?.email}
+                </p>
+              </div>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleLogout}
+              className="w-full"
+            >
+              Sign Out
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Main content */}
+      <div className="lg:ml-64">
+        {/* Top bar */}
+        <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
+          <div className="flex h-16 items-center justify-between px-6">
+            <div className="flex items-center gap-4 lg:hidden">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setSidebarOpen(true)}
+              >
+                ☰
+              </Button>
+            </div>
+            
+            <div className="flex items-center gap-4 ml-auto">
+              <Link href="/content/create">
+                <Button size="sm">+ New Content</Button>
+              </Link>
+            </div>
+          </div>
+        </header>
+
+        {/* Page content */}
+        <main className="p-6">
+          {children}
+        </main>
+      </div>
+
+      {/* Mobile overlay */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 z-30 bg-gray-900/50 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+    </div>
+  );
+}
