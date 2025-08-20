@@ -1,10 +1,8 @@
-interface ButtonProps {
+interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   children: React.ReactNode;
   variant?: 'primary' | 'secondary' | 'ghost';
   size?: 'sm' | 'md' | 'lg';
   fullWidth?: boolean;
-  disabled?: boolean;
-  onClick?: () => void;
   className?: string;
 }
 
@@ -15,7 +13,8 @@ export function Button({
   fullWidth = false,
   disabled = false,
   onClick,
-  className = ''
+  className = '',
+  ...props
 }: ButtonProps) {
   const baseClasses = 'font-semibold rounded-lg transition-colors';
   
@@ -45,6 +44,7 @@ export function Button({
       className={classes}
       onClick={onClick}
       disabled={disabled}
+      {...props}
     >
       {children}
     </button>

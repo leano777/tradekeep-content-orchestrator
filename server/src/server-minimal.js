@@ -796,6 +796,143 @@ app.get('/api/v1/cloud-assets/files', (req, res) => {
   });
 });
 
+// Content Templates Routes
+app.get('/api/v1/content-templates', requireAuth, async (req, res) => {
+  try {
+    const { category, page = 1, limit = 20 } = req.query;
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    const where = {};
+
+    if (category) where.category = category;
+
+    const [templates, total] = await Promise.all([
+      prisma.contentTemplate.findMany({
+        where,
+        include: {
+          createdBy: {
+            select: { id: true, name: true }
+          }
+        },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: parseInt(limit)
+      }),
+      prisma.contentTemplate.count({ where })
+    ]);
+
+    res.json({
+      status: 'success',
+      results: templates.length,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total,
+        pages: Math.ceil(total / parseInt(limit))
+      },
+      data: templates
+    });
+  } catch (error) {
+    console.error('Get content templates error:', error);
+    res.status(500).json({ error: 'Failed to get content templates' });
+  }
+});
+
+app.post('/api/v1/content-templates', requirePermission('content:create'), async (req, res) => {
+  try {
+    const { name, description, content, category, variables, thumbnail } = req.body;
+
+    if (!name || !content) {
+      return res.status(400).json({ error: 'Name and content are required' });
+    }
+
+    const template = await prisma.contentTemplate.create({
+      data: {
+        name,
+        description,
+        content,
+        category: category || 'general',
+        variables: variables ? JSON.stringify(variables) : null,
+        thumbnail,
+        createdById: req.user.id
+      },
+      include: {
+        createdBy: {
+          select: { id: true, name: true }
+        }
+      }
+    });
+
+    res.json({ status: 'success', data: template });
+  } catch (error) {
+    console.error('Create content template error:', error);
+    res.status(500).json({ error: 'Failed to create content template' });
+  }
+});
+
+app.get('/api/v1/content-templates/:id', requireAuth, async (req, res) => {
+  try {
+    const template = await prisma.contentTemplate.findUnique({
+      where: { id: req.params.id },
+      include: {
+        createdBy: {
+          select: { id: true, name: true }
+        }
+      }
+    });
+
+    if (!template) {
+      return res.status(404).json({ error: 'Template not found' });
+    }
+
+    res.json({ status: 'success', data: template });
+  } catch (error) {
+    console.error('Get content template error:', error);
+    res.status(500).json({ error: 'Failed to get content template' });
+  }
+});
+
+app.put('/api/v1/content-templates/:id', requirePermission('content:edit'), async (req, res) => {
+  try {
+    const { name, description, content, category, variables, thumbnail } = req.body;
+
+    const updateData = {};
+    if (name) updateData.name = name;
+    if (description !== undefined) updateData.description = description;
+    if (content) updateData.content = content;
+    if (category) updateData.category = category;
+    if (variables !== undefined) updateData.variables = variables ? JSON.stringify(variables) : null;
+    if (thumbnail !== undefined) updateData.thumbnail = thumbnail;
+
+    const template = await prisma.contentTemplate.update({
+      where: { id: req.params.id },
+      data: updateData,
+      include: {
+        createdBy: {
+          select: { id: true, name: true }
+        }
+      }
+    });
+
+    res.json({ status: 'success', data: template });
+  } catch (error) {
+    console.error('Update content template error:', error);
+    res.status(500).json({ error: 'Failed to update content template' });
+  }
+});
+
+app.delete('/api/v1/content-templates/:id', requirePermission('content:delete'), async (req, res) => {
+  try {
+    await prisma.contentTemplate.delete({
+      where: { id: req.params.id }
+    });
+
+    res.json({ status: 'success', message: 'Template deleted successfully' });
+  } catch (error) {
+    console.error('Delete content template error:', error);
+    res.status(500).json({ error: 'Failed to delete content template' });
+  }
+});
+
 // Campaign Routes
 app.get('/api/v1/campaigns', requireAuth, async (req, res) => {
   try {

@@ -20,7 +20,8 @@
       "Bash(curl:*)",
       "Bash(npx prisma:*)",
       "Bash(docker-compose up:*)",
-      "Bash(PORT=9002 node src/server-minimal.js)"
+      "Bash(PORT=9002 node src/server-minimal.js)",
+      "Bash(npm run type-check:*)"
     ],
     "deny": [],
     "ask": []

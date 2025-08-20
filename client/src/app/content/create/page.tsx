@@ -1,7 +1,7 @@
 'use client';
 
 import { useAuth } from '@/hooks/useAuth';
-import { ContentEditor } from '@/components/content/ContentEditor';
+import { EnhancedContentEditor } from '@/components/content/EnhancedContentEditor';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { LoginForm } from '@/components/auth/LoginForm';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
@@ -24,7 +24,7 @@ export default function CreateContentPage() {
   const handleSave = async (data: any) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:9001/api/v1/content', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9002'}/api/v1/content`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -57,7 +57,7 @@ export default function CreateContentPage() {
           </p>
         </div>
 
-        <ContentEditor onSave={handleSave} onCancel={handleCancel} />
+        <EnhancedContentEditor onSave={handleSave} onCancel={handleCancel} />
       </div>
     </DashboardLayout>
   );
