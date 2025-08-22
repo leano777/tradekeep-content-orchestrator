@@ -27,7 +27,9 @@
       "Bash(python:*)",
       "Bash(start index.html)",
       "Bash(explorer:*)",
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "Bash(npm audit:*)",
+      "Bash(set TOKEN=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNtZW1mYWJqdzAwMDhlN2JzbG1rZ3RqOHoiLCJlbWFpbCI6InRlc3R1c2VyMkBleGFtcGxlLmNvbSIsImlhdCI6MTc1NTg0MjQ5NH0.jVvIpleCiUDhY0-hErsEFNYOp8eg5sGGzDUJFBm0t4g)"
     ],
     "deny": [],
     "ask": []

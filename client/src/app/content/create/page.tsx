@@ -5,9 +5,12 @@ import { EnhancedContentEditor } from '@/components/content/EnhancedContentEdito
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { LoginForm } from '@/components/auth/LoginForm';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import apiClient from '@/lib/api';
+import { useRouter } from 'next/navigation';
 
 export default function CreateContentPage() {
   const { user, loading } = useAuth();
+  const router = useRouter();
 
   if (loading) {
     return <LoadingSpinner size="lg" className="min-h-screen" />;
@@ -23,28 +26,17 @@ export default function CreateContentPage() {
 
   const handleSave = async (data: any) => {
     try {
-      const token = localStorage.getItem('tk_auth_token');
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9000/api'}/content`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify(data),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to save content');
-      }
-
-      window.location.href = '/content';
+      const result = await apiClient.createContent(data);
+      router.push('/content');
+      return result;
     } catch (error) {
+      console.error('Failed to save content:', error);
       throw error;
     }
   };
 
   const handleCancel = () => {
-    window.location.href = '/dashboard';
+    router.push('/dashboard');
   };
 
   return (

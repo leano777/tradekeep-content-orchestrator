@@ -1,233 +1,353 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { LoginForm } from '@/components/auth/LoginForm';
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
-import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import { Select } from '@/components/ui/Select';
-import { Content } from '@/types';
-import Link from 'next/link';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import apiClient from '@/lib/api';
+
+interface Content {
+  id: string;
+  title: string;
+  body: string;
+  type: string;
+  status: string;
+  pillar: string;
+  platform?: string;
+  publishedAt?: string;
+  scheduledAt?: string;
+  createdAt: string;
+  updatedAt: string;
+  author: {
+    id: string;
+    name: string;
+    email: string;
+  };
+}
 
 export default function ContentPage() {
   const { user, loading } = useAuth();
+  const router = useRouter();
   const [content, setContent] = useState<Content[]>([]);
   const [contentLoading, setContentLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [pillarFilter, setPillarFilter] = useState('all');
+  const [filter, setFilter] = useState<{
+    status: string;
+    type: string;
+    search: string;
+  }>({
+    status: 'all',
+    type: 'all',
+    search: ''
+  });
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/auth/login');
+    }
+  }, [user, loading, router]);
 
   useEffect(() => {
     if (user) {
-      fetchContent();
+      loadContent();
     }
-  }, [user]);
+  }, [user, filter]);
 
-  const fetchContent = async () => {
+  const loadContent = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:9001/api/v1/content', {
-        headers: token ? { 'Authorization': `Bearer ${token}` } : {},
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setContent(data.data || []);
-      }
+      setContentLoading(true);
+      const params: Record<string, string> = {};
+      
+      if (filter.status !== 'all') params.status = filter.status;
+      if (filter.type !== 'all') params.type = filter.type;
+      if (filter.search) params.search = filter.search;
+      
+      const response = await apiClient.getContent(params);
+      setContent(response.data || response || []);
     } catch (error) {
-      console.error('Failed to fetch content:', error);
+      console.error('Failed to load content:', error);
+      setContent([]);
     } finally {
       setContentLoading(false);
     }
   };
 
-  if (loading) {
-    return <LoadingSpinner size="lg" className="min-h-screen" />;
-  }
+  const handleDelete = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this content?')) return;
+    
+    try {
+      await apiClient.deleteContent(id);
+      setContent(content.filter(item => item.id !== id));
+    } catch (error) {
+      console.error('Failed to delete content:', error);
+      alert('Failed to delete content');
+    }
+  };
 
-  if (!user) {
+  const handlePublish = async (id: string) => {
+    try {
+      await apiClient.publishContent(id);
+      loadContent(); // Reload to get updated status
+    } catch (error) {
+      console.error('Failed to publish content:', error);
+      alert('Failed to publish content');
+    }
+  };
+
+  const getStatusBadge = (status: string) => {
+    const statusStyles = {
+      draft: 'bg-yellow-100 text-yellow-800',
+      published: 'bg-green-100 text-green-800',
+      scheduled: 'bg-blue-100 text-blue-800',
+      archived: 'bg-gray-100 text-gray-800',
+      review: 'bg-orange-100 text-orange-800'
+    };
+    
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-        <LoginForm />
+      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusStyles[status as keyof typeof statusStyles] || 'bg-gray-100 text-gray-800'}`}>
+        {status.charAt(0).toUpperCase() + status.slice(1)}
+      </span>
+    );
+  };
+
+  const getTypeBadge = (type: string) => {
+    const typeStyles = {
+      post: '📝',
+      article: '📄',
+      email: '✉️',
+      newsletter: '📧',
+      social: '📱',
+      SOCIAL_POST: '📱'
+    };
+    
+    return (
+      <span className="inline-flex items-center text-sm">
+        <span className="mr-1">{typeStyles[type as keyof typeof typeStyles] || '📝'}</span>
+        {type.replace('_', ' ').toLowerCase()}
+      </span>
+    );
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
       </div>
     );
   }
 
-  const filteredContent = content.filter(item => {
-    const matchesSearch = item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         item.body.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || item.status === statusFilter;
-    const matchesPillar = pillarFilter === 'all' || item.pillar === pillarFilter;
-    
-    return matchesSearch && matchesStatus && matchesPillar;
-  });
-
-  const statusOptions = [
-    { value: 'all', label: 'All Status' },
-    { value: 'draft', label: 'Draft' },
-    { value: 'review', label: 'Review' },
-    { value: 'approved', label: 'Approved' },
-    { value: 'scheduled', label: 'Scheduled' },
-    { value: 'published', label: 'Published' },
-  ];
-
-  const pillarOptions = [
-    { value: 'all', label: 'All Pillars' },
-    { value: 'internal-os', label: '🧠 Internal Operating System' },
-    { value: 'psychology', label: '🔬 Psychology Over Strategy' },
-    { value: 'discipline', label: '⚡ Discipline Over Dopamine' },
-    { value: 'systems', label: '🎯 Systems vs Reactive Trading' },
-  ];
-
-  const pillarColors = {
-    'internal-os': 'bg-blue-500',
-    'psychology': 'bg-purple-500',
-    'discipline': 'bg-red-500',
-    'systems': 'bg-green-500',
-  };
-
-  const statusVariants = {
-    'draft': 'default',
-    'review': 'warning',
-    'approved': 'info',
-    'scheduled': 'info',
-    'published': 'success',
-  } as const;
+  if (!user) {
+    return null;
+  }
 
   return (
-    <DashboardLayout>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Content Library</h1>
-            <p className="text-gray-600 dark:text-gray-400 mt-2">
-              Manage and organize your content
-            </p>
-          </div>
-          <Link href="/content/create">
-            <Button>+ Create Content</Button>
-          </Link>
-        </div>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex flex-col sm:flex-row gap-4">
-              <Input
-                placeholder="Search content..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="flex-1"
-              />
-              <Select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                options={statusOptions}
-                className="w-full sm:w-40"
-              />
-              <Select
-                value={pillarFilter}
-                onChange={(e) => setPillarFilter(e.target.value)}
-                options={pillarOptions}
-                className="w-full sm:w-48"
-              />
+    <div className="min-h-screen bg-gray-50">
+      {/* Navigation Header */}
+      <nav className="bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between h-16">
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={() => router.push('/dashboard')}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                ← Back
+              </button>
+              <h1 className="text-xl font-semibold text-gray-900">
+                Content Management
+              </h1>
             </div>
-          </CardContent>
-        </Card>
+            
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={() => router.push('/content/create')}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              >
+                Create Content
+              </button>
+              <button
+                onClick={() => router.push('/dashboard')}
+                className="px-3 py-2 text-sm bg-gray-600 text-white rounded-md hover:bg-gray-700"
+              >
+                Dashboard
+              </button>
+            </div>
+          </div>
+        </div>
+      </nav>
 
-        {contentLoading ? (
-          <LoadingSpinner size="lg" className="py-12" />
-        ) : filteredContent.length === 0 ? (
-          <Card>
-            <CardContent className="py-12 text-center">
-              <div className="text-4xl mb-4">📝</div>
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                {content.length === 0 ? 'No content yet' : 'No content found'}
-              </h3>
-              <p className="text-gray-500 dark:text-gray-400 mb-4">
-                {content.length === 0 
-                  ? 'Create your first piece of content to get started.'
-                  : 'Try adjusting your search terms or filters.'
-                }
-              </p>
-              {content.length === 0 && (
-                <Link href="/content/create">
-                  <Button>Create Content</Button>
-                </Link>
-              )}
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredContent.map((item) => (
-              <Card key={item.id} className="hover:shadow-md transition-shadow">
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <Badge variant={statusVariants[item.status]}>
-                      {item.status}
-                    </Badge>
-                    <div className={`w-3 h-3 rounded-full ${pillarColors[item.pillar]}`} />
-                  </div>
-                  <CardTitle className="text-lg">{item.title}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-gray-600 dark:text-gray-400 text-sm mb-4 line-clamp-3">
-                    {item.body.slice(0, 120)}...
-                  </p>
-                  
-                  <div className="space-y-2 mb-4">
-                    <div className="flex items-center gap-2 text-sm">
-                      <span className="text-gray-500 dark:text-gray-400">Pillar:</span>
-                      <span className="text-gray-900 dark:text-white">
-                        {item.pillar.replace('-', ' ').toUpperCase()}
-                      </span>
-                    </div>
-                    
-                    <div className="flex items-center gap-2 text-sm">
-                      <span className="text-gray-500 dark:text-gray-400">Type:</span>
-                      <span className="text-gray-900 dark:text-white">{item.type}</span>
-                    </div>
-                    
-                    {item.platform && (
-                      <div className="flex items-center gap-2 text-sm">
-                        <span className="text-gray-500 dark:text-gray-400">Platform:</span>
-                        <Badge variant="info">{item.platform}</Badge>
+      <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        <div className="px-4 py-6 sm:px-0">
+          {/* Filters */}
+          <div className="bg-white p-4 rounded-lg shadow mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Status
+                </label>
+                <select
+                  value={filter.status}
+                  onChange={(e) => setFilter({...filter, status: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="all">All Statuses</option>
+                  <option value="draft">Draft</option>
+                  <option value="published">Published</option>
+                  <option value="scheduled">Scheduled</option>
+                  <option value="review">Review</option>
+                  <option value="archived">Archived</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Type
+                </label>
+                <select
+                  value={filter.type}
+                  onChange={(e) => setFilter({...filter, type: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="all">All Types</option>
+                  <option value="post">Post</option>
+                  <option value="article">Article</option>
+                  <option value="email">Email</option>
+                  <option value="newsletter">Newsletter</option>
+                  <option value="social">Social</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Search
+                </label>
+                <input
+                  type="text"
+                  placeholder="Search content..."
+                  value={filter.search}
+                  onChange={(e) => setFilter({...filter, search: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Content List */}
+          <div className="bg-white shadow rounded-lg">
+            <div className="px-4 py-5 sm:p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg leading-6 font-medium text-gray-900">
+                  Content ({content.length})
+                </h3>
+              </div>
+
+              {contentLoading ? (
+                <div className="space-y-4">
+                  {[...Array(5)].map((_, i) => (
+                    <div key={i} className="animate-pulse">
+                      <div className="flex items-center space-x-4">
+                        <div className="h-4 bg-gray-200 rounded w-1/3"></div>
+                        <div className="h-4 bg-gray-200 rounded w-20"></div>
+                        <div className="h-4 bg-gray-200 rounded w-20"></div>
+                        <div className="h-4 bg-gray-200 rounded w-24"></div>
                       </div>
-                    )}
-                    
-                    <div className="flex items-center gap-2 text-sm">
-                      <span className="text-gray-500 dark:text-gray-400">Created:</span>
-                      <span className="text-gray-900 dark:text-white">
-                        {new Date(item.createdAt).toLocaleDateString()}
-                      </span>
                     </div>
-                  </div>
-                  
-                  <div className="flex gap-2">
-                    <Button variant="outline" size="sm" className="flex-1">
-                      Edit
-                    </Button>
-                    <Button size="sm" className="flex-1">
-                      View
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                  ))}
+                </div>
+              ) : content.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="text-gray-500 text-lg mb-4">📝</div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No content found</h3>
+                  <p className="text-gray-500 mb-4">Get started by creating your first piece of content.</p>
+                  <button
+                    onClick={() => router.push('/content/create')}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                  >
+                    Create Content
+                  </button>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Title
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Type
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Status
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Author
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Created
+                        </th>
+                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Actions
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {content.map((item) => (
+                        <tr key={item.id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4">
+                            <div>
+                              <div className="text-sm font-medium text-gray-900 truncate max-w-xs">
+                                {item.title}
+                              </div>
+                              <div className="text-sm text-gray-500 truncate max-w-xs">
+                                {item.body.substring(0, 100)}...
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            {getTypeBadge(item.type)}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            {getStatusBadge(item.status)}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {item.author.name}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {new Date(item.createdAt).toLocaleDateString()}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <div className="flex space-x-2 justify-end">
+                              <button
+                                onClick={() => router.push(`/content/${item.id}/edit`)}
+                                className="text-blue-600 hover:text-blue-900"
+                              >
+                                Edit
+                              </button>
+                              {item.status === 'draft' && (
+                                <button
+                                  onClick={() => handlePublish(item.id)}
+                                  className="text-green-600 hover:text-green-900"
+                                >
+                                  Publish
+                                </button>
+                              )}
+                              <button
+                                onClick={() => handleDelete(item.id)}
+                                className="text-red-600 hover:text-red-900"
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
           </div>
-        )}
-
-        {filteredContent.length > 0 && (
-          <div className="flex items-center justify-between">
-            <p className="text-gray-500 dark:text-gray-400 text-sm">
-              Showing {filteredContent.length} of {content.length} items
-            </p>
-          </div>
-        )}
+        </div>
       </div>
-    </DashboardLayout>
+    </div>
   );
 }
