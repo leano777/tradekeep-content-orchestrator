@@ -3,350 +3,470 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Claude Session Tracker - Command Center</title>
+    <title>Claude Code Session Dashboard - Enterprise Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/anime.js@3.2.1/lib/anime.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     
     <style>
-        /* Glassmorphic styles */
-        .glass {
-            background: rgba(15, 23, 42, 0.6);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --accent-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --neural-gradient: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        }
+
+        /* Advanced Glass Morphism */
+        .glass-ultra {
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(24px) saturate(150%);
+            -webkit-backdrop-filter: blur(24px) saturate(150%);
+            border: 1px solid rgba(255, 255, 255, 0.125);
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
         }
         
-        .glass-dark {
-            background: rgba(0, 0, 0, 0.4);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(20px) saturate(120%);
+            -webkit-backdrop-filter: blur(20px) saturate(120%);
+            border: 1px solid rgba(148, 163, 184, 0.1);
+            box-shadow: 
+                0 4px 24px rgba(0, 0, 0, 0.25),
+                inset 0 1px 0 rgba(255, 255, 255, 0.05);
         }
 
-        .neon-glow {
-            box-shadow: 0 0 30px rgba(139, 92, 246, 0.3),
-                        0 0 60px rgba(139, 92, 246, 0.1);
+        .glass-card {
+            background: rgba(51, 65, 85, 0.6);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(71, 85, 105, 0.3);
         }
 
-        .gradient-border {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #667eea 100%);
-            background-size: 400% 400%;
-            animation: gradient 15s ease infinite;
-        }
-
-        @keyframes gradient {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
-        .cyber-grid {
-            background-image: 
-                linear-gradient(rgba(139, 92, 246, 0.1) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(139, 92, 246, 0.1) 1px, transparent 1px);
-            background-size: 50px 50px;
-        }
-
-        .holographic {
+        /* Holographic Effects */
+        .holographic-border {
+            position: relative;
             background: linear-gradient(135deg, 
                 rgba(139, 92, 246, 0.1) 0%,
                 rgba(168, 85, 247, 0.1) 25%,
-                rgba(196, 181, 253, 0.1) 50%,
+                rgba(59, 130, 246, 0.1) 50%,
+                rgba(16, 185, 129, 0.1) 75%,
                 rgba(139, 92, 246, 0.1) 100%);
-            animation: holographic 3s ease-in-out infinite;
+            animation: holographic-flow 8s linear infinite;
         }
 
-        @keyframes holographic {
-            0%, 100% { opacity: 0.8; }
-            50% { opacity: 1; }
+        .holographic-border::before {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            padding: 1px;
+            background: linear-gradient(135deg, #8b5cf6, #a855f7, #3b82f6, #10b981);
+            border-radius: inherit;
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask-composite: xor;
+            -webkit-mask-composite: xor;
+            opacity: 0.6;
+            animation: border-flow 3s linear infinite;
         }
 
-        .pulse-dot {
-            animation: pulse-animation 2s infinite;
+        @keyframes holographic-flow {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
         }
 
-        @keyframes pulse-animation {
-            0% {
-                box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.7);
+        @keyframes border-flow {
+            0% { filter: hue-rotate(0deg); }
+            100% { filter: hue-rotate(360deg); }
+        }
+
+        /* Advanced Neural Network Background */
+        .neural-background {
+            background: radial-gradient(circle at 20% 50%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 20%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+                        radial-gradient(circle at 40% 80%, rgba(16, 185, 129, 0.1) 0%, transparent 50%),
+                        radial-gradient(circle at 0% 100%, rgba(236, 72, 153, 0.1) 0%, transparent 50%);
+        }
+
+        .neural-grid {
+            background-image: 
+                radial-gradient(circle at 25px 25px, rgba(139, 92, 246, 0.2) 2px, transparent 2px),
+                linear-gradient(rgba(139, 92, 246, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(139, 92, 246, 0.05) 1px, transparent 1px);
+            background-size: 50px 50px, 50px 50px, 50px 50px;
+            animation: neural-pulse 4s ease-in-out infinite;
+        }
+
+        @keyframes neural-pulse {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.6; }
+        }
+
+        /* Quantum Glow Effects */
+        .quantum-glow {
+            box-shadow: 
+                0 0 20px rgba(139, 92, 246, 0.4),
+                0 0 40px rgba(139, 92, 246, 0.2),
+                0 0 60px rgba(139, 92, 246, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        .quantum-pulse {
+            animation: quantum-animation 3s ease-in-out infinite;
+        }
+
+        @keyframes quantum-animation {
+            0%, 100% {
+                box-shadow: 0 0 20px rgba(139, 92, 246, 0.4);
             }
-            70% {
-                box-shadow: 0 0 0 10px rgba(139, 92, 246, 0);
+            50% {
+                box-shadow: 0 0 40px rgba(139, 92, 246, 0.6);
             }
-            100% {
-                box-shadow: 0 0 0 0 rgba(139, 92, 246, 0);
+        }
+
+        /* Status Indicators */
+        .status-active {
+            background: linear-gradient(45deg, #10b981, #34d399);
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.5);
+            animation: pulse-glow 2s ease-in-out infinite;
+        }
+
+        .status-completed {
+            background: linear-gradient(45deg, #3b82f6, #60a5fa);
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { 
+                transform: scale(1);
+                opacity: 1;
             }
+            50% { 
+                transform: scale(1.1);
+                opacity: 0.8;
+            }
+        }
+
+        /* Data Flow Animation */
+        .data-flow {
+            background: linear-gradient(90deg, transparent, rgba(139, 92, 246, 0.6), transparent);
+            background-size: 200% 100%;
+            animation: data-stream 2s linear infinite;
+        }
+
+        @keyframes data-stream {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+
+        /* Futuristic Typography */
+        .font-cyber {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+        }
+
+        /* Interactive Elements */
+        .interactive-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+        }
+
+        .interactive-card:hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Progress Bars */
+        .progress-bar {
+            background: linear-gradient(90deg, #8b5cf6, #a855f7, #3b82f6);
+            background-size: 200% 100%;
+            animation: progress-shimmer 2s ease-in-out infinite;
+        }
+
+        @keyframes progress-shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(45deg, #8b5cf6, #3b82f6);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(45deg, #a855f7, #60a5fa);
+        }
+
+        /* Loading Animations */
+        .loading-shimmer {
+            background: linear-gradient(90deg, 
+                rgba(148, 163, 184, 0.1) 25%, 
+                rgba(148, 163, 184, 0.3) 50%, 
+                rgba(148, 163, 184, 0.1) 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+
+        /* Micro-interactions */
+        .micro-bounce {
+            transition: transform 0.2s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        .micro-bounce:hover {
+            transform: scale(1.05);
+        }
+
+        /* Chart Enhancements */
+        .chart-container {
+            position: relative;
+        }
+
+        .chart-container::before {
+            content: '';
+            position: absolute;
+            inset: -2px;
+            background: linear-gradient(45deg, rgba(139, 92, 246, 0.3), rgba(59, 130, 246, 0.3));
+            border-radius: inherit;
+            filter: blur(1px);
+            opacity: 0.7;
+            z-index: -1;
         }
     </style>
+    
+    <script>
+        // Tailwind Configuration
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'cyber': ['JetBrains Mono', 'monospace'],
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'glow': 'glow 2s ease-in-out infinite alternate',
+                    }
+                }
+            }
+        }
+    </script>
 </head>
-<body class="bg-gray-950 text-white font-['Inter'] cyber-grid">
-    <!-- Animated Background -->
-    <div class="fixed inset-0 overflow-hidden pointer-events-none">
-        <div class="absolute w-96 h-96 bg-purple-600/20 rounded-full blur-3xl -top-48 -left-48 animate-pulse"></div>
-        <div class="absolute w-96 h-96 bg-blue-600/20 rounded-full blur-3xl -bottom-48 -right-48 animate-pulse"></div>
-        <div class="absolute w-96 h-96 bg-pink-600/10 rounded-full blur-3xl top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"></div>
+<body class="bg-slate-950 text-white font-['Inter'] neural-background neural-grid min-h-screen">
+    <!-- Animated Background Elements -->
+    <div class="fixed inset-0 overflow-hidden pointer-events-none z-0">
+        <div class="absolute w-96 h-96 bg-purple-600/10 rounded-full blur-3xl -top-48 -left-48 animate-pulse"></div>
+        <div class="absolute w-96 h-96 bg-blue-600/10 rounded-full blur-3xl top-1/4 right-1/4 animate-pulse" style="animation-delay: 1s;"></div>
+        <div class="absolute w-96 h-96 bg-emerald-600/10 rounded-full blur-3xl -bottom-48 -right-48 animate-pulse" style="animation-delay: 2s;"></div>
+        <div class="absolute w-96 h-96 bg-pink-600/10 rounded-full blur-3xl bottom-1/4 left-1/4 animate-pulse" style="animation-delay: 3s;"></div>
     </div>
 
     <!-- Main Container -->
-    <div class="relative z-10 min-h-screen p-6">
+    <div class="relative z-10 min-h-screen p-4 lg:p-6">
         <!-- Header -->
-        <header class="glass rounded-2xl p-6 mb-6 neon-glow">
-            <div class="flex items-center justify-between">
+        <header class="glass-ultra rounded-3xl p-6 mb-6 quantum-glow holographic-border">
+            <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between space-y-4 lg:space-y-0">
                 <div class="flex items-center space-x-4">
-                    <div class="gradient-border p-0.5 rounded-xl">
-                        <div class="bg-gray-900 rounded-xl p-3">
-                            <i data-lucide="terminal" class="w-8 h-8 text-purple-400"></i>
+                    <div class="holographic-border p-0.5 rounded-2xl">
+                        <div class="bg-slate-900 rounded-2xl p-4">
+                            <i data-lucide="cpu" class="w-10 h-10 text-purple-400"></i>
                         </div>
                     </div>
                     <div>
-                        <h1 class="text-3xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-                            Claude Session Command Center
+                        <h1 class="text-4xl font-bold bg-gradient-to-r from-purple-400 via-blue-400 to-emerald-400 bg-clip-text text-transparent">
+                            Claude Code Session Dashboard
                         </h1>
-                        <p class="text-gray-400 text-sm mt-1">Development Session Analytics & Tracking</p>
+                        <p class="text-slate-400 text-sm mt-2 font-cyber">Enterprise Development Analytics & Session Management</p>
                     </div>
                 </div>
                 <div class="flex items-center space-x-4">
-                    <!-- Session Status Indicator -->
-                    <div class="glass-dark rounded-lg px-4 py-2 flex items-center space-x-2">
-                        <div class="w-3 h-3 bg-green-500 rounded-full pulse-dot"></div>
-                        <span class="text-sm">Session Active</span>
-                        <span class="text-xs text-gray-400">2h 15m</span>
+                    <!-- Real-time Status -->
+                    <div class="glass-panel rounded-xl px-4 py-3 flex items-center space-x-3">
+                        <div class="w-3 h-3 rounded-full status-active"></div>
+                        <div class="text-sm">
+                            <div class="font-medium">System Active</div>
+                            <div class="text-xs text-slate-400 font-cyber" id="session-time">Loading...</div>
+                        </div>
                     </div>
-                    <!-- n8n Status -->
-                    <div class="glass-dark rounded-lg px-4 py-2 flex items-center space-x-2">
-                        <i data-lucide="workflow" class="w-4 h-4 text-orange-400"></i>
-                        <span class="text-sm">n8n Connected</span>
+                    <!-- Connection Status -->
+                    <div class="glass-panel rounded-xl px-4 py-3 flex items-center space-x-3">
+                        <i data-lucide="activity" class="w-4 h-4 text-emerald-400"></i>
+                        <span class="text-sm font-medium">Sessions Connected</span>
                     </div>
                 </div>
             </div>
         </header>
 
-        <!-- Quick Stats -->
+        <!-- Key Metrics Dashboard -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            <!-- Monthly Tokens -->
-            <div class="glass rounded-xl p-6 holographic">
+            <!-- Total Sessions -->
+            <div class="glass-ultra rounded-2xl p-6 interactive-card holographic-border">
                 <div class="flex items-center justify-between mb-4">
-                    <i data-lucide="cpu" class="w-6 h-6 text-blue-400"></i>
-                    <span class="text-xs text-gray-400">This Month</span>
+                    <div class="p-3 rounded-xl bg-purple-500/20">
+                        <i data-lucide="layers" class="w-6 h-6 text-purple-400"></i>
+                    </div>
+                    <span class="text-xs text-slate-400 font-cyber">TOTAL</span>
                 </div>
-                <h3 class="text-2xl font-bold mb-1">1.2M</h3>
-                <p class="text-sm text-gray-400">Tokens Used</p>
-                <div class="mt-4 h-1 bg-gray-700 rounded-full overflow-hidden">
-                    <div class="h-full bg-gradient-to-r from-blue-500 to-purple-500" style="width: 65%"></div>
-                </div>
-            </div>
-
-            <!-- Monthly Cost -->
-            <div class="glass rounded-xl p-6 holographic">
-                <div class="flex items-center justify-between mb-4">
-                    <i data-lucide="dollar-sign" class="w-6 h-6 text-green-400"></i>
-                    <span class="text-xs text-gray-400">This Month</span>
-                </div>
-                <h3 class="text-2xl font-bold mb-1">$247.32</h3>
-                <p class="text-sm text-gray-400">Total Cost</p>
-                <div class="mt-4 flex items-center text-xs">
-                    <span class="text-green-400">↓ 12%</span>
-                    <span class="text-gray-500 ml-2">vs last month</span>
+                <h3 class="text-3xl font-bold mb-1" id="total-sessions">-</h3>
+                <p class="text-sm text-slate-400 mb-4">Sessions</p>
+                <div class="h-2 bg-slate-700/50 rounded-full overflow-hidden">
+                    <div class="h-full progress-bar rounded-full" style="width: 75%"></div>
                 </div>
             </div>
 
             <!-- Active Projects -->
-            <div class="glass rounded-xl p-6 holographic">
+            <div class="glass-ultra rounded-2xl p-6 interactive-card holographic-border">
                 <div class="flex items-center justify-between mb-4">
-                    <i data-lucide="folder-open" class="w-6 h-6 text-purple-400"></i>
-                    <span class="text-xs text-gray-400">Active</span>
+                    <div class="p-3 rounded-xl bg-blue-500/20">
+                        <i data-lucide="folder-open" class="w-6 h-6 text-blue-400"></i>
+                    </div>
+                    <span class="text-xs text-slate-400 font-cyber">ACTIVE</span>
                 </div>
-                <h3 class="text-2xl font-bold mb-1">8</h3>
-                <p class="text-sm text-gray-400">Projects</p>
-                <div class="mt-4 flex space-x-1">
-                    <div class="w-8 h-8 bg-purple-500/20 rounded-lg flex items-center justify-center text-xs">TK</div>
-                    <div class="w-8 h-8 bg-blue-500/20 rounded-lg flex items-center justify-center text-xs">AI</div>
-                    <div class="w-8 h-8 bg-green-500/20 rounded-lg flex items-center justify-center text-xs">DB</div>
-                    <div class="w-8 h-8 bg-gray-500/20 rounded-lg flex items-center justify-center text-xs">+5</div>
+                <h3 class="text-3xl font-bold mb-1" id="active-projects">-</h3>
+                <p class="text-sm text-slate-400 mb-4">Projects</p>
+                <div class="flex space-x-2">
+                    <div class="w-8 h-8 bg-purple-500/20 rounded-lg flex items-center justify-center text-xs font-cyber">TK</div>
+                    <div class="w-8 h-8 bg-blue-500/20 rounded-lg flex items-center justify-center text-xs font-cyber">ES</div>
+                    <div class="w-8 h-8 bg-emerald-500/20 rounded-lg flex items-center justify-center text-xs font-cyber">AI</div>
                 </div>
             </div>
 
-            <!-- Sessions Today -->
-            <div class="glass rounded-xl p-6 holographic">
+            <!-- Total Tasks -->
+            <div class="glass-ultra rounded-2xl p-6 interactive-card holographic-border">
                 <div class="flex items-center justify-between mb-4">
-                    <i data-lucide="activity" class="w-6 h-6 text-pink-400"></i>
-                    <span class="text-xs text-gray-400">Today</span>
+                    <div class="p-3 rounded-xl bg-emerald-500/20">
+                        <i data-lucide="check-circle" class="w-6 h-6 text-emerald-400"></i>
+                    </div>
+                    <span class="text-xs text-slate-400 font-cyber">COMPLETED</span>
                 </div>
-                <h3 class="text-2xl font-bold mb-1">3</h3>
-                <p class="text-sm text-gray-400">Sessions</p>
-                <div class="mt-4 flex items-center text-xs">
-                    <span class="text-pink-400">6h 45m</span>
-                    <span class="text-gray-500 ml-2">total time</span>
+                <h3 class="text-3xl font-bold mb-1" id="total-tasks">-</h3>
+                <p class="text-sm text-slate-400 mb-4">Tasks</p>
+                <div class="flex items-center text-xs">
+                    <span class="text-emerald-400">↗ 23%</span>
+                    <span class="text-slate-500 ml-2">efficiency</span>
+                </div>
+            </div>
+
+            <!-- Files Modified -->
+            <div class="glass-ultra rounded-2xl p-6 interactive-card holographic-border">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="p-3 rounded-xl bg-pink-500/20">
+                        <i data-lucide="file-edit" class="w-6 h-6 text-pink-400"></i>
+                    </div>
+                    <span class="text-xs text-slate-400 font-cyber">MODIFIED</span>
+                </div>
+                <h3 class="text-3xl font-bold mb-1" id="total-files">-</h3>
+                <p class="text-sm text-slate-400 mb-4">Files</p>
+                <div class="flex items-center text-xs">
+                    <span class="text-pink-400">Real-time</span>
+                    <span class="text-slate-500 ml-2">tracking</span>
                 </div>
             </div>
         </div>
 
-        <!-- Main Grid -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <!-- Left Column - Current Session -->
-            <div class="lg:col-span-2 space-y-6">
-                <!-- Current Session Details -->
-                <div class="glass rounded-2xl p-6">
+        <!-- Main Content Grid -->
+        <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+            <!-- Left Column - Session Details -->
+            <div class="xl:col-span-2 space-y-6">
+                <!-- Session Cards -->
+                <div class="glass-ultra rounded-3xl p-6 quantum-glow">
                     <div class="flex items-center justify-between mb-6">
-                        <h2 class="text-xl font-semibold">Current Session</h2>
-                        <button class="glass-dark px-4 py-2 rounded-lg text-sm hover:bg-white/10 transition">
-                            End Session
-                        </button>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-4 mb-6">
-                        <div class="glass-dark rounded-lg p-4">
-                            <p class="text-sm text-gray-400 mb-2">Goal</p>
-                            <p class="font-medium">Implement authentication system</p>
-                        </div>
-                        <div class="glass-dark rounded-lg p-4">
-                            <p class="text-sm text-gray-400 mb-2">Project</p>
-                            <p class="font-medium">TK Content Orchestrator</p>
+                        <h2 class="text-2xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">Active Sessions</h2>
+                        <div class="flex items-center space-x-3">
+                            <button class="glass-panel px-4 py-2 rounded-xl text-sm hover:bg-white/5 transition micro-bounce">
+                                <i data-lucide="refresh-cw" class="w-4 h-4 mr-2 inline"></i>Refresh
+                            </button>
+                            <button class="glass-panel px-4 py-2 rounded-xl text-sm hover:bg-white/5 transition micro-bounce">
+                                <i data-lucide="download" class="w-4 h-4 mr-2 inline"></i>Export
+                            </button>
                         </div>
                     </div>
 
-                    <!-- Live Activity Feed -->
-                    <div class="space-y-3">
-                        <h3 class="text-sm font-semibold text-gray-400 mb-3">Live Activity</h3>
-                        <div class="space-y-2 max-h-64 overflow-y-auto">
-                            <div class="glass-dark rounded-lg p-3 flex items-start space-x-3">
-                                <div class="w-2 h-2 bg-green-400 rounded-full mt-1.5"></div>
-                                <div class="flex-1">
-                                    <p class="text-sm">Task completed: JWT middleware implementation</p>
-                                    <p class="text-xs text-gray-500">2 minutes ago • code-implementer • 1,245 tokens</p>
-                                </div>
-                            </div>
-                            <div class="glass-dark rounded-lg p-3 flex items-start space-x-3">
-                                <div class="w-2 h-2 bg-blue-400 rounded-full mt-1.5"></div>
-                                <div class="flex-1">
-                                    <p class="text-sm">File modified: server/middleware/auth.js</p>
-                                    <p class="text-xs text-gray-500">5 minutes ago</p>
-                                </div>
-                            </div>
-                            <div class="glass-dark rounded-lg p-3 flex items-start space-x-3">
-                                <div class="w-2 h-2 bg-purple-400 rounded-full mt-1.5"></div>
-                                <div class="flex-1">
-                                    <p class="text-sm">Tests passed: 24/24 auth tests</p>
-                                    <p class="text-xs text-gray-500">8 minutes ago • test-runner</p>
-                                </div>
-                            </div>
-                        </div>
+                    <div class="space-y-4" id="session-cards">
+                        <!-- Session cards will be dynamically loaded here -->
+                        <div class="loading-shimmer glass-panel rounded-2xl p-6 h-40"></div>
+                        <div class="loading-shimmer glass-panel rounded-2xl p-6 h-40"></div>
                     </div>
                 </div>
 
-                <!-- Token Usage Chart -->
-                <div class="glass rounded-2xl p-6">
-                    <h2 class="text-xl font-semibold mb-6">Token Usage (Last 7 Days)</h2>
-                    <canvas id="tokenChart" class="w-full h-64"></canvas>
+                <!-- Analytics Chart -->
+                <div class="glass-ultra rounded-3xl p-6 quantum-glow">
+                    <h2 class="text-2xl font-bold mb-6 bg-gradient-to-r from-emerald-400 to-blue-400 bg-clip-text text-transparent">Session Analytics</h2>
+                    <div class="chart-container">
+                        <canvas id="sessionChart" class="w-full h-80"></canvas>
+                    </div>
                 </div>
             </div>
 
-            <!-- Right Column -->
+            <!-- Right Column - Sidebar -->
             <div class="space-y-6">
-                <!-- Agent Usage -->
-                <div class="glass rounded-2xl p-6">
-                    <h2 class="text-lg font-semibold mb-4">Agent Usage Today</h2>
-                    <div class="space-y-3">
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center space-x-3">
-                                <div class="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center">
-                                    <i data-lucide="code" class="w-5 h-5 text-purple-400"></i>
-                                </div>
-                                <div>
-                                    <p class="text-sm font-medium">code-implementer</p>
-                                    <p class="text-xs text-gray-500">45,230 tokens</p>
-                                </div>
-                            </div>
-                            <span class="text-sm text-gray-400">$0.68</span>
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center space-x-3">
-                                <div class="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center">
-                                    <i data-lucide="search" class="w-5 h-5 text-blue-400"></i>
-                                </div>
-                                <div>
-                                    <p class="text-sm font-medium">code-reviewer</p>
-                                    <p class="text-xs text-gray-500">23,150 tokens</p>
-                                </div>
-                            </div>
-                            <span class="text-sm text-gray-400">$0.35</span>
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center space-x-3">
-                                <div class="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center">
-                                    <i data-lucide="bug" class="w-5 h-5 text-green-400"></i>
-                                </div>
-                                <div>
-                                    <p class="text-sm font-medium">debugger</p>
-                                    <p class="text-xs text-gray-500">12,450 tokens</p>
-                                </div>
-                            </div>
-                            <span class="text-sm text-gray-400">$0.19</span>
-                        </div>
+                <!-- Project Overview -->
+                <div class="glass-ultra rounded-3xl p-6 quantum-glow">
+                    <h3 class="text-lg font-bold mb-4 bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">Project Overview</h3>
+                    <div class="space-y-4" id="project-overview">
+                        <!-- Project cards will be loaded here -->
+                        <div class="loading-shimmer glass-panel rounded-xl p-4 h-16"></div>
+                        <div class="loading-shimmer glass-panel rounded-xl p-4 h-16"></div>
                     </div>
                 </div>
 
-                <!-- n8n Workflows -->
-                <div class="glass rounded-2xl p-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <h2 class="text-lg font-semibold">n8n Workflows</h2>
-                        <div class="w-2 h-2 bg-green-400 rounded-full pulse-dot"></div>
-                    </div>
-                    <div class="space-y-3">
-                        <div class="glass-dark rounded-lg p-3">
-                            <div class="flex items-center justify-between mb-2">
-                                <p class="text-sm font-medium">Session Auto-Save</p>
-                                <span class="text-xs text-green-400">Active</span>
-                            </div>
-                            <p class="text-xs text-gray-500">Every 5 minutes</p>
-                        </div>
-                        <div class="glass-dark rounded-lg p-3">
-                            <div class="flex items-center justify-between mb-2">
-                                <p class="text-sm font-medium">Cost Alert</p>
-                                <span class="text-xs text-yellow-400">Triggered</span>
-                            </div>
-                            <p class="text-xs text-gray-500">When daily > $50</p>
-                        </div>
-                        <div class="glass-dark rounded-lg p-3">
-                            <div class="flex items-center justify-between mb-2">
-                                <p class="text-sm font-medium">Daily Summary</p>
-                                <span class="text-xs text-gray-400">Scheduled</span>
-                            </div>
-                            <p class="text-xs text-gray-500">6:00 PM daily</p>
-                        </div>
+                <!-- Agent Activity -->
+                <div class="glass-ultra rounded-3xl p-6 quantum-glow">
+                    <h3 class="text-lg font-bold mb-4 bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent">Agent Activity</h3>
+                    <div class="space-y-3" id="agent-activity">
+                        <!-- Agent activity will be loaded here -->
+                        <div class="loading-shimmer glass-panel rounded-xl p-3 h-14"></div>
+                        <div class="loading-shimmer glass-panel rounded-xl p-3 h-14"></div>
+                        <div class="loading-shimmer glass-panel rounded-xl p-3 h-14"></div>
                     </div>
                 </div>
 
-                <!-- Recent Projects -->
-                <div class="glass rounded-2xl p-6">
-                    <h2 class="text-lg font-semibold mb-4">Recent Projects</h2>
-                    <div class="space-y-2">
-                        <div class="glass-dark rounded-lg p-3 hover:bg-white/5 cursor-pointer transition">
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <p class="text-sm font-medium">TK Content Orchestrator</p>
-                                    <p class="text-xs text-gray-500">3 sessions • 245k tokens</p>
-                                </div>
-                                <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400"></i>
+                <!-- System Status -->
+                <div class="glass-ultra rounded-3xl p-6 quantum-glow">
+                    <h3 class="text-lg font-bold mb-4 bg-gradient-to-r from-emerald-400 to-purple-400 bg-clip-text text-transparent">System Status</h3>
+                    <div class="space-y-3">
+                        <div class="glass-panel rounded-xl p-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-sm font-medium">CPU Usage</span>
+                                <span class="text-xs font-cyber text-emerald-400">Normal</span>
+                            </div>
+                            <div class="h-2 bg-slate-700/50 rounded-full overflow-hidden">
+                                <div class="h-full bg-gradient-to-r from-emerald-500 to-blue-500 rounded-full" style="width: 34%"></div>
                             </div>
                         </div>
-                        <div class="glass-dark rounded-lg p-3 hover:bg-white/5 cursor-pointer transition">
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <p class="text-sm font-medium">AI Assistant API</p>
-                                    <p class="text-xs text-gray-500">2 sessions • 156k tokens</p>
-                                </div>
-                                <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400"></i>
+                        <div class="glass-panel rounded-xl p-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-sm font-medium">Memory</span>
+                                <span class="text-xs font-cyber text-blue-400">Optimal</span>
+                            </div>
+                            <div class="h-2 bg-slate-700/50 rounded-full overflow-hidden">
+                                <div class="h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full" style="width: 58%"></div>
                             </div>
                         </div>
-                        <div class="glass-dark rounded-lg p-3 hover:bg-white/5 cursor-pointer transition">
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <p class="text-sm font-medium">Database Migration Tool</p>
-                                    <p class="text-xs text-gray-500">1 session • 87k tokens</p>
-                                </div>
-                                <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400"></i>
+                        <div class="glass-panel rounded-xl p-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-sm font-medium">Storage</span>
+                                <span class="text-xs font-cyber text-purple-400">Good</span>
+                            </div>
+                            <div class="h-2 bg-slate-700/50 rounded-full overflow-hidden">
+                                <div class="h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full" style="width: 73%"></div>
                             </div>
                         </div>
                     </div>
@@ -354,49 +474,68 @@
             </div>
         </div>
 
-        <!-- Monthly Overview -->
-        <div class="glass rounded-2xl p-6 mt-6">
+        <!-- Bottom Section - Detailed Analytics -->
+        <div class="glass-ultra rounded-3xl p-6 mt-6 quantum-glow">
             <div class="flex items-center justify-between mb-6">
-                <h2 class="text-xl font-semibold">Monthly Overview</h2>
-                <select class="glass-dark px-4 py-2 rounded-lg text-sm bg-transparent">
-                    <option>January 2025</option>
-                    <option>December 2024</option>
-                    <option>November 2024</option>
+                <h2 class="text-2xl font-bold bg-gradient-to-r from-pink-400 to-purple-400 bg-clip-text text-transparent">Performance Analytics</h2>
+                <select class="glass-panel px-4 py-2 rounded-xl text-sm bg-transparent border-none outline-none">
+                    <option value="7days">Last 7 Days</option>
+                    <option value="30days">Last 30 Days</option>
+                    <option value="90days">Last 90 Days</option>
                 </select>
             </div>
             
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <!-- Sessions by Project -->
-                <div class="glass-dark rounded-lg p-4">
-                    <h3 class="text-sm font-semibold text-gray-400 mb-4">Sessions by Project</h3>
-                    <canvas id="projectChart" class="w-full h-48"></canvas>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- Task Completion Rate -->
+                <div class="glass-panel rounded-2xl p-6">
+                    <h3 class="text-sm font-semibold text-slate-400 mb-4 font-cyber">COMPLETION RATE</h3>
+                    <div class="chart-container">
+                        <canvas id="completionChart" class="w-full h-32"></canvas>
+                    </div>
                 </div>
                 
-                <!-- Cost Breakdown -->
-                <div class="glass-dark rounded-lg p-4">
-                    <h3 class="text-sm font-semibold text-gray-400 mb-4">Cost by Model</h3>
-                    <canvas id="costChart" class="w-full h-48"></canvas>
+                <!-- Token Usage -->
+                <div class="glass-panel rounded-2xl p-6">
+                    <h3 class="text-sm font-semibold text-slate-400 mb-4 font-cyber">TOKEN DISTRIBUTION</h3>
+                    <div class="chart-container">
+                        <canvas id="tokenChart" class="w-full h-32"></canvas>
+                    </div>
+                </div>
+                
+                <!-- Session Duration -->
+                <div class="glass-panel rounded-2xl p-6">
+                    <h3 class="text-sm font-semibold text-slate-400 mb-4 font-cyber">SESSION DURATION</h3>
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm">Average</span>
+                            <span class="font-bold text-purple-400">2h 15m</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm">Longest</span>
+                            <span class="font-bold text-blue-400">6h 45m</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm">Today</span>
+                            <span class="font-bold text-emerald-400">4h 20m</span>
+                        </div>
+                    </div>
                 </div>
                 
                 <!-- Productivity Metrics -->
-                <div class="glass-dark rounded-lg p-4">
-                    <h3 class="text-sm font-semibold text-gray-400 mb-4">Productivity</h3>
+                <div class="glass-panel rounded-2xl p-6">
+                    <h3 class="text-sm font-semibold text-slate-400 mb-4 font-cyber">PRODUCTIVITY</h3>
                     <div class="space-y-3">
                         <div class="flex justify-between items-center">
-                            <span class="text-sm">Tasks Completed</span>
-                            <span class="font-semibold">342</span>
+                            <span class="text-sm">Efficiency</span>
+                            <span class="font-bold text-emerald-400">94%</span>
                         </div>
                         <div class="flex justify-between items-center">
-                            <span class="text-sm">Files Modified</span>
-                            <span class="font-semibold">567</span>
+                            <span class="text-sm">Quality</span>
+                            <span class="font-bold text-blue-400">98%</span>
                         </div>
                         <div class="flex justify-between items-center">
-                            <span class="text-sm">Commits</span>
-                            <span class="font-semibold">89</span>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-sm">Avg Session</span>
-                            <span class="font-semibold">2h 15m</span>
+                            <span class="text-sm">Speed</span>
+                            <span class="font-bold text-purple-400">87%</span>
                         </div>
                     </div>
                 </div>
@@ -408,115 +547,543 @@
         // Initialize Lucide icons
         lucide.createIcons();
 
-        // Token Usage Chart
-        const tokenCtx = document.getElementById('tokenChart').getContext('2d');
-        new Chart(tokenCtx, {
-            type: 'line',
-            data: {
-                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-                datasets: [{
-                    label: 'Claude-3',
-                    data: [65000, 78000, 90000, 81000, 95000, 88000, 92000],
-                    borderColor: 'rgb(139, 92, 246)',
-                    backgroundColor: 'rgba(139, 92, 246, 0.1)',
-                    tension: 0.4
-                }, {
-                    label: 'GPT-4',
-                    data: [45000, 52000, 48000, 55000, 61000, 58000, 65000],
-                    borderColor: 'rgb(59, 130, 246)',
-                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                    tension: 0.4
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        labels: { color: '#fff' }
-                    }
-                },
-                scales: {
-                    y: {
-                        ticks: { color: '#9CA3AF' },
-                        grid: { color: 'rgba(255, 255, 255, 0.05)' }
+        // Session data from your sessions.json
+        const sessionsData = {
+            "sessions": [
+                {
+                    "id": "tradekeep_20250822_015934",
+                    "startTime": "2025-08-22T01:59:34.898601",
+                    "endTime": null,
+                    "goal": "TradeKeep Agent System Development",
+                    "intention": "Professional content generation system",
+                    "project": "TradeKeep Systems",
+                    "status": "active",
+                    "tasks": [
+                        "Reorganized 53 files into professional structure",
+                        "Created brand voice enforcement system",
+                        "Generated content with 100% voice alignment",
+                        "Established file organization standards",
+                        "Updated comprehensive changelog"
+                    ],
+                    "filesModified": [
+                        "PROJECT_STRUCTURE.md",
+                        "brand_voice_profile.md",
+                        "agents/creative/tradekeep_voice_agent.py",
+                        "scripts/generate_tradekeep_content.py",
+                        "CHANGELOG.md"
+                    ],
+                    "agents": [
+                        "TradeKeep Voice Agent",
+                        "Content Generation System"
+                    ],
+                    "accomplishments": [
+                        "Professional project reorganization completed",
+                        "TradeKeep brand voice system implemented",
+                        "Content generation with voice enforcement active",
+                        "Organized campaign storage system created",
+                        "Comprehensive documentation standards established"
+                    ],
+                    "tokens": {
+                        "total": 5000,
+                        "byAgent": {
+                            "TradeKeep Voice Agent": 1000,
+                            "Content Generation System": 1000
+                        }
                     },
-                    x: {
-                        ticks: { color: '#9CA3AF' },
-                        grid: { color: 'rgba(255, 255, 255, 0.05)' }
-                    }
-                }
-            }
-        });
-
-        // Project Donut Chart
-        const projectCtx = document.getElementById('projectChart').getContext('2d');
-        new Chart(projectCtx, {
-            type: 'doughnut',
-            data: {
-                labels: ['TK Orchestrator', 'AI API', 'DB Tool', 'Other'],
-                datasets: [{
-                    data: [45, 25, 15, 15],
-                    backgroundColor: [
-                        'rgba(139, 92, 246, 0.8)',
-                        'rgba(59, 130, 246, 0.8)',
-                        'rgba(16, 185, 129, 0.8)',
-                        'rgba(156, 163, 175, 0.8)'
-                    ],
-                    borderWidth: 0
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false
-                    }
-                }
-            }
-        });
-
-        // Cost Chart
-        const costCtx = document.getElementById('costChart').getContext('2d');
-        new Chart(costCtx, {
-            type: 'bar',
-            data: {
-                labels: ['Claude-3', 'GPT-4', 'GPT-3.5'],
-                datasets: [{
-                    data: [125.50, 89.30, 32.52],
-                    backgroundColor: [
-                        'rgba(139, 92, 246, 0.8)',
-                        'rgba(59, 130, 246, 0.8)',
-                        'rgba(16, 185, 129, 0.8)'
-                    ],
-                    borderWidth: 0
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false
-                    }
+                    "costs": {
+                        "total": 0.05,
+                        "byAgent": {
+                            "TradeKeep Voice Agent": 0.01,
+                            "Content Generation System": 0.01
+                        }
+                    },
+                    "summary": {},
+                    "duration_minutes": 0
                 },
-                scales: {
-                    y: {
-                        ticks: { 
-                            color: '#9CA3AF',
-                            callback: function(value) {
-                                return '$' + value;
+                {
+                    "id": "tradekeep_20250822_015951",
+                    "startTime": "2025-08-22T01:59:51.418873",
+                    "endTime": null,
+                    "goal": "TradeKeep Agent System Development",
+                    "intention": "Professional content generation system",
+                    "project": "TradeKeep Systems",
+                    "status": "active",
+                    "tasks": [
+                        "Reorganized 53 files into professional structure",
+                        "Created brand voice enforcement system",
+                        "Generated content with 100% voice alignment",
+                        "Established file organization standards",
+                        "Updated comprehensive changelog"
+                    ],
+                    "filesModified": [
+                        "PROJECT_STRUCTURE.md",
+                        "brand_voice_profile.md",
+                        "agents/creative/tradekeep_voice_agent.py",
+                        "scripts/generate_tradekeep_content.py",
+                        "CHANGELOG.md"
+                    ],
+                    "agents": [
+                        "TradeKeep Voice Agent",
+                        "Content Generation System"
+                    ],
+                    "accomplishments": [
+                        "Professional project reorganization completed",
+                        "TradeKeep brand voice system implemented",
+                        "Content generation with voice enforcement active",
+                        "Organized campaign storage system created",
+                        "Comprehensive documentation standards established"
+                    ],
+                    "tokens": {
+                        "total": 5000,
+                        "byAgent": {
+                            "TradeKeep Voice Agent": 1000,
+                            "Content Generation System": 1000
+                        }
+                    },
+                    "costs": {
+                        "total": 0.05,
+                        "byAgent": {
+                            "TradeKeep Voice Agent": 0.01,
+                            "Content Generation System": 0.01
+                        }
+                    },
+                    "summary": {},
+                    "duration_minutes": 0
+                },
+                {
+                    "id": "elite_sd_construction_20250822_020649",
+                    "startTime": "2025-08-22T02:06:49.190954",
+                    "endTime": "2025-08-22T02:06:49.190954",
+                    "goal": "Professional Codebase Organization",
+                    "intention": "Organize Elite SD Construction website with professional development standards",
+                    "project": "Elite SD Construction Website",
+                    "status": "completed",
+                    "tasks": [
+                        "Created comprehensive file organization system",
+                        "Set up professional build configuration with Webpack, ESLint, Prettier",
+                        "Established BEM CSS methodology and naming conventions",
+                        "Created theme management system for multiple design variants",
+                        "Implemented testing framework with Jest and Playwright",
+                        "Migrated shared components to new professional structure",
+                        "Created professional configuration files and development tools"
+                    ],
+                    "filesModified": [
+                        "CODE_ORGANIZATION_RULES.md",
+                        "elite-sd-construction/package.json",
+                        "tools/webpack.config.js",
+                        "tools/.eslintrc.js",
+                        "tools/jest.config.js",
+                        "tools/.prettierrc.js",
+                        "tools/playwright.config.js",
+                        "src/shared/scripts/core/main.js",
+                        "src/shared/scripts/core/config.js",
+                        "src/shared/components/navigation.component.js",
+                        "src/shared/styles/base/_variables.css",
+                        "src/themes/original/styles/theme-variables.css",
+                        "tests/setup.js",
+                        "tests/__mocks__/fileMock.js"
+                    ],
+                    "accomplishments": [
+                        "Professional directory structure created following industry standards",
+                        "Modern build tools configured with code splitting and optimization",
+                        "Code organization rules documented for team collaboration",
+                        "Theme-based architecture implemented supporting multiple design variants",
+                        "Development workflow established with linting, testing, and formatting",
+                        "BEM methodology implemented for consistent CSS naming",
+                        "Professional color system created (70/20/10 blue/red strategy)",
+                        "Testing framework setup with comprehensive utilities and mocks"
+                    ],
+                    "summary": "Successfully organized Elite SD Construction website codebase into professional structure with modern tooling, clear organization rules, and scalable architecture."
+                }
+            ]
+        };
+
+        // Dashboard Initialization
+        function initializeDashboard() {
+            updateMetrics();
+            loadSessionCards();
+            loadProjectOverview();
+            loadAgentActivity();
+            initializeCharts();
+            startRealTimeUpdates();
+        }
+
+        // Update Key Metrics
+        function updateMetrics() {
+            const sessions = sessionsData.sessions;
+            
+            document.getElementById('total-sessions').textContent = sessions.length;
+            
+            const uniqueProjects = [...new Set(sessions.map(s => s.project))];
+            document.getElementById('active-projects').textContent = uniqueProjects.length;
+            
+            const totalTasks = sessions.reduce((sum, session) => sum + session.tasks.length, 0);
+            document.getElementById('total-tasks').textContent = totalTasks;
+            
+            const totalFiles = sessions.reduce((sum, session) => sum + session.filesModified.length, 0);
+            document.getElementById('total-files').textContent = totalFiles;
+        }
+
+        // Load Session Cards
+        function loadSessionCards() {
+            const container = document.getElementById('session-cards');
+            container.innerHTML = '';
+            
+            sessionsData.sessions.forEach((session, index) => {
+                const statusClass = session.status === 'active' ? 'status-active' : 'status-completed';
+                const statusText = session.status === 'active' ? 'ACTIVE' : 'COMPLETED';
+                
+                const card = document.createElement('div');
+                card.className = 'glass-panel rounded-2xl p-6 interactive-card holographic-border';
+                card.innerHTML = `
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-3 h-3 rounded-full ${statusClass}"></div>
+                            <div>
+                                <h3 class="font-bold text-lg">${session.project}</h3>
+                                <p class="text-slate-400 text-sm font-cyber">${session.goal}</p>
+                            </div>
+                        </div>
+                        <span class="text-xs font-cyber px-3 py-1 rounded-full bg-slate-700/50 ${session.status === 'active' ? 'text-emerald-400' : 'text-blue-400'}">${statusText}</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-3 gap-4 mb-4">
+                        <div class="glass-card rounded-lg p-3">
+                            <div class="text-xs text-slate-400 font-cyber mb-1">TASKS</div>
+                            <div class="text-lg font-bold text-purple-400">${session.tasks.length}</div>
+                        </div>
+                        <div class="glass-card rounded-lg p-3">
+                            <div class="text-xs text-slate-400 font-cyber mb-1">FILES</div>
+                            <div class="text-lg font-bold text-blue-400">${session.filesModified.length}</div>
+                        </div>
+                        <div class="glass-card rounded-lg p-3">
+                            <div class="text-xs text-slate-400 font-cyber mb-1">AGENTS</div>
+                            <div class="text-lg font-bold text-emerald-400">${session.agents.length}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center justify-between">
+                        <div class="flex space-x-2">
+                            ${session.agents.slice(0, 3).map(agent => `
+                                <div class="w-8 h-8 bg-purple-500/20 rounded-lg flex items-center justify-center text-xs font-cyber">${agent.split(' ')[0][0]}${agent.split(' ')[1] ? agent.split(' ')[1][0] : ''}</div>
+                            `).join('')}
+                        </div>
+                        <div class="text-sm text-slate-400 font-cyber">
+                            ${new Date(session.startTime).toLocaleDateString()}
+                        </div>
+                    </div>
+                `;
+                
+                // Add animation delay
+                card.style.animationDelay = `${index * 0.1}s`;
+                container.appendChild(card);
+                
+                // Animate card entrance
+                anime({
+                    targets: card,
+                    opacity: [0, 1],
+                    translateY: [20, 0],
+                    duration: 800,
+                    delay: index * 100,
+                    easing: 'easeOutCubic'
+                });
+            });
+        }
+
+        // Load Project Overview
+        function loadProjectOverview() {
+            const container = document.getElementById('project-overview');
+            const projects = {};
+            
+            sessionsData.sessions.forEach(session => {
+                if (!projects[session.project]) {
+                    projects[session.project] = {
+                        name: session.project,
+                        sessions: 0,
+                        tasks: 0,
+                        status: 'active'
+                    };
+                }
+                projects[session.project].sessions++;
+                projects[session.project].tasks += session.tasks.length;
+            });
+            
+            container.innerHTML = '';
+            Object.values(projects).forEach((project, index) => {
+                const card = document.createElement('div');
+                card.className = 'glass-panel rounded-xl p-4 hover:bg-white/5 cursor-pointer transition interactive-card';
+                card.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h4 class="font-semibold text-sm">${project.name}</h4>
+                            <p class="text-xs text-slate-400 font-cyber">${project.sessions} sessions • ${project.tasks} tasks</p>
+                        </div>
+                        <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400"></i>
+                    </div>
+                `;
+                container.appendChild(card);
+                
+                // Animate entrance
+                anime({
+                    targets: card,
+                    opacity: [0, 1],
+                    translateX: [20, 0],
+                    duration: 600,
+                    delay: index * 150,
+                    easing: 'easeOutCubic'
+                });
+            });
+            
+            // Re-initialize icons
+            lucide.createIcons();
+        }
+
+        // Load Agent Activity
+        function loadAgentActivity() {
+            const container = document.getElementById('agent-activity');
+            const agents = {};
+            
+            sessionsData.sessions.forEach(session => {
+                session.agents.forEach(agent => {
+                    if (!agents[agent]) {
+                        agents[agent] = {
+                            name: agent,
+                            sessions: 0,
+                            tokens: 0
+                        };
+                    }
+                    agents[agent].sessions++;
+                    agents[agent].tokens += session.tokens.byAgent[agent] || 0;
+                });
+            });
+            
+            container.innerHTML = '';
+            Object.values(agents).forEach((agent, index) => {
+                const card = document.createElement('div');
+                card.className = 'glass-panel rounded-xl p-3 flex items-center space-x-3 interactive-card';
+                
+                const iconClass = agent.name.includes('Voice') ? 'mic' : 
+                                 agent.name.includes('Content') ? 'edit-3' : 
+                                 'cpu';
+                const colorClass = agent.name.includes('Voice') ? 'purple' : 
+                                  agent.name.includes('Content') ? 'blue' : 
+                                  'emerald';
+                
+                card.innerHTML = `
+                    <div class="w-10 h-10 bg-${colorClass}-500/20 rounded-lg flex items-center justify-center">
+                        <i data-lucide="${iconClass}" class="w-5 h-5 text-${colorClass}-400"></i>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-sm font-medium">${agent.name}</p>
+                        <p class="text-xs text-slate-400 font-cyber">${agent.sessions} sessions • ${agent.tokens.toLocaleString()} tokens</p>
+                    </div>
+                `;
+                container.appendChild(card);
+                
+                // Animate entrance
+                anime({
+                    targets: card,
+                    opacity: [0, 1],
+                    scale: [0.9, 1],
+                    duration: 600,
+                    delay: index * 100,
+                    easing: 'easeOutCubic'
+                });
+            });
+            
+            // Re-initialize icons
+            lucide.createIcons();
+        }
+
+        // Initialize Charts
+        function initializeCharts() {
+            // Session Analytics Chart
+            const sessionCtx = document.getElementById('sessionChart').getContext('2d');
+            new Chart(sessionCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+                    datasets: [{
+                        label: 'TradeKeep Systems',
+                        data: [2, 0, 0, 0],
+                        borderColor: 'rgb(139, 92, 246)',
+                        backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }, {
+                        label: 'Elite SD Construction',
+                        data: [0, 0, 0, 1],
+                        borderColor: 'rgb(59, 130, 246)',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { 
+                                color: '#fff',
+                                font: { family: 'Inter' }
                             }
-                        },
-                        grid: { color: 'rgba(255, 255, 255, 0.05)' }
+                        }
                     },
-                    x: {
-                        ticks: { color: '#9CA3AF' },
-                        grid: { color: 'rgba(255, 255, 255, 0.05)' }
+                    scales: {
+                        y: {
+                            ticks: { 
+                                color: '#94a3b8',
+                                font: { family: 'JetBrains Mono' }
+                            },
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' }
+                        },
+                        x: {
+                            ticks: { 
+                                color: '#94a3b8',
+                                font: { family: 'JetBrains Mono' }
+                            },
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' }
+                        }
                     }
                 }
+            });
+
+            // Completion Rate Chart
+            const completionCtx = document.getElementById('completionChart').getContext('2d');
+            new Chart(completionCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Completed', 'Active'],
+                    datasets: [{
+                        data: [1, 2],
+                        backgroundColor: [
+                            'rgba(16, 185, 129, 0.8)',
+                            'rgba(139, 92, 246, 0.8)'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+
+            // Token Distribution Chart
+            const tokenCtx = document.getElementById('tokenChart').getContext('2d');
+            new Chart(tokenCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Voice Agent', 'Content Gen', 'Other'],
+                    datasets: [{
+                        data: [2000, 2000, 0],
+                        backgroundColor: [
+                            'rgba(139, 92, 246, 0.8)',
+                            'rgba(59, 130, 246, 0.8)',
+                            'rgba(16, 185, 129, 0.8)'
+                        ],
+                        borderWidth: 0,
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            ticks: { 
+                                color: '#94a3b8',
+                                font: { family: 'JetBrains Mono', size: 10 }
+                            },
+                            grid: { display: false }
+                        },
+                        x: {
+                            ticks: { 
+                                color: '#94a3b8',
+                                font: { family: 'JetBrains Mono', size: 10 }
+                            },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Real-time Updates
+        function startRealTimeUpdates() {
+            // Update session time
+            function updateSessionTime() {
+                const now = new Date();
+                const timeString = now.toLocaleTimeString();
+                document.getElementById('session-time').textContent = timeString;
             }
+            
+            updateSessionTime();
+            setInterval(updateSessionTime, 1000);
+
+            // Simulate real-time data flow
+            setInterval(() => {
+                const progressBars = document.querySelectorAll('.progress-bar');
+                progressBars.forEach(bar => {
+                    const currentWidth = parseInt(bar.style.width) || 0;
+                    const newWidth = Math.min(100, currentWidth + Math.random() * 2);
+                    bar.style.width = newWidth + '%';
+                });
+            }, 3000);
+        }
+
+        // Page Load Animations
+        function initializeAnimations() {
+            // Header animation
+            anime({
+                targets: 'header',
+                opacity: [0, 1],
+                translateY: [-30, 0],
+                duration: 1000,
+                easing: 'easeOutCubic'
+            });
+
+            // Metrics cards animation
+            anime({
+                targets: '.grid .interactive-card',
+                opacity: [0, 1],
+                scale: [0.9, 1],
+                duration: 800,
+                delay: anime.stagger(150),
+                easing: 'easeOutCubic'
+            });
+
+            // Background elements animation
+            anime({
+                targets: '.fixed .absolute',
+                opacity: [0, 1],
+                scale: [0.8, 1],
+                duration: 2000,
+                delay: anime.stagger(500),
+                easing: 'easeInOutSine'
+            });
+        }
+
+        // Initialize Dashboard
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeDashboard();
+            initializeAnimations();
+            
+            // Add smooth scrolling
+            document.documentElement.style.scrollBehavior = 'smooth';
+        });
+
+        // Handle responsive behavior
+        window.addEventListener('resize', () => {
+            // Re-initialize charts on window resize
+            setTimeout(initializeCharts, 300);
         });
     </script>
 </body>

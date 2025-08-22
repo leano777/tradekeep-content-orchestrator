@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TK Content Orchestrator - Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f3f4f6;
+        }
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .status.online {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        .status.offline {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        button:hover {
+            background: #2563eb;
+        }
+        input {
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            margin-right: 10px;
+            width: 200px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .content-list {
+            margin-top: 20px;
+        }
+        .content-item {
+            padding: 15px;
+            background: #f9fafb;
+            border-radius: 6px;
+            margin-bottom: 10px;
+        }
+        .error {
+            color: #dc2626;
+            margin-top: 10px;
+        }
+        .success {
+            color: #059669;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🚀 TK Content Orchestrator - Test Interface</h1>
+        <p>Backend Status: <span id="status" class="status offline">Checking...</span></p>
+    </div>
+
+    <div class="card">
+        <h2>Login</h2>
+        <div class="form-group">
+            <input type="email" id="email" placeholder="Email" value="demo@tradekeep.com">
+            <input type="password" id="password" placeholder="Password" value="Demo123!">
+            <button onclick="login()">Login</button>
+        </div>
+        <div id="loginResult"></div>
+    </div>
+
+    <div class="card" id="contentSection" style="display:none;">
+        <h2>Content Management</h2>
+        <div class="form-group">
+            <button onclick="fetchContent()">Fetch Content</button>
+            <button onclick="createContent()">Create Test Content</button>
+        </div>
+        <div id="contentResult"></div>
+        <div id="contentList" class="content-list"></div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:9002/api/v1';
+        let authToken = null;
+
+        // Check backend status
+        async function checkStatus() {
+            try {
+                const response = await fetch('http://localhost:9002/health');
+                const data = await response.json();
+                document.getElementById('status').textContent = 'Online';
+                document.getElementById('status').className = 'status online';
+            } catch (error) {
+                document.getElementById('status').textContent = 'Offline';
+                document.getElementById('status').className = 'status offline';
+            }
+        }
+
+        // Login function
+        async function login() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            try {
+                const response = await fetch(`${API_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    authToken = data.token;
+                    document.getElementById('loginResult').innerHTML = 
+                        `<div class="success">✓ Logged in as ${data.user.name} (${data.user.role})</div>`;
+                    document.getElementById('contentSection').style.display = 'block';
+                } else {
+                    // Try registering if login fails
+                    const registerResponse = await fetch(`${API_URL}/auth/register`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ 
+                            name: 'Demo User',
+                            email, 
+                            password,
+                            role: 'EDITOR'
+                        })
+                    });
+                    
+                    const registerData = await registerResponse.json();
+                    
+                    if (registerResponse.ok) {
+                        authToken = registerData.token;
+                        document.getElementById('loginResult').innerHTML = 
+                            `<div class="success">✓ Registered and logged in as ${registerData.user.name}</div>`;
+                        document.getElementById('contentSection').style.display = 'block';
+                    } else {
+                        document.getElementById('loginResult').innerHTML = 
+                            `<div class="error">✗ ${data.error || registerData.error}</div>`;
+                    }
+                }
+            } catch (error) {
+                document.getElementById('loginResult').innerHTML = 
+                    `<div class="error">✗ Connection error: ${error.message}</div>`;
+            }
+        }
+
+        // Fetch content
+        async function fetchContent() {
+            if (!authToken) {
+                alert('Please login first');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_URL}/content`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    document.getElementById('contentResult').innerHTML = 
+                        `<div class="success">✓ Found ${data.data.length} content items</div>`;
+                    
+                    const contentHtml = data.data.map(item => `
+                        <div class="content-item">
+                            <strong>${item.title}</strong>
+                            <br>Status: ${item.status}
+                            <br>Type: ${item.type}
+                            <br>Author: ${item.author?.name || 'Unknown'}
+                            <br>Created: ${new Date(item.createdAt).toLocaleDateString()}
+                        </div>
+                    `).join('');
+                    
+                    document.getElementById('contentList').innerHTML = contentHtml || '<p>No content found</p>';
+                } else {
+                    document.getElementById('contentResult').innerHTML = 
+                        `<div class="error">✗ ${data.error}</div>`;
+                }
+            } catch (error) {
+                document.getElementById('contentResult').innerHTML = 
+                    `<div class="error">✗ Error: ${error.message}</div>`;
+            }
+        }
+
+        // Create content
+        async function createContent() {
+            if (!authToken) {
+                alert('Please login first');
+                return;
+            }
+            
+            const content = {
+                title: `Test Content ${Date.now()}`,
+                body: 'This is a test content created from the test interface',
+                type: 'BLOG',
+                status: 'DRAFT',
+                pillar: 'internal-os'
+            };
+            
+            try {
+                const response = await fetch(`${API_URL}/content`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify(content)
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    document.getElementById('contentResult').innerHTML = 
+                        `<div class="success">✓ Created: ${data.data.title}</div>`;
+                    fetchContent(); // Refresh list
+                } else {
+                    document.getElementById('contentResult').innerHTML = 
+                        `<div class="error">✗ ${data.error}</div>`;
+                }
+            } catch (error) {
+                document.getElementById('contentResult').innerHTML = 
+                    `<div class="error">✗ Error: ${error.message}</div>`;
+            }
+        }
+
+        // Check status on load
+        checkStatus();
+        setInterval(checkStatus, 5000); // Check every 5 seconds
+    </script>
+</body>
+</html>

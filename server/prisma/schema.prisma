@@ -31,6 +31,8 @@ model User {
   brandAssets BrandAsset[]
   brandContentExamples BrandContentExample[]
   userEngagements UserEngagement[]
+  approvals Approval[]
+  tasks Task[]
 
   @@map("users")
 }
@@ -59,6 +61,7 @@ model Content {
   notifications Notification[]
   contentPillar ContentPillar? @relation("ContentPillarRelation", fields: [pillarId], references: [id])
   analytics   ContentAnalytics[]
+  workflowInstances WorkflowInstance[]
   
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
@@ -562,4 +565,139 @@ model AnalyticsSnapshot {
 
   @@index([period, snapshotDate])
   @@map("analytics_snapshots")
+}
+
+// Workflow models for content approval and task management
+model Workflow {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  type        String   // CONTENT_APPROVAL, TASK_SEQUENCE, CUSTOM
+  status      String   @default("ACTIVE") // ACTIVE, INACTIVE, ARCHIVED
+  
+  // Configuration
+  config      String?  // JSON configuration for workflow
+  
+  // Relations
+  stages      WorkflowStage[]
+  instances   WorkflowInstance[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("workflows")
+}
+
+model WorkflowStage {
+  id          String   @id @default(cuid())
+  workflowId  String
+  workflow    Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  
+  name        String
+  type        String   // APPROVAL, REVIEW, TASK, NOTIFICATION
+  assignedTo  String?  // User role or specific user ID
+  order       Int
+  
+  // Stage configuration
+  config      String?  // JSON: timeout, auto-approve settings, etc.
+  
+  // Relations
+  approvals   Approval[]
+  tasks       Task[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([workflowId, order])
+  @@map("workflow_stages")
+}
+
+model WorkflowInstance {
+  id             String    @id @default(cuid())
+  workflowId     String
+  workflow       Workflow  @relation(fields: [workflowId], references: [id])
+  
+  // Instance state
+  status         String    // PENDING, IN_PROGRESS, COMPLETED, REJECTED, CANCELLED
+  currentStageId String?
+  
+  // Associated content
+  contentId      String?
+  content        Content?  @relation(fields: [contentId], references: [id], onDelete: SetNull)
+  
+  // Metadata
+  startedBy      String    // User ID who initiated
+  metadata       String?   // JSON: additional context
+  
+  // Timestamps
+  startedAt      DateTime  @default(now())
+  completedAt    DateTime?
+  
+  // Relations
+  approvals      Approval[]
+  tasks          Task[]
+  
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  
+  @@index([status, createdAt])
+  @@index([contentId])
+  @@map("workflow_instances")
+}
+
+model Approval {
+  id                  String           @id @default(cuid())
+  workflowInstanceId  String
+  workflowInstance    WorkflowInstance @relation(fields: [workflowInstanceId], references: [id], onDelete: Cascade)
+  
+  stageId            String
+  stage              WorkflowStage    @relation(fields: [stageId], references: [id])
+  
+  approvedById       String
+  approvedBy         User             @relation(fields: [approvedById], references: [id])
+  
+  status             String           // APPROVED, REJECTED, PENDING
+  comments           String?
+  
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  
+  @@index([workflowInstanceId, stageId])
+  @@map("approvals")
+}
+
+model Task {
+  id                  String           @id @default(cuid())
+  workflowInstanceId  String?
+  workflowInstance    WorkflowInstance? @relation(fields: [workflowInstanceId], references: [id], onDelete: Cascade)
+  
+  stageId            String?
+  stage              WorkflowStage?    @relation(fields: [stageId], references: [id])
+  
+  // Task details
+  title              String
+  description        String?
+  type               String            // REVIEW, WRITE, EDIT, PUBLISH, CUSTOM
+  priority           String            @default("MEDIUM") // LOW, MEDIUM, HIGH, URGENT
+  
+  // Assignment
+  assignedToId       String?
+  assignedTo         User?             @relation(fields: [assignedToId], references: [id])
+  
+  // Status tracking
+  status             String            @default("TODO") // TODO, IN_PROGRESS, DONE, BLOCKED
+  
+  // Dates
+  dueDate            DateTime?
+  completedAt        DateTime?
+  
+  // Metadata
+  metadata           String?           // JSON: additional task data
+  
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+  
+  @@index([assignedToId, status])
+  @@index([status, dueDate])
+  @@map("tasks")
 }

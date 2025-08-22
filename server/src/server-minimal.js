@@ -1713,6 +1713,249 @@ app.post('/api/v1/campaigns/:id/content', requirePermission('campaigns:edit'), a
   }
 });
 
+// Workflow routes
+app.get('/api/v1/workflows', requireAuth, async (req, res) => {
+  try {
+    const workflows = await prisma.workflow.findMany({
+      include: {
+        stages: {
+          orderBy: { order: 'asc' }
+        },
+        _count: {
+          select: { instances: true }
+        }
+      }
+    });
+
+    res.json({ status: 'success', data: workflows });
+  } catch (error) {
+    console.error('Get workflows error:', error);
+    res.status(500).json({ error: 'Failed to fetch workflows' });
+  }
+});
+
+app.post('/api/v1/workflows', requirePermission('workflow:create'), async (req, res) => {
+  try {
+    const { name, description, type, stages } = req.body;
+
+    const workflow = await prisma.workflow.create({
+      data: {
+        name,
+        description,
+        type,
+        stages: {
+          create: stages.map((stage, index) => ({
+            name: stage.name,
+            type: stage.type,
+            assignedTo: stage.assignedTo,
+            config: JSON.stringify(stage.config || {}),
+            order: index
+          }))
+        }
+      },
+      include: {
+        stages: {
+          orderBy: { order: 'asc' }
+        }
+      }
+    });
+
+    res.json({ status: 'success', data: workflow });
+  } catch (error) {
+    console.error('Create workflow error:', error);
+    res.status(500).json({ error: 'Failed to create workflow' });
+  }
+});
+
+app.get('/api/v1/workflows/instances', requireAuth, async (req, res) => {
+  try {
+    const { status } = req.query;
+    const where = {};
+    
+    if (status) {
+      where.status = status;
+    }
+
+    const instances = await prisma.workflowInstance.findMany({
+      where,
+      include: {
+        workflow: true,
+        content: {
+          select: { id: true, title: true }
+        },
+        approvals: {
+          include: {
+            approvedBy: {
+              select: { id: true, name: true }
+            }
+          }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    res.json({ status: 'success', data: instances });
+  } catch (error) {
+    console.error('Get workflow instances error:', error);
+    res.status(500).json({ error: 'Failed to fetch workflow instances' });
+  }
+});
+
+app.post('/api/v1/workflows/instances', requirePermission('workflow:execute'), async (req, res) => {
+  try {
+    const { workflowId, contentId, metadata } = req.body;
+
+    const workflow = await prisma.workflow.findUnique({
+      where: { id: workflowId },
+      include: { stages: { orderBy: { order: 'asc' } } }
+    });
+
+    if (!workflow) {
+      return res.status(404).json({ error: 'Workflow not found' });
+    }
+
+    const instance = await prisma.workflowInstance.create({
+      data: {
+        workflowId,
+        contentId,
+        status: 'PENDING',
+        currentStageId: workflow.stages[0]?.id,
+        metadata: JSON.stringify(metadata || {}),
+        startedBy: req.user.id
+      },
+      include: {
+        workflow: true,
+        content: {
+          select: { id: true, title: true }
+        }
+      }
+    });
+
+    res.json({ status: 'success', data: instance });
+  } catch (error) {
+    console.error('Create workflow instance error:', error);
+    res.status(500).json({ error: 'Failed to create workflow instance' });
+  }
+});
+
+app.post('/api/v1/workflows/instances/:id/approve', requireAuth, async (req, res) => {
+  try {
+    const { comments } = req.body;
+    const instanceId = req.params.id;
+
+    const instance = await prisma.workflowInstance.findUnique({
+      where: { id: instanceId },
+      include: {
+        workflow: {
+          include: { stages: { orderBy: { order: 'asc' } } }
+        }
+      }
+    });
+
+    if (!instance) {
+      return res.status(404).json({ error: 'Workflow instance not found' });
+    }
+
+    // Create approval record
+    await prisma.approval.create({
+      data: {
+        workflowInstanceId: instanceId,
+        stageId: instance.currentStageId,
+        approvedById: req.user.id,
+        status: 'APPROVED',
+        comments
+      }
+    });
+
+    // Find next stage
+    const currentStageIndex = instance.workflow.stages.findIndex(
+      s => s.id === instance.currentStageId
+    );
+    const nextStage = instance.workflow.stages[currentStageIndex + 1];
+
+    // Update instance
+    const updatedInstance = await prisma.workflowInstance.update({
+      where: { id: instanceId },
+      data: {
+        currentStageId: nextStage?.id,
+        status: nextStage ? 'IN_PROGRESS' : 'COMPLETED',
+        completedAt: nextStage ? undefined : new Date()
+      },
+      include: {
+        workflow: true,
+        content: {
+          select: { id: true, title: true }
+        },
+        approvals: {
+          include: {
+            approvedBy: {
+              select: { id: true, name: true }
+            }
+          }
+        }
+      }
+    });
+
+    res.json({ status: 'success', data: updatedInstance });
+  } catch (error) {
+    console.error('Approve workflow error:', error);
+    res.status(500).json({ error: 'Failed to approve workflow' });
+  }
+});
+
+app.post('/api/v1/workflows/instances/:id/reject', requireAuth, async (req, res) => {
+  try {
+    const { comments } = req.body;
+    const instanceId = req.params.id;
+
+    const instance = await prisma.workflowInstance.findUnique({
+      where: { id: instanceId }
+    });
+
+    if (!instance) {
+      return res.status(404).json({ error: 'Workflow instance not found' });
+    }
+
+    // Create rejection record
+    await prisma.approval.create({
+      data: {
+        workflowInstanceId: instanceId,
+        stageId: instance.currentStageId,
+        approvedById: req.user.id,
+        status: 'REJECTED',
+        comments
+      }
+    });
+
+    // Update instance
+    const updatedInstance = await prisma.workflowInstance.update({
+      where: { id: instanceId },
+      data: {
+        status: 'REJECTED',
+        completedAt: new Date()
+      },
+      include: {
+        workflow: true,
+        content: {
+          select: { id: true, title: true }
+        },
+        approvals: {
+          include: {
+            approvedBy: {
+              select: { id: true, name: true }
+            }
+          }
+        }
+      }
+    });
+
+    res.json({ status: 'success', data: updatedInstance });
+  } catch (error) {
+    console.error('Reject workflow error:', error);
+    res.status(500).json({ error: 'Failed to reject workflow' });
+  }
+});
+
 // 404 handler
 app.use('*', (req, res) => {
   res.status(404).json({
