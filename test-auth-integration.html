@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TK Authentication Integration Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .auth-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .auth-card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .auth-card h2 {
+            color: #333;
+            font-size: 24px;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            color: #555;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+            margin-top: 10px;
+        }
+
+        .btn-danger {
+            background: #ff4757;
+            color: white;
+        }
+
+        .status-card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+
+        .status-card h2 {
+            color: #333;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .status-connected {
+            background: #e5fff5;
+            color: #00b894;
+        }
+
+        .status-disconnected {
+            background: #ffe5e5;
+            color: #ff4757;
+        }
+
+        .user-info {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .user-info h3 {
+            color: #333;
+            font-size: 18px;
+            margin-bottom: 15px;
+        }
+
+        .user-detail {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .user-detail:last-child {
+            border-bottom: none;
+        }
+
+        .user-detail label {
+            color: #666;
+            font-weight: 600;
+        }
+
+        .user-detail span {
+            color: #333;
+        }
+
+        .test-results {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .test-results h2 {
+            color: #333;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        .test-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .test-status {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+        }
+
+        .test-success {
+            background: #00b894;
+        }
+
+        .test-error {
+            background: #ff4757;
+        }
+
+        .test-pending {
+            background: #ffeaa7;
+        }
+
+        .test-info {
+            flex: 1;
+        }
+
+        .test-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 4px;
+        }
+
+        .test-message {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .alert {
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .alert-success {
+            background: #e5fff5;
+            color: #00b894;
+            border-left: 4px solid #00b894;
+        }
+
+        .alert-error {
+            background: #ffe5e5;
+            color: #ff4757;
+            border-left: 4px solid #ff4757;
+        }
+
+        .alert-info {
+            background: #e5f5ff;
+            color: #2196f3;
+            border-left: 4px solid #2196f3;
+        }
+
+        .api-endpoints {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .endpoint {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            background: white;
+            border-radius: 6px;
+            margin-bottom: 10px;
+        }
+
+        .method {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            color: white;
+        }
+
+        .method-get { background: #74b9ff; }
+        .method-post { background: #00b894; }
+        .method-put { background: #fdcb6e; }
+        .method-delete { background: #ff4757; }
+
+        .endpoint-path {
+            flex: 1;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .endpoint-status {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .status-ok { background: #e5fff5; color: #00b894; }
+        .status-fail { background: #ffe5e5; color: #ff4757; }
+
+        @media (max-width: 768px) {
+            .auth-container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔐 TK Authentication Integration Test</h1>
+            <p>Complete authentication system integration with backend API</p>
+        </div>
+
+        <!-- Connection Status -->
+        <div class="status-card">
+            <h2>Connection Status</h2>
+            <div id="connectionStatus" class="status-indicator status-disconnected">
+                <span class="status-dot">●</span>
+                <span>Checking connection...</span>
+            </div>
+            <div class="api-endpoints">
+                <h3>API Endpoints</h3>
+                <div class="endpoint">
+                    <span class="method method-get">GET</span>
+                    <span class="endpoint-path">/health</span>
+                    <span id="health-status" class="endpoint-status status-fail">Not tested</span>
+                </div>
+                <div class="endpoint">
+                    <span class="method method-post">POST</span>
+                    <span class="endpoint-path">/api/v1/auth/register</span>
+                    <span id="register-status" class="endpoint-status status-fail">Not tested</span>
+                </div>
+                <div class="endpoint">
+                    <span class="method method-post">POST</span>
+                    <span class="endpoint-path">/api/v1/auth/login</span>
+                    <span id="login-status" class="endpoint-status status-fail">Not tested</span>
+                </div>
+                <div class="endpoint">
+                    <span class="method method-get">GET</span>
+                    <span class="endpoint-path">/api/v1/auth/me</span>
+                    <span id="me-status" class="endpoint-status status-fail">Not tested</span>
+                </div>
+                <div class="endpoint">
+                    <span class="method method-post">POST</span>
+                    <span class="endpoint-path">/api/v1/auth/logout</span>
+                    <span id="logout-status" class="endpoint-status status-fail">Not tested</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Authentication Forms -->
+        <div class="auth-container">
+            <!-- Registration Form -->
+            <div class="auth-card">
+                <h2>Register New Account</h2>
+                <div id="registerAlert"></div>
+                <form id="registerForm">
+                    <div class="form-group">
+                        <label>Name</label>
+                        <input type="text" id="regName" placeholder="John Doe" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="regEmail" placeholder="john@example.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input type="password" id="regPassword" placeholder="••••••••" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Register</button>
+                </form>
+            </div>
+
+            <!-- Login Form -->
+            <div class="auth-card">
+                <h2>Login to Account</h2>
+                <div id="loginAlert"></div>
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="loginEmail" placeholder="john@example.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input type="password" id="loginPassword" placeholder="••••••••" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Login</button>
+                    <button type="button" class="btn btn-danger" onclick="logout()">Logout</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Current User Info -->
+        <div class="status-card">
+            <h2>Current User</h2>
+            <div id="userAlert"></div>
+            <div id="userInfo" style="display: none;">
+                <div class="user-info">
+                    <h3>User Details</h3>
+                    <div class="user-detail">
+                        <label>ID:</label>
+                        <span id="userId">-</span>
+                    </div>
+                    <div class="user-detail">
+                        <label>Name:</label>
+                        <span id="userName">-</span>
+                    </div>
+                    <div class="user-detail">
+                        <label>Email:</label>
+                        <span id="userEmail">-</span>
+                    </div>
+                    <div class="user-detail">
+                        <label>Role:</label>
+                        <span id="userRole">-</span>
+                    </div>
+                    <div class="user-detail">
+                        <label>Token:</label>
+                        <span id="userToken" style="font-family: monospace; font-size: 12px; word-break: break-all;">-</span>
+                    </div>
+                </div>
+            </div>
+            <div id="noUser" class="alert alert-info">
+                No user logged in. Register or login to see user information.
+            </div>
+        </div>
+
+        <!-- Test Results -->
+        <div class="test-results">
+            <h2>Integration Test Results</h2>
+            <div id="testResults">
+                <div class="test-item">
+                    <div class="test-status test-pending">⏳</div>
+                    <div class="test-info">
+                        <div class="test-title">Server Connection</div>
+                        <div class="test-message" id="serverTest">Testing connection to backend server...</div>
+                    </div>
+                </div>
+                <div class="test-item">
+                    <div class="test-status test-pending">⏳</div>
+                    <div class="test-info">
+                        <div class="test-title">Registration Flow</div>
+                        <div class="test-message" id="registrationTest">Not tested yet</div>
+                    </div>
+                </div>
+                <div class="test-item">
+                    <div class="test-status test-pending">⏳</div>
+                    <div class="test-info">
+                        <div class="test-title">Login Flow</div>
+                        <div class="test-message" id="loginTest">Not tested yet</div>
+                    </div>
+                </div>
+                <div class="test-item">
+                    <div class="test-status test-pending">⏳</div>
+                    <div class="test-info">
+                        <div class="test-title">Token Authentication</div>
+                        <div class="test-message" id="tokenTest">Not tested yet</div>
+                    </div>
+                </div>
+                <div class="test-item">
+                    <div class="test-status test-pending">⏳</div>
+                    <div class="test-info">
+                        <div class="test-title">Protected Routes</div>
+                        <div class="test-message" id="protectedTest">Not tested yet</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:9002';
+        let currentToken = localStorage.getItem('tk_auth_token');
+        let currentUser = null;
+
+        // Check server connection on load
+        async function checkConnection() {
+            try {
+                const response = await fetch(`${API_BASE}/health`);
+                const data = await response.json();
+                
+                if (data.status === 'healthy') {
+                    updateConnectionStatus(true);
+                    updateTestResult('serverTest', true, 'Connected to backend server');
+                    document.getElementById('health-status').className = 'endpoint-status status-ok';
+                    document.getElementById('health-status').textContent = 'OK';
+                } else {
+                    updateConnectionStatus(false);
+                    updateTestResult('serverTest', false, 'Server unhealthy');
+                }
+            } catch (error) {
+                updateConnectionStatus(false);
+                updateTestResult('serverTest', false, `Connection failed: ${error.message}`);
+            }
+
+            // Check current user if token exists
+            if (currentToken) {
+                await checkCurrentUser();
+            }
+        }
+
+        // Update connection status indicator
+        function updateConnectionStatus(connected) {
+            const statusEl = document.getElementById('connectionStatus');
+            if (connected) {
+                statusEl.className = 'status-indicator status-connected';
+                statusEl.innerHTML = '<span class="status-dot">●</span><span>Connected to Backend</span>';
+            } else {
+                statusEl.className = 'status-indicator status-disconnected';
+                statusEl.innerHTML = '<span class="status-dot">●</span><span>Disconnected</span>';
+            }
+        }
+
+        // Check current user
+        async function checkCurrentUser() {
+            if (!currentToken) {
+                displayNoUser();
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/api/v1/auth/me`, {
+                    headers: {
+                        'Authorization': `Bearer ${currentToken}`
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    currentUser = data.user;
+                    displayUserInfo(currentUser);
+                    updateTestResult('tokenTest', true, 'Token authentication working');
+                    document.getElementById('me-status').className = 'endpoint-status status-ok';
+                    document.getElementById('me-status').textContent = 'OK';
+                } else {
+                    displayNoUser();
+                    updateTestResult('tokenTest', false, 'Invalid or expired token');
+                }
+            } catch (error) {
+                displayNoUser();
+                updateTestResult('tokenTest', false, `Auth check failed: ${error.message}`);
+            }
+        }
+
+        // Display user information
+        function displayUserInfo(user) {
+            document.getElementById('userInfo').style.display = 'block';
+            document.getElementById('noUser').style.display = 'none';
+            document.getElementById('userId').textContent = user.id || '-';
+            document.getElementById('userName').textContent = user.name || '-';
+            document.getElementById('userEmail').textContent = user.email || '-';
+            document.getElementById('userRole').textContent = user.role || '-';
+            document.getElementById('userToken').textContent = currentToken ? currentToken.substring(0, 50) + '...' : '-';
+        }
+
+        // Display no user state
+        function displayNoUser() {
+            document.getElementById('userInfo').style.display = 'none';
+            document.getElementById('noUser').style.display = 'block';
+            currentUser = null;
+        }
+
+        // Registration form handler
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const name = document.getElementById('regName').value;
+            const email = document.getElementById('regEmail').value;
+            const password = document.getElementById('regPassword').value;
+
+            try {
+                const response = await fetch(`${API_BASE}/api/v1/auth/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ name, email, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    currentToken = data.token;
+                    currentUser = data.user;
+                    localStorage.setItem('tk_auth_token', currentToken);
+                    localStorage.setItem('tk_user', JSON.stringify(currentUser));
+                    
+                    showAlert('registerAlert', 'success', 'Registration successful!');
+                    displayUserInfo(currentUser);
+                    updateTestResult('registrationTest', true, 'Registration flow working');
+                    document.getElementById('register-status').className = 'endpoint-status status-ok';
+                    document.getElementById('register-status').textContent = 'OK';
+                    
+                    // Clear form
+                    document.getElementById('registerForm').reset();
+                } else {
+                    showAlert('registerAlert', 'error', data.error || 'Registration failed');
+                    updateTestResult('registrationTest', false, data.error || 'Registration failed');
+                }
+            } catch (error) {
+                showAlert('registerAlert', 'error', `Registration error: ${error.message}`);
+                updateTestResult('registrationTest', false, `Error: ${error.message}`);
+            }
+        });
+
+        // Login form handler
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+
+            try {
+                const response = await fetch(`${API_BASE}/api/v1/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    currentToken = data.token;
+                    currentUser = data.user;
+                    localStorage.setItem('tk_auth_token', currentToken);
+                    localStorage.setItem('tk_user', JSON.stringify(currentUser));
+                    
+                    showAlert('loginAlert', 'success', 'Login successful!');
+                    displayUserInfo(currentUser);
+                    updateTestResult('loginTest', true, 'Login flow working');
+                    document.getElementById('login-status').className = 'endpoint-status status-ok';
+                    document.getElementById('login-status').textContent = 'OK';
+                    
+                    // Test protected route
+                    await testProtectedRoute();
+                    
+                    // Clear form
+                    document.getElementById('loginForm').reset();
+                } else {
+                    showAlert('loginAlert', 'error', data.error || 'Login failed');
+                    updateTestResult('loginTest', false, data.error || 'Login failed');
+                }
+            } catch (error) {
+                showAlert('loginAlert', 'error', `Login error: ${error.message}`);
+                updateTestResult('loginTest', false, `Error: ${error.message}`);
+            }
+        });
+
+        // Logout function
+        async function logout() {
+            try {
+                if (currentToken) {
+                    const response = await fetch(`${API_BASE}/api/v1/auth/logout`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${currentToken}`
+                        }
+                    });
+
+                    if (response.ok) {
+                        document.getElementById('logout-status').className = 'endpoint-status status-ok';
+                        document.getElementById('logout-status').textContent = 'OK';
+                    }
+                }
+
+                currentToken = null;
+                currentUser = null;
+                localStorage.removeItem('tk_auth_token');
+                localStorage.removeItem('tk_user');
+                
+                showAlert('loginAlert', 'success', 'Logged out successfully');
+                displayNoUser();
+            } catch (error) {
+                showAlert('loginAlert', 'error', `Logout error: ${error.message}`);
+            }
+        }
+
+        // Test protected route
+        async function testProtectedRoute() {
+            if (!currentToken) {
+                updateTestResult('protectedTest', false, 'No token available');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/api/v1/dashboard/stats`, {
+                    headers: {
+                        'Authorization': `Bearer ${currentToken}`
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    updateTestResult('protectedTest', true, 'Protected routes accessible');
+                } else {
+                    updateTestResult('protectedTest', false, 'Access denied to protected routes');
+                }
+            } catch (error) {
+                updateTestResult('protectedTest', false, `Error: ${error.message}`);
+            }
+        }
+
+        // Show alert message
+        function showAlert(containerId, type, message) {
+            const container = document.getElementById(containerId);
+            const alertClass = type === 'success' ? 'alert-success' : 'alert-error';
+            container.innerHTML = `<div class="alert ${alertClass}">${message}</div>`;
+            
+            setTimeout(() => {
+                container.innerHTML = '';
+            }, 5000);
+        }
+
+        // Update test result display
+        function updateTestResult(testId, success, message) {
+            const testEl = document.getElementById(testId);
+            const statusEl = testEl.parentElement.previousElementSibling;
+            
+            if (success) {
+                statusEl.className = 'test-status test-success';
+                statusEl.innerHTML = '✓';
+                testEl.style.color = '#00b894';
+            } else {
+                statusEl.className = 'test-status test-error';
+                statusEl.innerHTML = '✗';
+                testEl.style.color = '#ff4757';
+            }
+            
+            testEl.textContent = message;
+        }
+
+        // Initialize on page load
+        checkConnection();
+    </script>
+</body>
+</html>

@@ -1,5 +1,5 @@
 // API Client for TK Content Orchestrator
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9000/api/v1';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9002/api/v1';
 
 class APIClient {
     private token: string | null = null;
@@ -13,12 +13,14 @@ class APIClient {
     }
 
     // Set authentication tokens
-    setTokens(token: string, refreshToken: string) {
+    setTokens(token: string, refreshToken?: string) {
         this.token = token;
-        this.refreshToken = refreshToken;
+        this.refreshToken = refreshToken || null;
         if (typeof window !== 'undefined') {
             localStorage.setItem('tk_auth_token', token);
-            localStorage.setItem('tk_refresh_token', refreshToken);
+            if (refreshToken) {
+                localStorage.setItem('tk_refresh_token', refreshToken);
+            }
         }
     }
 
@@ -102,17 +104,25 @@ class APIClient {
 
     // Auth endpoints
     async register(userData: {
-        username: string;
+        username?: string;
         email: string;
         password: string;
+        name?: string;
         firstName?: string;
         lastName?: string;
     }) {
+        // Our backend expects 'name' field, not separate firstName/lastName
+        const registrationData = {
+            email: userData.email,
+            password: userData.password,
+            name: userData.name || `${userData.firstName || ''} ${userData.lastName || ''}`.trim() || userData.username || 'User'
+        };
+        
         const data = await this.request('/auth/register', {
             method: 'POST',
-            body: JSON.stringify(userData)
+            body: JSON.stringify(registrationData)
         });
-        this.setTokens(data.token, data.refreshToken);
+        this.setTokens(data.token);
         if (typeof window !== 'undefined') {
             localStorage.setItem('tk_user', JSON.stringify(data.user));
         }
@@ -120,11 +130,17 @@ class APIClient {
     }
 
     async login(credentials: { email?: string; username?: string; password: string }) {
+        // Our backend expects only email and password
+        const loginData = {
+            email: credentials.email || credentials.username || '',
+            password: credentials.password
+        };
+        
         const data = await this.request('/auth/login', {
             method: 'POST',
-            body: JSON.stringify(credentials)
+            body: JSON.stringify(loginData)
         });
-        this.setTokens(data.token, data.refreshToken);
+        this.setTokens(data.token);
         if (typeof window !== 'undefined') {
             localStorage.setItem('tk_user', JSON.stringify(data.user));
         }
@@ -264,7 +280,7 @@ class APIClient {
 
     // Health check
     async checkHealth() {
-        const response = await fetch(`${API_BASE_URL.replace('/api', '')}/api/health`);
+        const response = await fetch(`${API_BASE_URL.replace('/api/v1', '')}/health`);
         return await response.json();
     }
 }
