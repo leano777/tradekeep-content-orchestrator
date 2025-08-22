@@ -1,0 +1,1226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Content Management - TK Content Orchestrator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background-color: #f8f9fa;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            gap: 2rem;
+            align-items: start;
+        }
+
+        .sidebar {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border: 1px solid #e9ecef;
+            position: sticky;
+            top: 20px;
+        }
+
+        .main-content {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border: 1px solid #e9ecef;
+            min-height: 600px;
+        }
+
+        .tabs {
+            display: flex;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+            overflow: hidden;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 1rem;
+            text-align: center;
+            cursor: pointer;
+            border: none;
+            background: white;
+            color: #6c757d;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .tab.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .tab:hover:not(.active) {
+            background: #f8f9fa;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .filter-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .filter-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #333;
+            font-size: 0.9rem;
+        }
+
+        .filter-group select,
+        .filter-group input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+
+        .filter-group select:focus,
+        .filter-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+            display: inline-block;
+            text-decoration: none;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5a6fd8;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-sm {
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+        }
+
+        .btn-full {
+            width: 100%;
+        }
+
+        .content-card {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .content-card:hover {
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border-color: #667eea;
+        }
+
+        .content-card h3 {
+            margin-bottom: 0.5rem;
+            color: #333;
+            font-size: 1.1rem;
+        }
+
+        .content-meta {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            font-size: 0.85rem;
+            color: #6c757d;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-draft {
+            background: #e9ecef;
+            color: #495057;
+        }
+
+        .status-published {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-scheduled {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .status-review {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .platform-badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-transform: capitalize;
+        }
+
+        .platform-linkedin {
+            background: #0077B5;
+            color: white;
+        }
+
+        .platform-twitter {
+            background: #1DA1F2;
+            color: white;
+        }
+
+        .platform-instagram {
+            background: #E4405F;
+            color: white;
+        }
+
+        .platform-facebook {
+            background: #1877F2;
+            color: white;
+        }
+
+        .platform-email {
+            background: #34495e;
+            color: white;
+        }
+
+        .content-actions {
+            margin-top: 1rem;
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .search-bar {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+
+        .search-bar input {
+            width: 100%;
+            padding: 0.75rem 2.5rem 0.75rem 1rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .search-bar .search-icon {
+            position: absolute;
+            right: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c757d;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-top: 2rem;
+        }
+
+        .pagination button {
+            padding: 0.5rem 1rem;
+            border: 1px solid #ddd;
+            background: white;
+            color: #333;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .pagination button:hover {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .pagination button.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #6c757d;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #6c757d;
+        }
+
+        .empty-state h3 {
+            margin-bottom: 1rem;
+            color: #495057;
+        }
+
+        .status {
+            padding: 0.5rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            color: #333;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #6c757d;
+        }
+
+        .content-preview {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 6px;
+            margin-top: 1rem;
+            border-left: 4px solid #667eea;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .sidebar {
+                position: static;
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📝 Content Management</h1>
+            <p>Create, manage, and optimize your content across all platforms</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('list')">Content List</button>
+            <button class="tab" onclick="showTab('create')">Create Content</button>
+            <button class="tab" onclick="showTab('analytics')">Content Analytics</button>
+        </div>
+
+        <!-- Content List Tab -->
+        <div id="list" class="tab-content active">
+            <div class="content-grid">
+                <div class="sidebar">
+                    <h3 style="margin-bottom: 1rem;">Filters</h3>
+                    
+                    <div class="search-bar">
+                        <input type="text" id="searchInput" placeholder="Search content..." onkeyup="handleSearch()">
+                        <span class="search-icon">🔍</span>
+                    </div>
+
+                    <div class="filter-group">
+                        <label>Status</label>
+                        <select id="statusFilter" onchange="applyFilters()">
+                            <option value="">All Statuses</option>
+                            <option value="draft">Draft</option>
+                            <option value="published">Published</option>
+                            <option value="scheduled">Scheduled</option>
+                            <option value="review">Review</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group">
+                        <label>Platform</label>
+                        <select id="platformFilter" onchange="applyFilters()">
+                            <option value="">All Platforms</option>
+                            <option value="linkedin">LinkedIn</option>
+                            <option value="twitter">Twitter</option>
+                            <option value="instagram">Instagram</option>
+                            <option value="facebook">Facebook</option>
+                            <option value="email">Email</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group">
+                        <label>Content Type</label>
+                        <select id="typeFilter" onchange="applyFilters()">
+                            <option value="">All Types</option>
+                            <option value="post">Post</option>
+                            <option value="social">Social</option>
+                            <option value="email">Email</option>
+                            <option value="video">Video</option>
+                            <option value="blog">Blog</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group">
+                        <label>Content Pillar</label>
+                        <select id="pillarFilter" onchange="applyFilters()">
+                            <option value="">All Pillars</option>
+                            <option value="internal-os">Internal OS</option>
+                            <option value="psychology">Psychology</option>
+                            <option value="discipline">Discipline</option>
+                            <option value="systems">Systems</option>
+                        </select>
+                    </div>
+
+                    <button class="btn btn-secondary btn-full" onclick="clearFilters()">Clear Filters</button>
+                </div>
+
+                <div class="main-content">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                        <h2>Content Items</h2>
+                        <div>
+                            <select id="sortBy" onchange="applyFilters()" style="margin-right: 0.5rem; padding: 0.5rem;">
+                                <option value="createdAt">Sort by Created</option>
+                                <option value="updatedAt">Sort by Updated</option>
+                                <option value="title">Sort by Title</option>
+                                <option value="status">Sort by Status</option>
+                            </select>
+                            <button class="btn btn-primary" onclick="showTab('create')">Create New</button>
+                        </div>
+                    </div>
+
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-value" id="totalCount">-</div>
+                            <div class="stat-label">Total Content</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="publishedCount">-</div>
+                            <div class="stat-label">Published</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="draftCount">-</div>
+                            <div class="stat-label">Drafts</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="scheduledCount">-</div>
+                            <div class="stat-label">Scheduled</div>
+                        </div>
+                    </div>
+
+                    <div id="contentList" class="loading">Loading content...</div>
+                    
+                    <div class="pagination" id="pagination"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Create Content Tab -->
+        <div id="create" class="tab-content">
+            <div style="max-width: 800px; margin: 0 auto;">
+                <h2>Create New Content</h2>
+                
+                <form onsubmit="createContent(event)">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Title *</label>
+                            <input type="text" name="title" required placeholder="Enter content title">
+                        </div>
+                        <div class="form-group">
+                            <label>Type *</label>
+                            <select name="type" required>
+                                <option value="">Select type</option>
+                                <option value="post">Post</option>
+                                <option value="social">Social Media</option>
+                                <option value="email">Email</option>
+                                <option value="video">Video</option>
+                                <option value="blog">Blog</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Content *</label>
+                        <textarea name="body" required placeholder="Write your content here..." rows="8"></textarea>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Status</label>
+                            <select name="status">
+                                <option value="draft">Draft</option>
+                                <option value="review">Ready for Review</option>
+                                <option value="scheduled">Scheduled</option>
+                                <option value="published">Published</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Platform</label>
+                            <select name="platform">
+                                <option value="">Select platform</option>
+                                <option value="linkedin">LinkedIn</option>
+                                <option value="twitter">Twitter</option>
+                                <option value="instagram">Instagram</option>
+                                <option value="facebook">Facebook</option>
+                                <option value="email">Email</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Content Pillar</label>
+                            <select name="pillar">
+                                <option value="internal-os">Internal OS</option>
+                                <option value="psychology">Psychology</option>
+                                <option value="discipline">Discipline</option>
+                                <option value="systems">Systems</option>
+                                <option value="discipline-over-dopamine">Discipline Over Dopamine</option>
+                                <option value="systems-vs-reactive">Systems vs Reactive</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Scheduled Date (if scheduled)</label>
+                            <input type="datetime-local" name="scheduledAt">
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 2rem;">
+                        <button type="submit" class="btn btn-primary">Create Content</button>
+                        <button type="button" class="btn btn-secondary" onclick="document.querySelector('form').reset()">Reset</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Content Analytics Tab -->
+        <div id="analytics" class="tab-content">
+            <div class="main-content">
+                <h2>Content Analytics Overview</h2>
+                <p>View detailed analytics for individual content pieces and overall performance.</p>
+                
+                <div style="margin-top: 2rem;">
+                    <button class="btn btn-primary" onclick="window.open('test-analytics.html', '_blank')">Open Full Analytics Dashboard</button>
+                </div>
+
+                <div id="contentAnalyticsPreview" style="margin-top: 2rem;">
+                    Loading analytics preview...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Content Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Edit Content</h3>
+                <button class="close-btn" onclick="closeEditModal()">&times;</button>
+            </div>
+            
+            <form id="editForm" onsubmit="updateContent(event)">
+                <input type="hidden" id="editContentId">
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Title *</label>
+                        <input type="text" id="editTitle" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Type *</label>
+                        <select id="editType" required>
+                            <option value="post">Post</option>
+                            <option value="social">Social Media</option>
+                            <option value="email">Email</option>
+                            <option value="video">Video</option>
+                            <option value="blog">Blog</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Content *</label>
+                    <textarea id="editBody" required rows="8"></textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Status</label>
+                        <select id="editStatus">
+                            <option value="draft">Draft</option>
+                            <option value="review">Ready for Review</option>
+                            <option value="scheduled">Scheduled</option>
+                            <option value="published">Published</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Platform</label>
+                        <select id="editPlatform">
+                            <option value="">Select platform</option>
+                            <option value="linkedin">LinkedIn</option>
+                            <option value="twitter">Twitter</option>
+                            <option value="instagram">Instagram</option>
+                            <option value="facebook">Facebook</option>
+                            <option value="email">Email</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Content Pillar</label>
+                        <select id="editPillar">
+                            <option value="internal-os">Internal OS</option>
+                            <option value="psychology">Psychology</option>
+                            <option value="discipline">Discipline</option>
+                            <option value="systems">Systems</option>
+                            <option value="discipline-over-dopamine">Discipline Over Dopamine</option>
+                            <option value="systems-vs-reactive">Systems vs Reactive</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Scheduled Date</label>
+                        <input type="datetime-local" id="editScheduledAt">
+                    </div>
+                </div>
+
+                <div style="margin-top: 2rem;">
+                    <button type="submit" class="btn btn-primary">Update Content</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- View Content Modal -->
+    <div id="viewModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="viewTitle">Content Details</h3>
+                <button class="close-btn" onclick="closeViewModal()">&times;</button>
+            </div>
+            
+            <div id="viewContent"></div>
+        </div>
+    </div>
+
+    <div id="status" class="status" style="display: none; position: fixed; top: 20px; right: 20px; z-index: 1000;"></div>
+
+    <script>
+        const API_BASE = 'http://localhost:9002/api/v1';
+        const AUTH_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNtZW0zM3pqdTAwMDB1eHFncTAyemVwdGYiLCJlbWFpbCI6ImJyYW5kQHRlc3QuY29tIiwiaWF0IjoxNzU1ODIyMDQzfQ.SmDPqkLf4kKOO7DCz49oc-_FL2Meb7JohxhZqs-lWdc';
+
+        let allContent = [];
+        let filteredContent = [];
+        let currentPage = 1;
+        const itemsPerPage = 10;
+
+        // Tab functionality
+        function showTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+
+            if (tabName === 'list') {
+                loadContent();
+            } else if (tabName === 'analytics') {
+                loadAnalyticsPreview();
+            }
+        }
+
+        // Status functions
+        function showStatus(message, type = 'success') {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = `status ${type}`;
+            status.style.display = 'block';
+            
+            setTimeout(() => {
+                status.style.display = 'none';
+            }, 3000);
+        }
+
+        // API functions
+        async function apiCall(endpoint, options = {}) {
+            try {
+                const response = await fetch(`${API_BASE}${endpoint}`, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${AUTH_TOKEN}`,
+                        ...options.headers
+                    },
+                    ...options
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.message || `HTTP ${response.status}`);
+                }
+
+                return await response.json();
+            } catch (error) {
+                console.error('API Error:', error);
+                showStatus(`Error: ${error.message}`, 'error');
+                return null;
+            }
+        }
+
+        // Load content
+        async function loadContent() {
+            const result = await apiCall('/content');
+            
+            if (result && result.data) {
+                allContent = result.data;
+                filteredContent = [...allContent];
+                updateStats();
+                applyFilters();
+            }
+        }
+
+        // Update statistics
+        function updateStats() {
+            const stats = allContent.reduce((acc, item) => {
+                acc.total++;
+                acc[item.status] = (acc[item.status] || 0) + 1;
+                return acc;
+            }, { total: 0, published: 0, draft: 0, scheduled: 0, review: 0 });
+
+            document.getElementById('totalCount').textContent = stats.total;
+            document.getElementById('publishedCount').textContent = stats.published || 0;
+            document.getElementById('draftCount').textContent = stats.draft || 0;
+            document.getElementById('scheduledCount').textContent = stats.scheduled || 0;
+        }
+
+        // Apply filters
+        function applyFilters() {
+            const status = document.getElementById('statusFilter').value;
+            const platform = document.getElementById('platformFilter').value;
+            const type = document.getElementById('typeFilter').value;
+            const pillar = document.getElementById('pillarFilter').value;
+            const sortBy = document.getElementById('sortBy').value;
+            const search = document.getElementById('searchInput').value.toLowerCase();
+
+            filteredContent = allContent.filter(item => {
+                if (status && item.status !== status) return false;
+                if (platform && item.platform !== platform) return false;
+                if (type && item.type !== type) return false;
+                if (pillar && item.pillar !== pillar) return false;
+                if (search && !item.title.toLowerCase().includes(search) && 
+                    !item.body.toLowerCase().includes(search)) return false;
+                return true;
+            });
+
+            // Sort content
+            filteredContent.sort((a, b) => {
+                if (sortBy === 'title') {
+                    return a.title.localeCompare(b.title);
+                } else {
+                    return new Date(b[sortBy]) - new Date(a[sortBy]);
+                }
+            });
+
+            currentPage = 1;
+            renderContent();
+            renderPagination();
+        }
+
+        // Search functionality
+        function handleSearch() {
+            clearTimeout(window.searchTimeout);
+            window.searchTimeout = setTimeout(() => {
+                applyFilters();
+            }, 300);
+        }
+
+        // Clear filters
+        function clearFilters() {
+            document.getElementById('statusFilter').value = '';
+            document.getElementById('platformFilter').value = '';
+            document.getElementById('typeFilter').value = '';
+            document.getElementById('pillarFilter').value = '';
+            document.getElementById('searchInput').value = '';
+            document.getElementById('sortBy').value = 'createdAt';
+            applyFilters();
+        }
+
+        // Render content list
+        function renderContent() {
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
+            const pageContent = filteredContent.slice(startIndex, endIndex);
+            
+            const container = document.getElementById('contentList');
+            
+            if (pageContent.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <h3>No content found</h3>
+                        <p>Try adjusting your filters or create new content.</p>
+                        <button class="btn btn-primary" onclick="showTab('create')">Create Content</button>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = pageContent.map(item => `
+                <div class="content-card">
+                    <h3>${item.title}</h3>
+                    <div class="content-meta">
+                        <div class="meta-item">
+                            <span class="status-badge status-${item.status}">${item.status}</span>
+                        </div>
+                        <div class="meta-item">
+                            <strong>Type:</strong> ${item.type}
+                        </div>
+                        ${item.platform ? `
+                            <div class="meta-item">
+                                <span class="platform-badge platform-${item.platform}">${item.platform}</span>
+                            </div>
+                        ` : ''}
+                        <div class="meta-item">
+                            <strong>Pillar:</strong> ${item.pillar.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                        </div>
+                        <div class="meta-item">
+                            <strong>Author:</strong> ${item.author.name}
+                        </div>
+                    </div>
+                    <div class="content-preview">
+                        ${item.body.length > 150 ? item.body.substring(0, 150) + '...' : item.body}
+                    </div>
+                    <div class="content-actions">
+                        <button class="btn btn-sm btn-primary" onclick="viewContent('${item.id}')">View</button>
+                        <button class="btn btn-sm btn-warning" onclick="editContent('${item.id}')">Edit</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteContent('${item.id}', '${item.title}')">Delete</button>
+                        ${item.status === 'draft' ? `<button class="btn btn-sm btn-success" onclick="publishContent('${item.id}')">Publish</button>` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Render pagination
+        function renderPagination() {
+            const totalPages = Math.ceil(filteredContent.length / itemsPerPage);
+            const container = document.getElementById('pagination');
+            
+            if (totalPages <= 1) {
+                container.innerHTML = '';
+                return;
+            }
+
+            let pagination = '';
+            
+            // Previous button
+            pagination += `<button ${currentPage === 1 ? 'disabled' : ''} onclick="changePage(${currentPage - 1})">Previous</button>`;
+            
+            // Page numbers
+            for (let i = 1; i <= totalPages; i++) {
+                if (i === currentPage) {
+                    pagination += `<button class="active">${i}</button>`;
+                } else if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) {
+                    pagination += `<button onclick="changePage(${i})">${i}</button>`;
+                } else if (i === currentPage - 3 || i === currentPage + 3) {
+                    pagination += `<span>...</span>`;
+                }
+            }
+            
+            // Next button
+            pagination += `<button ${currentPage === totalPages ? 'disabled' : ''} onclick="changePage(${currentPage + 1})">Next</button>`;
+            
+            container.innerHTML = pagination;
+        }
+
+        // Change page
+        function changePage(page) {
+            currentPage = page;
+            renderContent();
+            renderPagination();
+        }
+
+        // View content
+        function viewContent(contentId) {
+            const content = allContent.find(item => item.id === contentId);
+            if (!content) return;
+
+            document.getElementById('viewTitle').textContent = content.title;
+            document.getElementById('viewContent').innerHTML = `
+                <div class="content-meta" style="margin-bottom: 1.5rem;">
+                    <div class="meta-item"><span class="status-badge status-${content.status}">${content.status}</span></div>
+                    <div class="meta-item"><strong>Type:</strong> ${content.type}</div>
+                    ${content.platform ? `<div class="meta-item"><span class="platform-badge platform-${content.platform}">${content.platform}</span></div>` : ''}
+                    <div class="meta-item"><strong>Pillar:</strong> ${content.pillar}</div>
+                    <div class="meta-item"><strong>Author:</strong> ${content.author.name}</div>
+                    <div class="meta-item"><strong>Created:</strong> ${new Date(content.createdAt).toLocaleDateString()}</div>
+                    ${content.publishedAt ? `<div class="meta-item"><strong>Published:</strong> ${new Date(content.publishedAt).toLocaleDateString()}</div>` : ''}
+                    ${content.scheduledAt ? `<div class="meta-item"><strong>Scheduled:</strong> ${new Date(content.scheduledAt).toLocaleDateString()}</div>` : ''}
+                </div>
+                <div class="content-preview">
+                    <h4>Content:</h4>
+                    <div style="white-space: pre-wrap; margin-top: 1rem;">${content.body}</div>
+                </div>
+            `;
+            
+            document.getElementById('viewModal').classList.add('active');
+        }
+
+        // Edit content
+        function editContent(contentId) {
+            const content = allContent.find(item => item.id === contentId);
+            if (!content) return;
+
+            document.getElementById('editContentId').value = content.id;
+            document.getElementById('editTitle').value = content.title;
+            document.getElementById('editType').value = content.type;
+            document.getElementById('editBody').value = content.body;
+            document.getElementById('editStatus').value = content.status;
+            document.getElementById('editPlatform').value = content.platform || '';
+            document.getElementById('editPillar').value = content.pillar;
+            
+            if (content.scheduledAt) {
+                const date = new Date(content.scheduledAt);
+                document.getElementById('editScheduledAt').value = date.toISOString().slice(0, 16);
+            }
+            
+            document.getElementById('editModal').classList.add('active');
+        }
+
+        // Create content
+        async function createContent(event) {
+            event.preventDefault();
+            const formData = new FormData(event.target);
+            
+            const data = {
+                title: formData.get('title'),
+                body: formData.get('body'),
+                type: formData.get('type'),
+                status: formData.get('status'),
+                platform: formData.get('platform') || null,
+                pillar: formData.get('pillar'),
+                scheduledAt: formData.get('scheduledAt') || null
+            };
+
+            const result = await apiCall('/content', {
+                method: 'POST',
+                body: JSON.stringify(data)
+            });
+
+            if (result) {
+                showStatus('Content created successfully!');
+                event.target.reset();
+                showTab('list');
+                loadContent();
+            }
+        }
+
+        // Update content
+        async function updateContent(event) {
+            event.preventDefault();
+            const contentId = document.getElementById('editContentId').value;
+            
+            const data = {
+                title: document.getElementById('editTitle').value,
+                body: document.getElementById('editBody').value,
+                type: document.getElementById('editType').value,
+                status: document.getElementById('editStatus').value,
+                platform: document.getElementById('editPlatform').value || null,
+                pillar: document.getElementById('editPillar').value,
+                scheduledAt: document.getElementById('editScheduledAt').value || null
+            };
+
+            const result = await apiCall(`/content/${contentId}`, {
+                method: 'PUT',
+                body: JSON.stringify(data)
+            });
+
+            if (result) {
+                showStatus('Content updated successfully!');
+                closeEditModal();
+                loadContent();
+            }
+        }
+
+        // Delete content
+        async function deleteContent(contentId, title) {
+            if (!confirm(`Are you sure you want to delete "${title}"?`)) {
+                return;
+            }
+
+            const result = await apiCall(`/content/${contentId}`, {
+                method: 'DELETE'
+            });
+
+            if (result) {
+                showStatus('Content deleted successfully!');
+                loadContent();
+            }
+        }
+
+        // Publish content
+        async function publishContent(contentId) {
+            const result = await apiCall(`/content/${contentId}/publish`, {
+                method: 'POST'
+            });
+
+            if (result) {
+                showStatus('Content published successfully!');
+                loadContent();
+            }
+        }
+
+        // Modal functions
+        function closeEditModal() {
+            document.getElementById('editModal').classList.remove('active');
+        }
+
+        function closeViewModal() {
+            document.getElementById('viewModal').classList.remove('active');
+        }
+
+        // Load analytics preview
+        async function loadAnalyticsPreview() {
+            const container = document.getElementById('contentAnalyticsPreview');
+            container.innerHTML = `
+                <h3>Quick Analytics Overview</h3>
+                <p>View detailed analytics in the full dashboard.</p>
+                <div style="margin-top: 1rem;">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-value">${allContent.length}</div>
+                            <div class="stat-label">Total Content Pieces</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">${allContent.filter(c => c.status === 'published').length}</div>
+                            <div class="stat-label">Published Content</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">${new Set(allContent.map(c => c.platform).filter(Boolean)).size}</div>
+                            <div class="stat-label">Platforms Used</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">${new Set(allContent.map(c => c.author.name)).size}</div>
+                            <div class="stat-label">Content Creators</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadContent();
+            
+            // Close modals when clicking outside
+            document.addEventListener('click', (e) => {
+                if (e.target.classList.contains('modal')) {
+                    e.target.classList.remove('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

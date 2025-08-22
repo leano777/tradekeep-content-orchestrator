@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brand Documentation System - TK Content Orchestrator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background-color: #f8f9fa;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .tabs {
+            display: flex;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+            overflow: hidden;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 1rem;
+            text-align: center;
+            cursor: pointer;
+            border: none;
+            background: white;
+            color: #6c757d;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .tab.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .tab:hover:not(.active) {
+            background: #f8f9fa;
+        }
+
+        .tab-content {
+            display: none;
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #333;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin-right: 0.5rem;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5a6fd8;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .card {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border: 1px solid #e9ecef;
+        }
+
+        .card h3 {
+            margin-bottom: 0.5rem;
+            color: #333;
+        }
+
+        .card p {
+            color: #6c757d;
+            margin-bottom: 1rem;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border-radius: 4px;
+            margin-right: 0.5rem;
+        }
+
+        .badge-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .badge-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .tag-input {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            min-height: 45px;
+            align-items: center;
+        }
+
+        .tag {
+            background: #667eea;
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .tag-remove {
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .list-view {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .asset-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .asset-card {
+            background: white;
+            border-radius: 8px;
+            padding: 1rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .asset-preview {
+            width: 100%;
+            height: 120px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6c757d;
+        }
+
+        .color-palette {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .color-swatch {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            cursor: pointer;
+        }
+
+        .status {
+            padding: 0.5rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎨 Brand Documentation System</h1>
+            <p>Manage your brand strategy, content pillars, and assets in one place</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('profiles')">Brand Profiles</button>
+            <button class="tab" onclick="showTab('pillars')">Content Pillars</button>
+            <button class="tab" onclick="showTab('assets')">Brand Assets</button>
+            <button class="tab" onclick="showTab('examples')">Content Examples</button>
+        </div>
+
+        <!-- Brand Profiles Tab -->
+        <div id="profiles" class="tab-content active">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                <h2>Brand Profiles</h2>
+                <button class="btn btn-primary" onclick="showCreateProfile()">Create New Profile</button>
+            </div>
+
+            <div id="profilesList" class="list-view">
+                <div class="loading">Loading brand profiles...</div>
+            </div>
+
+            <!-- Create Profile Form -->
+            <div id="createProfileForm" style="display: none;">
+                <h3>Create New Brand Profile</h3>
+                <form onsubmit="createProfile(event)">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Profile Name *</label>
+                            <input type="text" name="name" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Tagline</label>
+                            <input type="text" name="tagline">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea name="description" placeholder="Brief description of the brand..."></textarea>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Mission Statement</label>
+                            <textarea name="mission" placeholder="What is the brand's mission?"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Vision Statement</label>
+                            <textarea name="vision" placeholder="What is the brand's vision?"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Brand Values (comma-separated)</label>
+                        <input type="text" name="brandValues" placeholder="Innovation, Quality, Customer Focus">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Brand Voice Tone</label>
+                            <select name="tone">
+                                <option value="">Select tone...</option>
+                                <option value="friendly">Friendly</option>
+                                <option value="professional">Professional</option>
+                                <option value="casual">Casual</option>
+                                <option value="authoritative">Authoritative</option>
+                                <option value="playful">Playful</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Brand Personality</label>
+                            <input type="text" name="personality" placeholder="Innovative, trustworthy, approachable">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Content Guidelines</label>
+                        <textarea name="contentGuidelines" placeholder="Guidelines for creating content for this brand..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Target Audience Description</label>
+                        <textarea name="targetAudience" placeholder="Describe the target audience, demographics, interests..."></textarea>
+                    </div>
+
+                    <div style="margin-top: 2rem;">
+                        <button type="submit" class="btn btn-primary">Create Profile</button>
+                        <button type="button" class="btn btn-secondary" onclick="hideCreateProfile()">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Content Pillars Tab -->
+        <div id="pillars" class="tab-content">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                <h2>Content Pillars</h2>
+                <div>
+                    <select id="profileSelect" onchange="loadPillars()" style="margin-right: 1rem;">
+                        <option value="">Select Brand Profile...</option>
+                    </select>
+                    <button class="btn btn-primary" onclick="showCreatePillar()">Add Content Pillar</button>
+                </div>
+            </div>
+
+            <div id="pillarsList" class="list-view">
+                <div class="loading">Select a brand profile to view content pillars...</div>
+            </div>
+
+            <!-- Create Pillar Form -->
+            <div id="createPillarForm" style="display: none;">
+                <h3>Create Content Pillar</h3>
+                <form onsubmit="createPillar(event)">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Pillar Name *</label>
+                            <input type="text" name="name" required placeholder="e.g., Educational Content">
+                        </div>
+                        <div class="form-group">
+                            <label>Frequency</label>
+                            <select name="frequency">
+                                <option value="">Select frequency...</option>
+                                <option value="daily">Daily</option>
+                                <option value="weekly">Weekly</option>
+                                <option value="biweekly">Bi-weekly</option>
+                                <option value="monthly">Monthly</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Description *</label>
+                        <textarea name="description" required placeholder="Describe what this content pillar covers..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Keywords (comma-separated)</label>
+                        <input type="text" name="keywords" placeholder="keyword1, keyword2, keyword3">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Topics (comma-separated)</label>
+                        <input type="text" name="topics" placeholder="topic1, topic2, topic3">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Tone Guide</label>
+                        <textarea name="toneGuide" placeholder="Specific tone guidelines for this pillar..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Preferred Platforms (comma-separated)</label>
+                        <input type="text" name="platforms" placeholder="Instagram, LinkedIn, Twitter">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Default Call-to-Action</label>
+                        <input type="text" name="cta" placeholder="e.g., Learn more, Contact us">
+                    </div>
+
+                    <div style="margin-top: 2rem;">
+                        <button type="submit" class="btn btn-primary">Create Pillar</button>
+                        <button type="button" class="btn btn-secondary" onclick="hideCreatePillar()">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Brand Assets Tab -->
+        <div id="assets" class="tab-content">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                <h2>Brand Assets</h2>
+                <div>
+                    <select id="assetProfileSelect" onchange="loadAssets()" style="margin-right: 1rem;">
+                        <option value="">Select Brand Profile...</option>
+                    </select>
+                    <select id="assetCategoryFilter" onchange="loadAssets()" style="margin-right: 1rem;">
+                        <option value="">All Categories</option>
+                        <option value="logo">Logos</option>
+                        <option value="template">Templates</option>
+                        <option value="graphic">Graphics</option>
+                        <option value="document">Documents</option>
+                        <option value="guideline">Guidelines</option>
+                    </select>
+                    <button class="btn btn-primary" onclick="showUploadAsset()">Upload Asset</button>
+                </div>
+            </div>
+
+            <div id="assetsList" class="asset-grid">
+                <div class="loading">Select a brand profile to view assets...</div>
+            </div>
+
+            <!-- Upload Asset Form -->
+            <div id="uploadAssetForm" style="display: none;">
+                <h3>Upload Brand Asset</h3>
+                <form onsubmit="uploadAsset(event)" enctype="multipart/form-data">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Asset Name *</label>
+                            <input type="text" name="name" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Category *</label>
+                            <select name="category" required>
+                                <option value="">Select category...</option>
+                                <option value="logo">Logo</option>
+                                <option value="template">Template</option>
+                                <option value="graphic">Graphic</option>
+                                <option value="document">Document</option>
+                                <option value="guideline">Guideline</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>File *</label>
+                        <input type="file" name="file" required accept=".jpg,.jpeg,.png,.gif,.pdf,.svg,.ai,.psd,.sketch">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Usage Rules</label>
+                        <textarea name="usageRules" placeholder="When and how to use this asset..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Tags (comma-separated)</label>
+                        <input type="text" name="tags" placeholder="logo, primary, dark">
+                    </div>
+
+                    <div style="margin-top: 2rem;">
+                        <button type="submit" class="btn btn-primary">Upload Asset</button>
+                        <button type="button" class="btn btn-secondary" onclick="hideUploadAsset()">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Content Examples Tab -->
+        <div id="examples" class="tab-content">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                <h2>Content Examples</h2>
+                <div>
+                    <select id="exampleProfileSelect" onchange="loadExamples()" style="margin-right: 1rem;">
+                        <option value="">Select Brand Profile...</option>
+                    </select>
+                    <button class="btn btn-primary" onclick="showCreateExample()">Add Example</button>
+                </div>
+            </div>
+
+            <div id="examplesList" class="list-view">
+                <div class="loading">Select a brand profile to view content examples...</div>
+            </div>
+
+            <!-- Create Example Form -->
+            <div id="createExampleForm" style="display: none;">
+                <h3>Add Content Example</h3>
+                <form onsubmit="createExample(event)">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Title *</label>
+                            <input type="text" name="title" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Type *</label>
+                            <select name="type" required>
+                                <option value="">Select type...</option>
+                                <option value="post">Social Media Post</option>
+                                <option value="email">Email</option>
+                                <option value="ad">Advertisement</option>
+                                <option value="video_script">Video Script</option>
+                                <option value="blog">Blog Post</option>
+                                <option value="newsletter">Newsletter</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Platform (if applicable)</label>
+                        <select name="platform">
+                            <option value="">Select platform...</option>
+                            <option value="instagram">Instagram</option>
+                            <option value="facebook">Facebook</option>
+                            <option value="twitter">Twitter</option>
+                            <option value="linkedin">LinkedIn</option>
+                            <option value="youtube">YouTube</option>
+                            <option value="tiktok">TikTok</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Content *</label>
+                        <textarea name="content" required placeholder="Paste the example content here..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Analysis</label>
+                        <textarea name="analysis" placeholder="What makes this good brand content? Why is it effective?"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Tags (comma-separated)</label>
+                        <input type="text" name="tags" placeholder="engaging, viral, brand-voice">
+                    </div>
+
+                    <div style="margin-top: 2rem;">
+                        <button type="submit" class="btn btn-primary">Add Example</button>
+                        <button type="button" class="btn btn-secondary" onclick="hideCreateExample()">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="status" class="status" style="display: none; position: fixed; top: 20px; right: 20px; z-index: 1000;"></div>
+
+    <script>
+        const API_BASE = 'http://localhost:9002/api/v1';
+        let currentProfile = null;
+
+        // Tab functionality
+        function showTab(tabName) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab content
+            document.getElementById(tabName).classList.add('active');
+            
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+
+            // Load data based on tab
+            if (tabName === 'profiles') {
+                loadProfiles();
+            } else if (tabName === 'pillars' || tabName === 'assets' || tabName === 'examples') {
+                loadProfilesForSelect();
+            }
+        }
+
+        // Status functions
+        function showStatus(message, type = 'success') {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = `status ${type}`;
+            status.style.display = 'block';
+            
+            setTimeout(() => {
+                status.style.display = 'none';
+            }, 3000);
+        }
+
+        // API functions
+        async function apiCall(endpoint, options = {}) {
+            try {
+                const response = await fetch(`${API_BASE}${endpoint}`, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNtZW0zM3pqdTAwMDB1eHFncTAyemVwdGYiLCJlbWFpbCI6ImJyYW5kQHRlc3QuY29tIiwiaWF0IjoxNzU1ODIyMDQzfQ.SmDPqkLf4kKOO7DCz49oc-_FL2Meb7JohxhZqs-lWdc',
+                        ...options.headers
+                    },
+                    ...options
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+
+                return await response.json();
+            } catch (error) {
+                console.error('API Error:', error);
+                showStatus(`Error: ${error.message}`, 'error');
+                return null;
+            }
+        }
+
+        // Brand Profiles
+        async function loadProfiles() {
+            const result = await apiCall('/brand/profiles');
+            const container = document.getElementById('profilesList');
+            
+            if (result && result.data.profiles) {
+                container.innerHTML = result.data.profiles.map(profile => `
+                    <div class="card">
+                        <h3>${profile.name}</h3>
+                        <p>${profile.description || 'No description provided'}</p>
+                        <div style="margin-bottom: 1rem;">
+                            ${profile.tagline ? `<span class="badge badge-primary">${profile.tagline}</span>` : ''}
+                            <span class="badge badge-success">${profile.isActive ? 'Active' : 'Inactive'}</span>
+                        </div>
+                        <small>Created by ${profile.createdBy.name} on ${new Date(profile.createdAt).toLocaleDateString()}</small>
+                        <div style="margin-top: 1rem;">
+                            <button class="btn btn-primary" onclick="viewProfile('${profile.id}')">View Details</button>
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                container.innerHTML = '<div class="loading">No brand profiles found. Create your first one!</div>';
+            }
+        }
+
+        async function loadProfilesForSelect() {
+            const result = await apiCall('/brand/profiles');
+            const selects = ['profileSelect', 'assetProfileSelect', 'exampleProfileSelect'];
+            
+            if (result && result.data.profiles) {
+                selects.forEach(selectId => {
+                    const select = document.getElementById(selectId);
+                    if (select) {
+                        select.innerHTML = '<option value="">Select Brand Profile...</option>' +
+                            result.data.profiles.map(profile => 
+                                `<option value="${profile.id}">${profile.name}</option>`
+                            ).join('');
+                    }
+                });
+            }
+        }
+
+        function showCreateProfile() {
+            document.getElementById('createProfileForm').style.display = 'block';
+            document.getElementById('profilesList').style.display = 'none';
+        }
+
+        function hideCreateProfile() {
+            document.getElementById('createProfileForm').style.display = 'none';
+            document.getElementById('profilesList').style.display = 'block';
+        }
+
+        async function createProfile(event) {
+            event.preventDefault();
+            const formData = new FormData(event.target);
+            
+            const data = {
+                name: formData.get('name'),
+                description: formData.get('description'),
+                tagline: formData.get('tagline'),
+                mission: formData.get('mission'),
+                vision: formData.get('vision'),
+                brandValues: formData.get('brandValues') ? formData.get('brandValues').split(',').map(v => v.trim()) : null,
+                brandVoice: {
+                    tone: formData.get('tone'),
+                    personality: formData.get('personality')
+                },
+                contentGuidelines: formData.get('contentGuidelines'),
+                targetAudience: formData.get('targetAudience')
+            };
+
+            const result = await apiCall('/brand/profiles', {
+                method: 'POST',
+                body: JSON.stringify(data)
+            });
+
+            if (result) {
+                showStatus('Brand profile created successfully!');
+                hideCreateProfile();
+                loadProfiles();
+                event.target.reset();
+            }
+        }
+
+        // Content Pillars
+        async function loadPillars() {
+            const profileId = document.getElementById('profileSelect').value;
+            const container = document.getElementById('pillarsList');
+            
+            if (!profileId) {
+                container.innerHTML = '<div class="loading">Select a brand profile to view content pillars...</div>';
+                return;
+            }
+
+            const result = await apiCall(`/brand/profiles/${profileId}/pillars`);
+            
+            if (result && result.data.pillars) {
+                container.innerHTML = result.data.pillars.map(pillar => `
+                    <div class="card">
+                        <h3>${pillar.name}</h3>
+                        <p>${pillar.description}</p>
+                        <div style="margin-bottom: 1rem;">
+                            ${pillar.frequency ? `<span class="badge badge-primary">${pillar.frequency}</span>` : ''}
+                            ${pillar.keywords ? JSON.parse(pillar.keywords).slice(0, 3).map(k => `<span class="badge badge-success">${k}</span>`).join('') : ''}
+                        </div>
+                        ${pillar.cta ? `<p><strong>CTA:</strong> ${pillar.cta}</p>` : ''}
+                        <small>${pillar.content.length} pieces of content</small>
+                    </div>
+                `).join('');
+            } else {
+                container.innerHTML = '<div class="loading">No content pillars found for this profile.</div>';
+            }
+        }
+
+        function showCreatePillar() {
+            const profileId = document.getElementById('profileSelect').value;
+            if (!profileId) {
+                showStatus('Please select a brand profile first', 'error');
+                return;
+            }
+            document.getElementById('createPillarForm').style.display = 'block';
+        }
+
+        function hideCreatePillar() {
+            document.getElementById('createPillarForm').style.display = 'none';
+        }
+
+        async function createPillar(event) {
+            event.preventDefault();
+            const profileId = document.getElementById('profileSelect').value;
+            const formData = new FormData(event.target);
+            
+            const data = {
+                name: formData.get('name'),
+                description: formData.get('description'),
+                keywords: formData.get('keywords') ? formData.get('keywords').split(',').map(k => k.trim()) : null,
+                topics: formData.get('topics') ? formData.get('topics').split(',').map(t => t.trim()) : null,
+                toneGuide: formData.get('toneGuide'),
+                frequency: formData.get('frequency'),
+                platforms: formData.get('platforms') ? formData.get('platforms').split(',').map(p => p.trim()) : null,
+                cta: formData.get('cta')
+            };
+
+            const result = await apiCall(`/brand/profiles/${profileId}/pillars`, {
+                method: 'POST',
+                body: JSON.stringify(data)
+            });
+
+            if (result) {
+                showStatus('Content pillar created successfully!');
+                hideCreatePillar();
+                loadPillars();
+                event.target.reset();
+            }
+        }
+
+        // Brand Assets
+        async function loadAssets() {
+            const profileId = document.getElementById('assetProfileSelect').value;
+            const category = document.getElementById('assetCategoryFilter').value;
+            const container = document.getElementById('assetsList');
+            
+            if (!profileId) {
+                container.innerHTML = '<div class="loading">Select a brand profile to view assets...</div>';
+                return;
+            }
+
+            const params = new URLSearchParams();
+            if (category) params.append('category', category);
+            
+            const result = await apiCall(`/brand/profiles/${profileId}/assets?${params}`);
+            
+            if (result && result.data.assets) {
+                container.innerHTML = result.data.assets.map(asset => `
+                    <div class="asset-card">
+                        <div class="asset-preview">
+                            ${asset.fileType.includes('image') ? 
+                                `<img src="${asset.fileUrl}" alt="${asset.name}" style="max-width: 100%; max-height: 100%; object-fit: contain;">` :
+                                `<div>📄 ${asset.fileType.toUpperCase()}</div>`
+                            }
+                        </div>
+                        <h4 style="font-size: 0.9rem; margin-bottom: 0.5rem;">${asset.name}</h4>
+                        <span class="badge badge-primary">${asset.category}</span>
+                        <div style="margin-top: 0.5rem; font-size: 0.8rem; color: #6c757d;">
+                            v${asset.version} • ${(asset.fileSize / 1024).toFixed(1)}KB
+                        </div>
+                        <small>by ${asset.uploadedBy.name}</small>
+                    </div>
+                `).join('');
+            } else {
+                container.innerHTML = '<div class="loading">No assets found for this profile.</div>';
+            }
+        }
+
+        function showUploadAsset() {
+            const profileId = document.getElementById('assetProfileSelect').value;
+            if (!profileId) {
+                showStatus('Please select a brand profile first', 'error');
+                return;
+            }
+            document.getElementById('uploadAssetForm').style.display = 'block';
+        }
+
+        function hideUploadAsset() {
+            document.getElementById('uploadAssetForm').style.display = 'none';
+        }
+
+        async function uploadAsset(event) {
+            event.preventDefault();
+            const profileId = document.getElementById('assetProfileSelect').value;
+            const formData = new FormData(event.target);
+
+            const result = await fetch(`${API_BASE}/brand/profiles/${profileId}/assets`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNtZW0zM3pqdTAwMDB1eHFncTAyemVwdGYiLCJlbWFpbCI6ImJyYW5kQHRlc3QuY29tIiwiaWF0IjoxNzU1ODIyMDQzfQ.SmDPqkLf4kKOO7DCz49oc-_FL2Meb7JohxhZqs-lWdc'
+                },
+                body: formData
+            });
+
+            if (result.ok) {
+                showStatus('Asset uploaded successfully!');
+                hideUploadAsset();
+                loadAssets();
+                event.target.reset();
+            } else {
+                showStatus('Failed to upload asset', 'error');
+            }
+        }
+
+        // Content Examples
+        async function loadExamples() {
+            const profileId = document.getElementById('exampleProfileSelect').value;
+            const container = document.getElementById('examplesList');
+            
+            if (!profileId) {
+                container.innerHTML = '<div class="loading">Select a brand profile to view examples...</div>';
+                return;
+            }
+
+            const result = await apiCall(`/brand/profiles/${profileId}/examples`);
+            
+            if (result && result.data.examples) {
+                container.innerHTML = result.data.examples.map(example => `
+                    <div class="card">
+                        <h3>${example.title}</h3>
+                        <div style="margin-bottom: 1rem;">
+                            <span class="badge badge-primary">${example.type}</span>
+                            ${example.platform ? `<span class="badge badge-success">${example.platform}</span>` : ''}
+                        </div>
+                        <div style="background: #f8f9fa; padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
+                            <pre style="white-space: pre-wrap; margin: 0;">${example.content}</pre>
+                        </div>
+                        ${example.analysis ? `<p><strong>Analysis:</strong> ${example.analysis}</p>` : ''}
+                        <small>Added by ${example.createdBy.name} on ${new Date(example.createdAt).toLocaleDateString()}</small>
+                    </div>
+                `).join('');
+            } else {
+                container.innerHTML = '<div class="loading">No content examples found for this profile.</div>';
+            }
+        }
+
+        function showCreateExample() {
+            const profileId = document.getElementById('exampleProfileSelect').value;
+            if (!profileId) {
+                showStatus('Please select a brand profile first', 'error');
+                return;
+            }
+            document.getElementById('createExampleForm').style.display = 'block';
+        }
+
+        function hideCreateExample() {
+            document.getElementById('createExampleForm').style.display = 'none';
+        }
+
+        async function createExample(event) {
+            event.preventDefault();
+            const profileId = document.getElementById('exampleProfileSelect').value;
+            const formData = new FormData(event.target);
+            
+            const data = {
+                title: formData.get('title'),
+                content: formData.get('content'),
+                type: formData.get('type'),
+                platform: formData.get('platform') || null,
+                analysis: formData.get('analysis'),
+                tags: formData.get('tags') ? formData.get('tags').split(',').map(t => t.trim()) : null
+            };
+
+            const result = await apiCall(`/brand/profiles/${profileId}/examples`, {
+                method: 'POST',
+                body: JSON.stringify(data)
+            });
+
+            if (result) {
+                showStatus('Content example added successfully!');
+                hideCreateExample();
+                loadExamples();
+                event.target.reset();
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadProfiles();
+        });
+    </script>
+</body>
+</html>

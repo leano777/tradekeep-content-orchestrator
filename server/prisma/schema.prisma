@@ -27,6 +27,10 @@ model User {
   comments Comment[]
   activities Activity[]
   notifications Notification[]
+  brandProfiles BrandProfile[]
+  brandAssets BrandAsset[]
+  brandContentExamples BrandContentExample[]
+  userEngagements UserEngagement[]
 
   @@map("users")
 }
@@ -38,6 +42,7 @@ model Content {
   type        String    @default("post")
   status      String    @default("draft")
   pillar      String    @default("internal-os")
+  pillarId    String?   // Reference to ContentPillar
   platform    String?
   scheduledAt DateTime?
   publishedAt DateTime?
@@ -52,6 +57,8 @@ model Content {
   comments    Comment[]
   activities  Activity[]
   notifications Notification[]
+  contentPillar ContentPillar? @relation("ContentPillarRelation", fields: [pillarId], references: [id])
+  analytics   ContentAnalytics[]
   
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
@@ -105,6 +112,7 @@ model Campaign {
   
   // Relations
   content     CampaignContent[]
+  analytics   CampaignAnalytics[]
   
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
@@ -296,4 +304,262 @@ model Notification {
   @@index([userId, read, createdAt])
   @@index([contentId])
   @@map("notifications")
+}
+
+model BrandProfile {
+  id          String    @id @default(cuid())
+  name        String
+  description String?
+  
+  // Brand Identity
+  brandVoice  String?   // JSON: { tone, personality, style }
+  brandValues String?   // JSON: array of brand values
+  tagline     String?
+  mission     String?
+  vision      String?
+  
+  // Visual Identity
+  colorPalette String?  // JSON: { primary, secondary, accent colors }
+  typography   String?  // JSON: { fonts, sizes, styles }
+  logoUrls     String?  // JSON: array of logo URLs
+  
+  // Content Guidelines
+  contentGuidelines String? // Markdown content guidelines
+  voiceExamples     String? // JSON: examples of brand voice
+  
+  // Target Audience
+  targetAudience String? // JSON: personas and demographics
+  
+  isActive    Boolean   @default(true)
+  createdById String
+  createdBy   User      @relation(fields: [createdById], references: [id])
+  
+  // Relations
+  contentPillars ContentPillar[]
+  brandAssets    BrandAsset[]
+  contentExamples BrandContentExample[]
+  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@map("brand_profiles")
+}
+
+model ContentPillar {
+  id          String    @id @default(cuid())
+  name        String
+  description String
+  
+  // Pillar Details
+  keywords    String?   // JSON: array of keywords
+  topics      String?   // JSON: array of topic areas
+  toneGuide   String?   // Specific tone for this pillar
+  examples    String?   // JSON: array of content examples
+  
+  // Content Strategy
+  frequency   String?   // How often to post this pillar
+  platforms   String?   // JSON: array of preferred platforms
+  cta         String?   // Default call-to-action
+  
+  // Metrics
+  performance String?   // JSON: performance metrics
+  
+  brandProfileId String
+  brandProfile   BrandProfile @relation(fields: [brandProfileId], references: [id], onDelete: Cascade)
+  
+  // Relations with content
+  content     Content[] @relation("ContentPillarRelation")
+  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@map("content_pillars")
+}
+
+model BrandAsset {
+  id          String    @id @default(cuid())
+  name        String
+  category    String    // logo, template, graphic, document, guideline
+  
+  // Asset Details
+  fileUrl     String
+  thumbnail   String?
+  fileType    String    // png, jpg, pdf, psd, ai, etc.
+  fileSize    Int
+  
+  // Usage Guidelines
+  usageRules  String?   // When and how to use this asset
+  tags        String?   // JSON: array of tags for searchability
+  
+  // Version Control
+  version     String    @default("1.0")
+  isLatest    Boolean   @default(true)
+  replacesId  String?   // Reference to previous version
+  replaces    BrandAsset? @relation("AssetVersions", fields: [replacesId], references: [id])
+  versions    BrandAsset[] @relation("AssetVersions")
+  
+  brandProfileId String
+  brandProfile   BrandProfile @relation(fields: [brandProfileId], references: [id], onDelete: Cascade)
+  
+  uploadedById String
+  uploadedBy   User       @relation(fields: [uploadedById], references: [id])
+  
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@map("brand_assets")
+}
+
+model BrandContentExample {
+  id          String    @id @default(cuid())
+  title       String
+  content     String    // Example content
+  type        String    // post, email, ad, video_script, etc.
+  platform    String?   // social platform if applicable
+  
+  // Analysis
+  analysis    String?   // What makes this good brand content
+  pillars     String?   // JSON: array of content pillar IDs this exemplifies
+  
+  // Metadata
+  performance String?   // JSON: metrics if available
+  tags        String?   // JSON: searchable tags
+  
+  brandProfileId String
+  brandProfile   BrandProfile @relation(fields: [brandProfileId], references: [id], onDelete: Cascade)
+  
+  createdById String
+  createdBy   User       @relation(fields: [createdById], references: [id])
+  
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@map("brand_content_examples")
+}
+
+model ContentAnalytics {
+  id        String   @id @default(cuid())
+  contentId String
+  content   Content  @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  
+  // Engagement metrics
+  views     Int      @default(0)
+  likes     Int      @default(0)
+  shares    Int      @default(0)
+  comments  Int      @default(0)
+  clicks    Int      @default(0)
+  
+  // Platform-specific metrics
+  platform  String   // instagram, facebook, twitter, linkedin, email, etc.
+  reach     Int?     // How many unique users saw the content
+  impressions Int?   // Total number of times content was displayed
+  
+  // Conversion metrics
+  clickThroughRate Float? // CTR percentage
+  engagementRate   Float? // Engagement rate percentage
+  conversionRate   Float? // Conversion rate if applicable
+  
+  // Metadata
+  metricDate DateTime @default(now()) // Date these metrics were recorded
+  source     String?  // Where metrics came from (api, manual, etc.)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([contentId, metricDate])
+  @@index([platform, metricDate])
+  @@map("content_analytics")
+}
+
+model CampaignAnalytics {
+  id         String   @id @default(cuid())
+  campaignId String
+  campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  
+  // Campaign performance
+  totalReach       Int      @default(0)
+  totalImpressions Int      @default(0)
+  totalEngagements Int      @default(0)
+  totalClicks      Int      @default(0)
+  totalConversions Int      @default(0)
+  
+  // Financial metrics
+  cost        Float?   // Campaign cost
+  revenue     Float?   // Revenue generated
+  roi         Float?   // Return on investment
+  
+  // Platform breakdown (JSON)
+  platformMetrics String? // JSON object with per-platform stats
+  
+  // Time-based metrics
+  metricDate DateTime @default(now())
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([campaignId, metricDate])
+  @@map("campaign_analytics")
+}
+
+model UserEngagement {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // User activity tracking
+  action      String   // view, like, share, comment, click, download, etc.
+  entityType  String   // content, campaign, asset, etc.
+  entityId    String   // ID of the content/campaign/asset
+  
+  // Context
+  platform    String?  // Where the action occurred
+  source      String?  // How they arrived (direct, search, social, etc.)
+  userAgent   String?  // Browser/device info
+  ipAddress   String?  // For geographic analytics
+  
+  // Session tracking
+  sessionId   String?  // Group related actions
+  duration    Int?     // Time spent (in seconds)
+  
+  timestamp   DateTime @default(now())
+
+  @@index([userId, timestamp])
+  @@index([entityType, entityId])
+  @@index([action, timestamp])
+  @@map("user_engagement")
+}
+
+model AnalyticsSnapshot {
+  id          String   @id @default(cuid())
+  
+  // Snapshot metadata
+  snapshotDate DateTime @default(now())
+  period       String   // daily, weekly, monthly, yearly
+  
+  // Aggregated metrics
+  totalContent      Int @default(0)
+  publishedContent  Int @default(0)
+  draftContent      Int @default(0)
+  scheduledContent  Int @default(0)
+  
+  totalViews        Int @default(0)
+  totalEngagements  Int @default(0)
+  totalShares       Int @default(0)
+  totalClicks       Int @default(0)
+  
+  // Platform breakdown (JSON)
+  platformStats     String? // JSON object with platform-specific stats
+  
+  // Content pillar performance (JSON)
+  pillarStats       String? // JSON object with pillar performance
+  
+  // Growth metrics
+  newUsers          Int @default(0)
+  activeUsers       Int @default(0)
+  returningUsers    Int @default(0)
+  
+  createdAt DateTime @default(now())
+
+  @@index([period, snapshotDate])
+  @@map("analytics_snapshots")
 }

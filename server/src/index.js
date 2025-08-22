@@ -18,6 +18,7 @@ const userRoutes = require('./routes/users');
 const commentsRoutes = require('./routes/comments');
 const activitiesRoutes = require('./routes/activities');
 const notificationsRoutes = require('./routes/notifications');
+const brandRoutes = require('./routes/brand');
 
 const { globalErrorHandler } = require('./middleware/errorHandler');
 const { SocketServer } = require('./websocket/socketServer');
@@ -124,6 +125,7 @@ app.use('/api/v1/users', userRoutes);
 app.use('/api/v1', commentsRoutes);
 app.use('/api/v1/activities', activitiesRoutes);
 app.use('/api/v1/notifications', notificationsRoutes);
+app.use('/api/v1/brand', brandRoutes);
 
 app.use(expressWinston.errorLogger({
   winstonInstance: logger

@@ -3,6 +3,14 @@ const prisma = require('../../db');
 
 class MicrosoftAuthService {
   constructor() {
+    // Check if credentials are available
+    if (!process.env.MICROSOFT_CLIENT_ID || !process.env.MICROSOFT_CLIENT_SECRET) {
+      console.log('⚠️ Microsoft OAuth credentials not configured - service disabled');
+      this.msalClient = null;
+      this.isEnabled = false;
+      return;
+    }
+
     const config = {
       auth: {
         clientId: process.env.MICROSOFT_CLIENT_ID,
@@ -12,6 +20,7 @@ class MicrosoftAuthService {
     };
     
     this.msalClient = new msal.ConfidentialClientApplication(config);
+    this.isEnabled = true;
     this.redirectUri = process.env.MICROSOFT_REDIRECT_URI || 'http://localhost:9000/api/v1/assets/cloud/callback/microsoft';
     
     this.scopes = [
@@ -24,6 +33,10 @@ class MicrosoftAuthService {
 
   // Generate OAuth URL for user consent
   async getAuthUrl(userId) {
+    if (!this.isEnabled) {
+      throw new Error('Microsoft OAuth service is not configured');
+    }
+    
     const authCodeUrlParameters = {
       scopes: this.scopes,
       redirectUri: this.redirectUri,
@@ -37,6 +50,10 @@ class MicrosoftAuthService {
 
   // Handle OAuth callback and store tokens
   async handleCallback(code, userId) {
+    if (!this.isEnabled) {
+      throw new Error('Microsoft OAuth service is not configured');
+    }
+    
     try {
       const tokenRequest = {
         code,

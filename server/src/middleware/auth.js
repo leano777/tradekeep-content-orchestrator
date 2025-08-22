@@ -97,17 +97,15 @@ const optionalAuth = catchAsync(async (req, res, next) => {
         select: {
           id: true,
           email: true,
-          username: true,
-          firstName: true,
-          lastName: true,
+          name: true,
           role: true,
           avatar: true,
-          isActive: true,
-          emailVerified: true
+          createdAt: true,
+          updatedAt: true
         }
       });
 
-      if (currentUser && currentUser.isActive) {
+      if (currentUser) {
         req.user = currentUser;
       }
     } catch (err) {

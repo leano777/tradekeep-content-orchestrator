@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TK Error Handling & Validation Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .test-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+        }
+
+        .test-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .test-card h2 {
+            color: #333;
+            font-size: 20px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .test-group {
+            margin-bottom: 20px;
+        }
+
+        .test-group label {
+            display: block;
+            color: #555;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .test-group input,
+        .test-group select,
+        .test-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+
+        .test-group input:focus,
+        .test-group select:focus,
+        .test-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-danger {
+            background: #ff4757;
+            color: white;
+        }
+
+        .btn-warning {
+            background: #ffa502;
+            color: white;
+        }
+
+        .btn-success {
+            background: #00b894;
+            color: white;
+        }
+
+        .response-container {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            background: #f8f9fa;
+            min-height: 100px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .response-container.error {
+            background: #ffe5e5;
+            border-left: 4px solid #ff4757;
+        }
+
+        .response-container.success {
+            background: #e5fff5;
+            border-left: 4px solid #00b894;
+        }
+
+        .response-container.warning {
+            background: #fff5e5;
+            border-left: 4px solid #ffa502;
+        }
+
+        .error-detail {
+            background: white;
+            border-radius: 6px;
+            padding: 10px;
+            margin-top: 10px;
+        }
+
+        .error-field {
+            color: #ff4757;
+            font-weight: 600;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+
+        .status-200 { background: #e5fff5; color: #00b894; }
+        .status-400 { background: #fff5e5; color: #ffa502; }
+        .status-401 { background: #ffe5f5; color: #ff6b9d; }
+        .status-403 { background: #f5e5ff; color: #7e57c2; }
+        .status-404 { background: #e5f5ff; color: #2196f3; }
+        .status-500 { background: #ffe5e5; color: #ff4757; }
+
+        .test-scenarios {
+            display: grid;
+            gap: 10px;
+        }
+
+        .scenario-btn {
+            text-align: left;
+            padding: 12px;
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .scenario-btn:hover {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .scenario-btn strong {
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .scenario-btn small {
+            opacity: 0.8;
+        }
+
+        .loader {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .loader.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .validation-errors {
+            margin-top: 10px;
+        }
+
+        .validation-error {
+            background: #ffe5e5;
+            border-left: 3px solid #ff4757;
+            padding: 8px 12px;
+            margin-bottom: 8px;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🛡️ TK Error Handling & Validation Test Suite</h1>
+            <p>Comprehensive testing for standardized error responses and input validation</p>
+        </div>
+
+        <div class="test-grid">
+            <!-- Validation Testing -->
+            <div class="test-card">
+                <h2>📝 Input Validation Tests</h2>
+                
+                <div class="test-group">
+                    <label>Email (Invalid Format Test)</label>
+                    <input type="text" id="invalid-email" value="not-an-email" placeholder="Invalid email format">
+                </div>
+
+                <div class="test-group">
+                    <label>Password (Weak Password Test)</label>
+                    <input type="text" id="weak-password" value="pass123" placeholder="Weak password">
+                </div>
+
+                <div class="test-group">
+                    <label>Content Title (Too Long Test)</label>
+                    <textarea id="long-title" rows="3" placeholder="Title exceeding 200 characters">This is an extremely long title that definitely exceeds the 200 character limit that we have set for content titles in our validation schema and should trigger a validation error when we try to submit this content</textarea>
+                </div>
+
+                <button class="btn btn-primary" onclick="testValidation('registration')">Test Registration Validation</button>
+                <button class="btn btn-primary" onclick="testValidation('content')">Test Content Validation</button>
+                <button class="btn btn-primary" onclick="testValidation('date')">Test Date Validation</button>
+
+                <div id="validation-response" class="response-container"></div>
+            </div>
+
+            <!-- Error Scenarios -->
+            <div class="test-card">
+                <h2>⚠️ Error Scenario Tests</h2>
+                
+                <div class="test-scenarios">
+                    <button class="scenario-btn" onclick="testError('404')">
+                        <strong>404 Not Found</strong>
+                        <small>Access non-existent resource</small>
+                    </button>
+
+                    <button class="scenario-btn" onclick="testError('401')">
+                        <strong>401 Unauthorized</strong>
+                        <small>Invalid authentication token</small>
+                    </button>
+
+                    <button class="scenario-btn" onclick="testError('403')">
+                        <strong>403 Forbidden</strong>
+                        <small>Insufficient permissions</small>
+                    </button>
+
+                    <button class="scenario-btn" onclick="testError('409')">
+                        <strong>409 Conflict</strong>
+                        <small>Duplicate resource</small>
+                    </button>
+
+                    <button class="scenario-btn" onclick="testError('422')">
+                        <strong>422 Unprocessable Entity</strong>
+                        <small>Business logic error</small>
+                    </button>
+
+                    <button class="scenario-btn" onclick="testError('429')">
+                        <strong>429 Rate Limit</strong>
+                        <small>Too many requests</small>
+                    </button>
+
+                    <button class="scenario-btn" onclick="testError('500')">
+                        <strong>500 Server Error</strong>
+                        <small>Internal server error</small>
+                    </button>
+
+                    <button class="scenario-btn" onclick="testError('timeout')">
+                        <strong>504 Timeout</strong>
+                        <small>Request timeout</small>
+                    </button>
+                </div>
+
+                <div id="error-response" class="response-container"></div>
+            </div>
+
+            <!-- Database Error Tests -->
+            <div class="test-card">
+                <h2>🗄️ Database Error Tests</h2>
+
+                <button class="btn btn-warning" onclick="testDatabaseError('duplicate')">Test Duplicate Entry</button>
+                <button class="btn btn-warning" onclick="testDatabaseError('notfound')">Test Record Not Found</button>
+                <button class="btn btn-warning" onclick="testDatabaseError('constraint')">Test Foreign Key Constraint</button>
+                <button class="btn btn-warning" onclick="testDatabaseError('relation')">Test Missing Relation</button>
+
+                <div id="database-response" class="response-container"></div>
+            </div>
+
+            <!-- Authentication Tests -->
+            <div class="test-card">
+                <h2>🔐 Authentication Error Tests</h2>
+
+                <div class="test-group">
+                    <label>Test Token</label>
+                    <input type="text" id="test-token" placeholder="JWT Token" value="invalid.token.here">
+                </div>
+
+                <button class="btn btn-danger" onclick="testAuth('invalid')">Test Invalid Token</button>
+                <button class="btn btn-danger" onclick="testAuth('expired')">Test Expired Token</button>
+                <button class="btn btn-danger" onclick="testAuth('missing')">Test Missing Token</button>
+                <button class="btn btn-danger" onclick="testAuth('malformed')">Test Malformed Token</button>
+
+                <div id="auth-response" class="response-container"></div>
+            </div>
+
+            <!-- Rate Limiting Tests -->
+            <div class="test-card">
+                <h2>⏱️ Rate Limiting Tests</h2>
+
+                <div class="test-group">
+                    <label>Requests to Send</label>
+                    <input type="number" id="request-count" value="10" min="1" max="100">
+                </div>
+
+                <button class="btn btn-warning" onclick="testRateLimit()">Test Rate Limiting</button>
+                <button class="btn btn-success" onclick="testThrottling()">Test Request Throttling</button>
+
+                <div class="loader" id="rate-loader">
+                    <div class="spinner"></div>
+                    <p>Sending requests...</p>
+                </div>
+
+                <div id="rate-response" class="response-container"></div>
+            </div>
+
+            <!-- Success Response Tests -->
+            <div class="test-card">
+                <h2>✅ Success Response Tests</h2>
+
+                <button class="btn btn-success" onclick="testSuccess('single')">Test Single Resource</button>
+                <button class="btn btn-success" onclick="testSuccess('list')">Test List with Pagination</button>
+                <button class="btn btn-success" onclick="testSuccess('created')">Test Resource Created</button>
+                <button class="btn btn-success" onclick="testSuccess('updated')">Test Resource Updated</button>
+                <button class="btn btn-success" onclick="testSuccess('deleted')">Test Resource Deleted</button>
+
+                <div id="success-response" class="response-container"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:9002/api/v1';
+        let testToken = localStorage.getItem('tk_auth_token');
+
+        // Test validation errors
+        async function testValidation(type) {
+            const container = document.getElementById('validation-response');
+            container.className = 'response-container';
+            container.innerHTML = 'Testing validation...';
+
+            let endpoint, data;
+
+            switch(type) {
+                case 'registration':
+                    endpoint = '/auth/register';
+                    data = {
+                        email: document.getElementById('invalid-email').value,
+                        password: document.getElementById('weak-password').value,
+                        name: '' // Empty name
+                    };
+                    break;
+
+                case 'content':
+                    endpoint = '/content';
+                    data = {
+                        title: document.getElementById('long-title').value,
+                        type: 'INVALID_TYPE',
+                        platform: 'INVALID_PLATFORM',
+                        status: 'INVALID_STATUS'
+                    };
+                    break;
+
+                case 'date':
+                    endpoint = '/content/schedule/test-id';
+                    data = {
+                        platforms: [], // Empty array
+                        scheduledTime: '2020-01-01T00:00:00Z' // Past date
+                    };
+                    break;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}${endpoint}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': testToken ? `Bearer ${testToken}` : ''
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+                displayResponse(container, result, response.status);
+            } catch (error) {
+                container.className = 'response-container error';
+                container.innerHTML = `Network Error: ${error.message}`;
+            }
+        }
+
+        // Test error scenarios
+        async function testError(scenario) {
+            const container = document.getElementById('error-response');
+            container.className = 'response-container';
+            container.innerHTML = 'Testing error scenario...';
+
+            let endpoint;
+            let method = 'GET';
+            let data = null;
+
+            switch(scenario) {
+                case '404':
+                    endpoint = '/content/non-existent-id';
+                    break;
+                case '401':
+                    endpoint = '/auth/me';
+                    testToken = 'invalid.token.here';
+                    break;
+                case '403':
+                    endpoint = '/admin/users';
+                    break;
+                case '409':
+                    endpoint = '/auth/register';
+                    method = 'POST';
+                    data = { email: 'existing@user.com', password: 'Test123!', name: 'Test' };
+                    break;
+                case '422':
+                    endpoint = '/content/publish/invalid-content';
+                    method = 'POST';
+                    data = { platforms: ['INSTAGRAM'] };
+                    break;
+                case '429':
+                    // This would trigger rate limiting
+                    endpoint = '/auth/login';
+                    method = 'POST';
+                    data = { email: 'test@test.com', password: 'wrong' };
+                    break;
+                case '500':
+                    endpoint = '/trigger-error';
+                    break;
+                case 'timeout':
+                    endpoint = '/slow-endpoint';
+                    break;
+            }
+
+            try {
+                const options = {
+                    method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': testToken ? `Bearer ${testToken}` : ''
+                    }
+                };
+
+                if (data) {
+                    options.body = JSON.stringify(data);
+                }
+
+                const response = await fetch(`${API_BASE}${endpoint}`, options);
+                const result = await response.json();
+                displayResponse(container, result, response.status);
+            } catch (error) {
+                container.className = 'response-container error';
+                container.innerHTML = `Network Error: ${error.message}`;
+            }
+        }
+
+        // Test database errors
+        async function testDatabaseError(type) {
+            const container = document.getElementById('database-response');
+            container.className = 'response-container';
+            container.innerHTML = 'Testing database error...';
+
+            let endpoint, method = 'POST', data = {};
+
+            switch(type) {
+                case 'duplicate':
+                    endpoint = '/test/duplicate';
+                    data = { email: 'duplicate@test.com' };
+                    break;
+                case 'notfound':
+                    endpoint = '/content/00000000-0000-0000-0000-000000000000';
+                    method = 'GET';
+                    break;
+                case 'constraint':
+                    endpoint = '/test/constraint';
+                    data = { userId: 'invalid-id' };
+                    break;
+                case 'relation':
+                    endpoint = '/test/relation';
+                    data = { contentId: 'missing-content' };
+                    break;
+            }
+
+            try {
+                const options = {
+                    method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': testToken ? `Bearer ${testToken}` : ''
+                    }
+                };
+
+                if (method === 'POST') {
+                    options.body = JSON.stringify(data);
+                }
+
+                const response = await fetch(`${API_BASE}${endpoint}`, options);
+                const result = await response.json();
+                displayResponse(container, result, response.status);
+            } catch (error) {
+                container.className = 'response-container error';
+                container.innerHTML = `Network Error: ${error.message}`;
+            }
+        }
+
+        // Test authentication errors
+        async function testAuth(type) {
+            const container = document.getElementById('auth-response');
+            container.className = 'response-container';
+            container.innerHTML = 'Testing authentication error...';
+
+            let token;
+
+            switch(type) {
+                case 'invalid':
+                    token = 'invalid.token.here';
+                    break;
+                case 'expired':
+                    // This is a real JWT but expired
+                    token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjEiLCJleHAiOjE2MDAwMDAwMDB9.expired';
+                    break;
+                case 'missing':
+                    token = '';
+                    break;
+                case 'malformed':
+                    token = 'not.a.jwt';
+                    break;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/auth/me`, {
+                    headers: {
+                        'Authorization': token ? `Bearer ${token}` : ''
+                    }
+                });
+
+                const result = await response.json();
+                displayResponse(container, result, response.status);
+            } catch (error) {
+                container.className = 'response-container error';
+                container.innerHTML = `Network Error: ${error.message}`;
+            }
+        }
+
+        // Test rate limiting
+        async function testRateLimit() {
+            const container = document.getElementById('rate-response');
+            const loader = document.getElementById('rate-loader');
+            const count = parseInt(document.getElementById('request-count').value);
+
+            container.className = 'response-container';
+            container.innerHTML = '';
+            loader.classList.add('active');
+
+            const results = [];
+
+            for (let i = 0; i < count; i++) {
+                try {
+                    const response = await fetch(`${API_BASE}/auth/login`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: 'test@test.com', password: 'wrong' })
+                    });
+
+                    const result = await response.json();
+                    results.push({
+                        request: i + 1,
+                        status: response.status,
+                        message: result.error || result.message
+                    });
+
+                    if (response.status === 429) {
+                        const retryAfter = response.headers.get('Retry-After');
+                        results[results.length - 1].retryAfter = retryAfter;
+                    }
+                } catch (error) {
+                    results.push({
+                        request: i + 1,
+                        error: error.message
+                    });
+                }
+            }
+
+            loader.classList.remove('active');
+            displayRateLimitResults(container, results);
+        }
+
+        // Test throttling
+        async function testThrottling() {
+            const container = document.getElementById('rate-response');
+            container.className = 'response-container';
+            container.innerHTML = 'Testing request throttling...\n\n';
+
+            // Simulate gradual throttling
+            const delays = [0, 100, 200, 400, 800, 1600];
+            
+            for (let i = 0; i < delays.length; i++) {
+                await new Promise(resolve => setTimeout(resolve, delays[i]));
+                container.innerHTML += `Request ${i + 1}: Delayed by ${delays[i]}ms\n`;
+            }
+
+            container.innerHTML += '\n✅ Throttling test complete';
+        }
+
+        // Test success responses
+        async function testSuccess(type) {
+            const container = document.getElementById('success-response');
+            container.className = 'response-container';
+            container.innerHTML = 'Testing success response...';
+
+            let mockResponse;
+
+            switch(type) {
+                case 'single':
+                    mockResponse = {
+                        status: 'success',
+                        data: {
+                            id: '123',
+                            title: 'Test Content',
+                            status: 'DRAFT',
+                            createdAt: new Date().toISOString()
+                        },
+                        timestamp: new Date().toISOString()
+                    };
+                    break;
+
+                case 'list':
+                    mockResponse = {
+                        status: 'success',
+                        data: [
+                            { id: '1', title: 'Item 1' },
+                            { id: '2', title: 'Item 2' },
+                            { id: '3', title: 'Item 3' }
+                        ],
+                        meta: {
+                            page: 1,
+                            limit: 10,
+                            total: 3,
+                            pages: 1
+                        },
+                        timestamp: new Date().toISOString()
+                    };
+                    break;
+
+                case 'created':
+                    mockResponse = {
+                        status: 'success',
+                        data: { id: 'new-123', message: 'Resource created successfully' },
+                        timestamp: new Date().toISOString()
+                    };
+                    break;
+
+                case 'updated':
+                    mockResponse = {
+                        status: 'success',
+                        data: { id: '123', message: 'Resource updated successfully' },
+                        timestamp: new Date().toISOString()
+                    };
+                    break;
+
+                case 'deleted':
+                    mockResponse = {
+                        status: 'success',
+                        message: 'Resource deleted successfully',
+                        timestamp: new Date().toISOString()
+                    };
+                    break;
+            }
+
+            displayResponse(container, mockResponse, 200);
+        }
+
+        // Display response
+        function displayResponse(container, response, status) {
+            const statusClass = status >= 200 && status < 300 ? 'success' : 
+                               status >= 400 && status < 500 ? 'warning' : 'error';
+            
+            container.className = `response-container ${statusClass}`;
+            
+            let html = `<span class="status-badge status-${status}">Status: ${status}</span>\n\n`;
+            html += JSON.stringify(response, null, 2);
+
+            // Highlight validation errors if present
+            if (response.details && Array.isArray(response.details)) {
+                html += '\n\n<div class="validation-errors"><strong>Validation Errors:</strong>';
+                response.details.forEach(error => {
+                    html += `\n<div class="validation-error">
+                        <span class="error-field">${error.field}:</span> ${error.message}
+                    </div>`;
+                });
+                html += '</div>';
+            }
+
+            container.innerHTML = html;
+        }
+
+        // Display rate limit results
+        function displayRateLimitResults(container, results) {
+            let html = 'Rate Limiting Test Results:\n\n';
+            let rateLimited = false;
+
+            results.forEach(result => {
+                if (result.status === 429) {
+                    rateLimited = true;
+                    html += `❌ Request ${result.request}: RATE LIMITED (${result.message})`;
+                    if (result.retryAfter) {
+                        html += ` - Retry after: ${result.retryAfter}s`;
+                    }
+                } else if (result.error) {
+                    html += `⚠️ Request ${result.request}: ERROR (${result.error})`;
+                } else {
+                    html += `✅ Request ${result.request}: Status ${result.status}`;
+                }
+                html += '\n';
+            });
+
+            if (rateLimited) {
+                html += '\n🛡️ Rate limiting is working correctly!';
+                container.className = 'response-container warning';
+            } else {
+                html += '\n⚠️ Rate limiting may not be configured or threshold not reached';
+                container.className = 'response-container success';
+            }
+
+            container.innerHTML = html;
+        }
+    </script>
+</body>
+</html>

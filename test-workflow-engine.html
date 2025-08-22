@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TK Workflow Execution Engine</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 16px;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .panel {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .panel h2 {
+            color: #333;
+            font-size: 24px;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            background: none;
+            border: none;
+            color: #666;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .tab.active {
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            color: #555;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .stage-builder {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .stage-item {
+            background: white;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 10px;
+            border: 2px solid #e0e0e0;
+            position: relative;
+        }
+
+        .stage-item .remove-stage {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #ff4757;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            font-size: 16px;
+            line-height: 1;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .btn-success {
+            background: #00b894;
+            color: white;
+        }
+
+        .btn-danger {
+            background: #ff4757;
+            color: white;
+        }
+
+        .btn-warning {
+            background: #fdcb6e;
+            color: #333;
+        }
+
+        .workflow-list {
+            display: grid;
+            gap: 15px;
+        }
+
+        .workflow-card {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .workflow-card:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .workflow-card h3 {
+            color: #333;
+            font-size: 18px;
+            margin-bottom: 8px;
+        }
+
+        .workflow-card p {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+
+        .workflow-stages {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .stage-badge {
+            background: white;
+            color: #667eea;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            border: 1px solid #667eea;
+        }
+
+        .instance-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-left: 4px solid #667eea;
+        }
+
+        .instance-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .instance-status {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-pending { background: #ffeaa7; color: #333; }
+        .status-in-progress { background: #74b9ff; color: white; }
+        .status-approved { background: #00b894; color: white; }
+        .status-rejected { background: #ff4757; color: white; }
+        .status-completed { background: #a29bfe; color: white; }
+
+        .progress-bar {
+            background: #f0f0f0;
+            border-radius: 10px;
+            height: 8px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+
+        .progress-fill {
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            height: 100%;
+            transition: width 0.5s ease;
+        }
+
+        .task-list {
+            display: grid;
+            gap: 15px;
+        }
+
+        .task-card {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            transition: all 0.3s ease;
+        }
+
+        .task-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .task-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .task-priority {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .priority-low { background: #f0f0f0; color: #666; }
+        .priority-medium { background: #ffeaa7; color: #333; }
+        .priority-high { background: #fab1a0; color: white; }
+        .priority-urgent { background: #ff4757; color: white; }
+
+        .notification-badge {
+            background: #ff4757;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: bold;
+            margin-left: 8px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        .empty-state svg {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            margin-bottom: 20px;
+        }
+
+        .modal-header h3 {
+            font-size: 24px;
+            color: #333;
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 25px;
+        }
+
+        .status-message {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            padding: 15px 20px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.3s ease;
+            z-index: 2000;
+        }
+
+        .status-message.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .status-message.success { background: #00b894; }
+        .status-message.error { background: #ff4757; }
+        .status-message.warning { background: #fdcb6e; color: #333; }
+
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔄 TK Workflow Execution Engine</h1>
+            <p>Automate approval processes, task sequences, and content workflows</p>
+        </div>
+
+        <div class="dashboard">
+            <!-- Workflow Templates Panel -->
+            <div class="panel">
+                <h2>📋 Workflow Templates</h2>
+                
+                <div class="tabs">
+                    <button class="tab active" onclick="switchTab('templates', 'list')">Templates</button>
+                    <button class="tab" onclick="switchTab('templates', 'create')">Create New</button>
+                </div>
+
+                <div id="templates-list" class="tab-content active">
+                    <div id="workflowTemplates" class="workflow-list">
+                        <div class="empty-state">
+                            <p>No workflow templates yet</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="templates-create" class="tab-content">
+                    <form id="createWorkflowForm">
+                        <div class="form-group">
+                            <label>Workflow Name</label>
+                            <input type="text" id="workflowName" placeholder="e.g., Content Approval Process" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Description</label>
+                            <textarea id="workflowDescription" rows="3" placeholder="Describe the workflow purpose"></textarea>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Type</label>
+                                <select id="workflowType">
+                                    <option value="CONTENT_APPROVAL">Content Approval</option>
+                                    <option value="TASK_SEQUENCE">Task Sequence</option>
+                                    <option value="CUSTOM">Custom</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Auto-Publish on Completion</label>
+                                <select id="autoPublish">
+                                    <option value="false">No</option>
+                                    <option value="true">Yes</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Workflow Stages</label>
+                            <div class="stage-builder">
+                                <div id="stagesList"></div>
+                                <button type="button" class="btn btn-secondary" onclick="addStage()">
+                                    + Add Stage
+                                </button>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">
+                            Create Workflow Template
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Workflow Instances Panel -->
+            <div class="panel">
+                <h2>⚡ Active Workflows</h2>
+                
+                <div class="tabs">
+                    <button class="tab active" onclick="switchTab('instances', 'active')">Active</button>
+                    <button class="tab" onclick="switchTab('instances', 'pending')">Pending Approval</button>
+                    <button class="tab" onclick="switchTab('instances', 'completed')">Completed</button>
+                </div>
+
+                <div id="instances-active" class="tab-content active">
+                    <div id="activeInstances">
+                        <div class="empty-state">
+                            <p>No active workflows</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="instances-pending" class="tab-content">
+                    <div id="pendingApprovals">
+                        <div class="empty-state">
+                            <p>No pending approvals</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="instances-completed" class="tab-content">
+                    <div id="completedInstances">
+                        <div class="empty-state">
+                            <p>No completed workflows</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tasks Panel -->
+        <div class="panel">
+            <h2>✅ Task Management</h2>
+            
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('tasks', 'my-tasks')">My Tasks</button>
+                <button class="tab" onclick="switchTab('tasks', 'all-tasks')">All Tasks</button>
+                <button class="tab" onclick="switchTab('tasks', 'create-task')">Create Task</button>
+            </div>
+
+            <div id="tasks-my-tasks" class="tab-content active">
+                <div id="myTasks" class="task-list">
+                    <div class="empty-state">
+                        <p>No tasks assigned to you</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="tasks-all-tasks" class="tab-content">
+                <div id="allTasks" class="task-list">
+                    <div class="empty-state">
+                        <p>No tasks in the system</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="tasks-create-task" class="tab-content">
+                <form id="createTaskForm">
+                    <div class="form-group">
+                        <label>Task Title</label>
+                        <input type="text" id="taskTitle" placeholder="Enter task title" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea id="taskDescription" rows="3" placeholder="Describe the task"></textarea>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Priority</label>
+                            <select id="taskPriority">
+                                <option value="LOW">Low</option>
+                                <option value="MEDIUM" selected>Medium</option>
+                                <option value="HIGH">High</option>
+                                <option value="URGENT">Urgent</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Due Date</label>
+                            <input type="datetime-local" id="taskDueDate">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Assignee Email</label>
+                        <input type="email" id="taskAssignee" placeholder="assignee@example.com">
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">
+                        Create Task
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Approval Modal -->
+    <div id="approvalModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Process Workflow Action</h3>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Comments</label>
+                    <textarea id="approvalComments" rows="4" placeholder="Add your comments..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('approvalModal')">Cancel</button>
+                <button class="btn btn-danger" onclick="processAction('REJECTED')">Reject</button>
+                <button class="btn btn-success" onclick="processAction('APPROVED')">Approve</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Status Message -->
+    <div id="statusMessage" class="status-message"></div>
+
+    <script>
+        const API_BASE = 'http://localhost:9002/api/v1';
+        let authToken = localStorage.getItem('tk_auth_token');
+        let currentUser = null;
+        let selectedInstanceId = null;
+        let stageCount = 0;
+
+        // Initialize
+        async function init() {
+            if (!authToken) {
+                showStatus('Please log in first', 'warning');
+                setTimeout(() => {
+                    window.location.href = '/test-analytics.html';
+                }, 2000);
+                return;
+            }
+
+            try {
+                const response = await apiRequest('/auth/me');
+                currentUser = response.user;
+                loadWorkflowTemplates();
+                loadWorkflowInstances();
+                loadTasks();
+            } catch (error) {
+                showStatus('Failed to initialize', 'error');
+            }
+        }
+
+        // API Helper
+        async function apiRequest(endpoint, options = {}) {
+            const headers = {
+                'Content-Type': 'application/json',
+                ...options.headers
+            };
+
+            if (authToken) {
+                headers['Authorization'] = `Bearer ${authToken}`;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}${endpoint}`, {
+                    ...options,
+                    headers
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Request failed');
+                }
+
+                return await response.json();
+            } catch (error) {
+                console.error('API Error:', error);
+                throw error;
+            }
+        }
+
+        // Tab Switching
+        function switchTab(group, tab) {
+            // Update tab buttons
+            document.querySelectorAll(`#${group}-${tab}`).forEach(el => {
+                el.parentElement.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                el.parentElement.querySelector(`[onclick*="${tab}"]`).classList.add('active');
+            });
+
+            // Update tab content
+            document.querySelectorAll(`[id^="${group}-"]`).forEach(el => {
+                el.classList.remove('active');
+            });
+            document.getElementById(`${group}-${tab}`).classList.add('active');
+        }
+
+        // Stage Management
+        function addStage() {
+            stageCount++;
+            const stageHtml = `
+                <div class="stage-item" id="stage-${stageCount}">
+                    <button class="remove-stage" onclick="removeStage(${stageCount})">×</button>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Stage Name</label>
+                            <input type="text" id="stageName-${stageCount}" placeholder="e.g., Manager Approval" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Stage Type</label>
+                            <select id="stageType-${stageCount}">
+                                <option value="APPROVAL">Approval</option>
+                                <option value="TASK">Task</option>
+                                <option value="NOTIFICATION">Notification</option>
+                                <option value="AUTO">Automated</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Assignee Role</label>
+                            <select id="stageRole-${stageCount}">
+                                <option value="">None</option>
+                                <option value="ADMIN">Admin</option>
+                                <option value="MANAGER">Manager</option>
+                                <option value="EDITOR">Editor</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Assignee Email (Optional)</label>
+                            <input type="email" id="stageAssignee-${stageCount}" placeholder="user@example.com">
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('stagesList').insertAdjacentHTML('beforeend', stageHtml);
+        }
+
+        function removeStage(id) {
+            document.getElementById(`stage-${id}`).remove();
+        }
+
+        // Create Workflow Template
+        document.getElementById('createWorkflowForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // Collect stages
+            const stages = [];
+            document.querySelectorAll('.stage-item').forEach((stageEl) => {
+                const id = stageEl.id.split('-')[1];
+                stages.push({
+                    name: document.getElementById(`stageName-${id}`).value,
+                    type: document.getElementById(`stageType-${id}`).value,
+                    assigneeRole: document.getElementById(`stageRole-${id}`).value || null,
+                    assigneeId: document.getElementById(`stageAssignee-${id}`).value || null,
+                    config: {}
+                });
+            });
+
+            const workflowData = {
+                name: document.getElementById('workflowName').value,
+                description: document.getElementById('workflowDescription').value,
+                type: document.getElementById('workflowType').value,
+                autoExecute: document.getElementById('autoPublish').value === 'true',
+                stages
+            };
+
+            try {
+                await apiRequest('/workflows/templates', {
+                    method: 'POST',
+                    body: JSON.stringify(workflowData)
+                });
+
+                showStatus('Workflow template created successfully', 'success');
+                document.getElementById('createWorkflowForm').reset();
+                document.getElementById('stagesList').innerHTML = '';
+                stageCount = 0;
+                loadWorkflowTemplates();
+                switchTab('templates', 'list');
+            } catch (error) {
+                showStatus(`Failed to create workflow: ${error.message}`, 'error');
+            }
+        });
+
+        // Load Workflow Templates
+        async function loadWorkflowTemplates() {
+            try {
+                const workflows = await apiRequest('/workflows/templates');
+                const container = document.getElementById('workflowTemplates');
+                
+                if (workflows.length === 0) {
+                    container.innerHTML = '<div class="empty-state"><p>No workflow templates yet</p></div>';
+                    return;
+                }
+
+                container.innerHTML = workflows.map(workflow => `
+                    <div class="workflow-card" onclick="executeWorkflow('${workflow.id}')">
+                        <h3>${workflow.name}</h3>
+                        <p>${workflow.description || 'No description'}</p>
+                        <div class="workflow-stages">
+                            ${workflow.stages.map(stage => 
+                                `<span class="stage-badge">${stage.name}</span>`
+                            ).join('')}
+                        </div>
+                        <div style="margin-top: 15px; color: #999; font-size: 12px;">
+                            ${workflow._count.instances} instances
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                showStatus('Failed to load workflow templates', 'error');
+            }
+        }
+
+        // Execute Workflow
+        async function executeWorkflow(workflowId) {
+            const contentId = prompt('Enter content ID (optional):');
+            
+            try {
+                const instance = await apiRequest('/workflows/execute', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        workflowId,
+                        contentId: contentId || null,
+                        metadata: {
+                            startedFrom: 'test-interface',
+                            timestamp: new Date().toISOString()
+                        }
+                    })
+                });
+
+                showStatus('Workflow started successfully', 'success');
+                loadWorkflowInstances();
+            } catch (error) {
+                showStatus(`Failed to start workflow: ${error.message}`, 'error');
+            }
+        }
+
+        // Load Workflow Instances
+        async function loadWorkflowInstances() {
+            try {
+                const instances = await apiRequest('/workflows/instances?assignedToMe=true');
+                
+                const active = instances.filter(i => i.status === 'IN_PROGRESS');
+                const pending = instances.filter(i => i.needsMyAction);
+                const completed = instances.filter(i => ['COMPLETED', 'REJECTED'].includes(i.status));
+
+                renderInstances('activeInstances', active, 'active');
+                renderInstances('pendingApprovals', pending, 'pending');
+                renderInstances('completedInstances', completed, 'completed');
+
+                // Update notification badge
+                if (pending.length > 0) {
+                    document.querySelector('[onclick*="pending"]').innerHTML = 
+                        `Pending Approval <span class="notification-badge">${pending.length}</span>`;
+                }
+            } catch (error) {
+                showStatus('Failed to load workflow instances', 'error');
+            }
+        }
+
+        function renderInstances(containerId, instances, type) {
+            const container = document.getElementById(containerId);
+            
+            if (instances.length === 0) {
+                container.innerHTML = `<div class="empty-state"><p>No ${type} workflows</p></div>`;
+                return;
+            }
+
+            container.innerHTML = instances.map(instance => {
+                const progress = instance.workflow.stages.length > 0 
+                    ? (instance.currentStage / instance.workflow.stages.length) * 100 
+                    : 0;
+
+                return `
+                    <div class="instance-card">
+                        <div class="instance-header">
+                            <div>
+                                <h4>${instance.workflow.name}</h4>
+                                <p style="color: #666; font-size: 14px; margin-top: 5px;">
+                                    Current: ${instance.currentStageName || 'N/A'}
+                                </p>
+                            </div>
+                            <span class="instance-status status-${instance.status.toLowerCase().replace('_', '-')}">
+                                ${instance.status}
+                            </span>
+                        </div>
+                        
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${progress}%"></div>
+                        </div>
+                        
+                        ${instance.needsMyAction ? `
+                            <div style="margin-top: 15px;">
+                                <button class="btn btn-primary" onclick="openApprovalModal('${instance.id}')">
+                                    Take Action
+                                </button>
+                            </div>
+                        ` : ''}
+                        
+                        ${instance.approvals && instance.approvals.length > 0 ? `
+                            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #f0f0f0;">
+                                <strong style="font-size: 12px; color: #666;">APPROVAL HISTORY</strong>
+                                ${instance.approvals.map(a => `
+                                    <div style="margin-top: 8px; font-size: 13px;">
+                                        <strong>${a.user.name}</strong>: ${a.action}
+                                        ${a.comments ? `<br><em style="color: #666;">"${a.comments}"</em>` : ''}
+                                    </div>
+                                `).join('')}
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Approval Modal
+        function openApprovalModal(instanceId) {
+            selectedInstanceId = instanceId;
+            document.getElementById('approvalModal').classList.add('active');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+            selectedInstanceId = null;
+        }
+
+        async function processAction(action) {
+            if (!selectedInstanceId) return;
+
+            const comments = document.getElementById('approvalComments').value;
+
+            try {
+                await apiRequest(`/workflows/instances/${selectedInstanceId}/action`, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action,
+                        comments
+                    })
+                });
+
+                showStatus(`Workflow ${action.toLowerCase()}`, 'success');
+                closeModal('approvalModal');
+                document.getElementById('approvalComments').value = '';
+                loadWorkflowInstances();
+            } catch (error) {
+                showStatus(`Failed to process action: ${error.message}`, 'error');
+            }
+        }
+
+        // Task Management
+        document.getElementById('createTaskForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const taskData = {
+                title: document.getElementById('taskTitle').value,
+                description: document.getElementById('taskDescription').value,
+                priority: document.getElementById('taskPriority').value,
+                dueDate: document.getElementById('taskDueDate').value || null,
+                assigneeId: document.getElementById('taskAssignee').value || null
+            };
+
+            try {
+                await apiRequest('/tasks', {
+                    method: 'POST',
+                    body: JSON.stringify(taskData)
+                });
+
+                showStatus('Task created successfully', 'success');
+                document.getElementById('createTaskForm').reset();
+                loadTasks();
+                switchTab('tasks', 'my-tasks');
+            } catch (error) {
+                showStatus(`Failed to create task: ${error.message}`, 'error');
+            }
+        });
+
+        async function loadTasks() {
+            try {
+                const tasks = await apiRequest('/tasks');
+                const myTasks = tasks.filter(t => t.assigneeId === currentUser?.id);
+                
+                renderTasks('myTasks', myTasks);
+                renderTasks('allTasks', tasks);
+            } catch (error) {
+                showStatus('Failed to load tasks', 'error');
+            }
+        }
+
+        function renderTasks(containerId, tasks) {
+            const container = document.getElementById(containerId);
+            
+            if (tasks.length === 0) {
+                container.innerHTML = '<div class="empty-state"><p>No tasks</p></div>';
+                return;
+            }
+
+            container.innerHTML = tasks.map(task => `
+                <div class="task-card">
+                    <div class="task-header">
+                        <h4>${task.title}</h4>
+                        <span class="task-priority priority-${task.priority.toLowerCase()}">
+                            ${task.priority}
+                        </span>
+                    </div>
+                    <p style="color: #666; font-size: 14px; margin: 10px 0;">
+                        ${task.description || 'No description'}
+                    </p>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="color: #999; font-size: 12px;">
+                            Assigned to: ${task.assignee?.name || 'Unassigned'}
+                        </span>
+                        ${task.status !== 'COMPLETED' ? `
+                            <button class="btn btn-secondary" onclick="updateTaskStatus('${task.id}', 'COMPLETED')">
+                                Mark Complete
+                            </button>
+                        ` : '<span style="color: #00b894;">✓ Completed</span>'}
+                    </div>
+                    ${task.dueDate ? `
+                        <div style="margin-top: 10px; color: #ff4757; font-size: 12px;">
+                            Due: ${new Date(task.dueDate).toLocaleString()}
+                        </div>
+                    ` : ''}
+                </div>
+            `).join('');
+        }
+
+        async function updateTaskStatus(taskId, status) {
+            try {
+                await apiRequest(`/tasks/${taskId}`, {
+                    method: 'PATCH',
+                    body: JSON.stringify({ status })
+                });
+
+                showStatus('Task updated successfully', 'success');
+                loadTasks();
+            } catch (error) {
+                showStatus(`Failed to update task: ${error.message}`, 'error');
+            }
+        }
+
+        // Status Messages
+        function showStatus(message, type = 'success') {
+            const statusEl = document.getElementById('statusMessage');
+            statusEl.textContent = message;
+            statusEl.className = `status-message ${type} active`;
+            
+            setTimeout(() => {
+                statusEl.classList.remove('active');
+            }, 3000);
+        }
+
+        // Initialize on load
+        init();
+
+        // Add some default stages for demo
+        setTimeout(() => {
+            if (document.getElementById('stagesList').children.length === 0) {
+                addStage();
+            }
+        }, 100);
+    </script>
+</body>
+</html>

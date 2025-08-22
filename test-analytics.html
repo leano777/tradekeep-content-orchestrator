@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics Dashboard - TK Content Orchestrator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background-color: #f8f9fa;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border: 1px solid #e9ecef;
+        }
+
+        .card h3 {
+            margin-bottom: 1rem;
+            color: #333;
+            font-size: 1.2rem;
+        }
+
+        .metric-card {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-label {
+            color: #6c757d;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .metric-change {
+            margin-top: 0.5rem;
+            font-size: 0.8rem;
+        }
+
+        .change-positive {
+            color: #28a745;
+        }
+
+        .change-negative {
+            color: #dc3545;
+        }
+
+        .tabs {
+            display: flex;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+            overflow: hidden;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 1rem;
+            text-align: center;
+            cursor: pointer;
+            border: none;
+            background: white;
+            color: #6c757d;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .tab.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .tab:hover:not(.active) {
+            background: #f8f9fa;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .chart-container {
+            height: 300px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6c757d;
+            font-style: italic;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .table th,
+        .table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .controls {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            color: #333;
+            font-size: 0.9rem;
+        }
+
+        input, select {
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin-top: auto;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5a6fd8;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .platform-pill {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .platform-instagram {
+            background: #E4405F;
+            color: white;
+        }
+
+        .platform-facebook {
+            background: #1877F2;
+            color: white;
+        }
+
+        .platform-twitter {
+            background: #1DA1F2;
+            color: white;
+        }
+
+        .platform-linkedin {
+            background: #0077B5;
+            color: white;
+        }
+
+        .platform-email {
+            background: #34495e;
+            color: white;
+        }
+
+        .status {
+            padding: 0.5rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #6c757d;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #e9ecef;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 0.5rem;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #667eea;
+            transition: width 0.3s ease;
+        }
+
+        .metric-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .engagement-breakdown {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 1rem;
+        }
+
+        .engagement-item {
+            text-align: center;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+            flex: 1;
+            margin: 0 0.5rem;
+        }
+
+        .engagement-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .engagement-label {
+            font-size: 0.8rem;
+            color: #6c757d;
+            margin-top: 0.25rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 Analytics Dashboard</h1>
+            <p>Real-time insights into your content performance and engagement</p>
+        </div>
+
+        <div class="controls">
+            <div class="form-group">
+                <label>Period</label>
+                <select id="periodSelect" onchange="loadDashboard()">
+                    <option value="7d">Last 7 days</option>
+                    <option value="30d" selected>Last 30 days</option>
+                    <option value="90d">Last 90 days</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label>Platform</label>
+                <select id="platformSelect" onchange="loadContent()">
+                    <option value="">All Platforms</option>
+                    <option value="instagram">Instagram</option>
+                    <option value="facebook">Facebook</option>
+                    <option value="twitter">Twitter</option>
+                    <option value="linkedin">LinkedIn</option>
+                    <option value="email">Email</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Custom Date Range</label>
+                <input type="date" id="startDate">
+            </div>
+            
+            <div class="form-group">
+                <label>&nbsp;</label>
+                <input type="date" id="endDate">
+            </div>
+
+            <div class="form-group">
+                <label>&nbsp;</label>
+                <button class="btn btn-primary" onclick="loadCustomRange()">Apply</button>
+            </div>
+
+            <div class="form-group">
+                <label>&nbsp;</label>
+                <button class="btn btn-secondary" onclick="generateSampleData()">Generate Sample Data</button>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('overview')">Overview</button>
+            <button class="tab" onclick="showTab('content')">Content Analytics</button>
+            <button class="tab" onclick="showTab('engagement')">User Engagement</button>
+            <button class="tab" onclick="showTab('reports')">Reports</button>
+        </div>
+
+        <!-- Overview Tab -->
+        <div id="overview" class="tab-content active">
+            <div class="dashboard-grid">
+                <div class="card metric-card">
+                    <div class="metric-value" id="totalContent">-</div>
+                    <div class="metric-label">Total Content</div>
+                </div>
+                
+                <div class="card metric-card">
+                    <div class="metric-value" id="weeklyViews">-</div>
+                    <div class="metric-label">Weekly Views</div>
+                    <div class="metric-change" id="viewsChange"></div>
+                </div>
+                
+                <div class="card metric-card">
+                    <div class="metric-value" id="weeklyEngagements">-</div>
+                    <div class="metric-label">Weekly Engagements</div>
+                    <div class="metric-change" id="engagementsChange"></div>
+                </div>
+                
+                <div class="card metric-card">
+                    <div class="metric-value" id="weeklyReach">-</div>
+                    <div class="metric-label">Weekly Reach</div>
+                </div>
+            </div>
+
+            <div class="dashboard-grid">
+                <div class="card">
+                    <h3>Content by Platform</h3>
+                    <div id="platformChart" class="chart-container">
+                        Platform distribution chart
+                    </div>
+                    <div id="platformBreakdown"></div>
+                </div>
+                
+                <div class="card">
+                    <h3>Content by Status</h3>
+                    <div id="statusChart" class="chart-container">
+                        Status distribution chart
+                    </div>
+                    <div id="statusBreakdown"></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Top Performing Content</h3>
+                <div id="topContentTable"></div>
+            </div>
+        </div>
+
+        <!-- Content Analytics Tab -->
+        <div id="content" class="tab-content">
+            <div class="card">
+                <h3>Content Performance Analytics</h3>
+                <div id="contentAnalytics" class="loading">Loading content analytics...</div>
+            </div>
+
+            <div class="card">
+                <h3>Add Analytics Data</h3>
+                <form onsubmit="addAnalyticsData(event)" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                    <div class="form-group">
+                        <label>Content ID</label>
+                        <input type="text" name="contentId" required placeholder="Enter content ID">
+                    </div>
+                    <div class="form-group">
+                        <label>Platform</label>
+                        <select name="platform" required>
+                            <option value="">Select platform</option>
+                            <option value="instagram">Instagram</option>
+                            <option value="facebook">Facebook</option>
+                            <option value="twitter">Twitter</option>
+                            <option value="linkedin">LinkedIn</option>
+                            <option value="email">Email</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Views</label>
+                        <input type="number" name="views" min="0" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Likes</label>
+                        <input type="number" name="likes" min="0" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Shares</label>
+                        <input type="number" name="shares" min="0" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Comments</label>
+                        <input type="number" name="comments" min="0" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Clicks</label>
+                        <input type="number" name="clicks" min="0" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Reach</label>
+                        <input type="number" name="reach" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Impressions</label>
+                        <input type="number" name="impressions" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>&nbsp;</label>
+                        <button type="submit" class="btn btn-primary">Add Analytics</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- User Engagement Tab -->
+        <div id="engagement" class="tab-content">
+            <div class="card">
+                <h3>User Engagement Tracking</h3>
+                <div id="engagementData" class="loading">Loading engagement data...</div>
+            </div>
+
+            <div class="card">
+                <h3>Track Engagement</h3>
+                <form onsubmit="trackEngagement(event)" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                    <div class="form-group">
+                        <label>Action</label>
+                        <select name="action" required>
+                            <option value="">Select action</option>
+                            <option value="view">View</option>
+                            <option value="like">Like</option>
+                            <option value="share">Share</option>
+                            <option value="comment">Comment</option>
+                            <option value="click">Click</option>
+                            <option value="download">Download</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Entity Type</label>
+                        <select name="entityType" required>
+                            <option value="">Select type</option>
+                            <option value="content">Content</option>
+                            <option value="campaign">Campaign</option>
+                            <option value="asset">Asset</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Entity ID</label>
+                        <input type="text" name="entityId" required placeholder="Enter entity ID">
+                    </div>
+                    <div class="form-group">
+                        <label>Platform</label>
+                        <select name="platform">
+                            <option value="">Select platform</option>
+                            <option value="instagram">Instagram</option>
+                            <option value="facebook">Facebook</option>
+                            <option value="twitter">Twitter</option>
+                            <option value="linkedin">LinkedIn</option>
+                            <option value="email">Email</option>
+                            <option value="website">Website</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Source</label>
+                        <input type="text" name="source" placeholder="e.g., direct, search, social">
+                    </div>
+                    <div class="form-group">
+                        <label>&nbsp;</label>
+                        <button type="submit" class="btn btn-primary">Track Engagement</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Reports Tab -->
+        <div id="reports" class="tab-content">
+            <div class="card">
+                <h3>Analytics Reports</h3>
+                <p>Generate comprehensive reports for different time periods and metrics.</p>
+                
+                <div style="margin-top: 2rem;">
+                    <button class="btn btn-primary" onclick="generateReport('content')">Content Performance Report</button>
+                    <button class="btn btn-primary" onclick="generateReport('engagement')">Engagement Report</button>
+                    <button class="btn btn-primary" onclick="generateReport('growth')">Growth Report</button>
+                </div>
+
+                <div id="reportOutput" style="margin-top: 2rem;"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="status" class="status" style="display: none; position: fixed; top: 20px; right: 20px; z-index: 1000;"></div>
+
+    <script>
+        const API_BASE = 'http://localhost:9002/api/v1';
+        const AUTH_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNtZW0zM3pqdTAwMDB1eHFncTAyemVwdGYiLCJlbWFpbCI6ImJyYW5kQHRlc3QuY29tIiwiaWF0IjoxNzU1ODIyMDQzfQ.SmDPqkLf4kKOO7DCz49oc-_FL2Meb7JohxhZqs-lWdc';
+
+        // Tab functionality
+        function showTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+
+            if (tabName === 'overview') {
+                loadDashboard();
+            } else if (tabName === 'content') {
+                loadContent();
+            } else if (tabName === 'engagement') {
+                loadEngagement();
+            }
+        }
+
+        // Status functions
+        function showStatus(message, type = 'success') {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = `status ${type}`;
+            status.style.display = 'block';
+            
+            setTimeout(() => {
+                status.style.display = 'none';
+            }, 3000);
+        }
+
+        // API functions
+        async function apiCall(endpoint, options = {}) {
+            try {
+                const response = await fetch(`${API_BASE}${endpoint}`, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${AUTH_TOKEN}`,
+                        ...options.headers
+                    },
+                    ...options
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.message || `HTTP ${response.status}`);
+                }
+
+                return await response.json();
+            } catch (error) {
+                console.error('API Error:', error);
+                showStatus(`Error: ${error.message}`, 'error');
+                return null;
+            }
+        }
+
+        // Load dashboard overview
+        async function loadDashboard() {
+            const result = await apiCall('/analytics/dashboard');
+            
+            if (result && result.data) {
+                const { overview, performance, breakdowns, topContent } = result.data;
+                
+                // Update metrics
+                document.getElementById('totalContent').textContent = overview.totalContent.toLocaleString();
+                document.getElementById('weeklyViews').textContent = performance.weeklyViews.toLocaleString();
+                document.getElementById('weeklyEngagements').textContent = performance.weeklyEngagements.toLocaleString();
+                document.getElementById('weeklyReach').textContent = performance.weeklyReach.toLocaleString();
+
+                // Update growth indicators
+                updateGrowthIndicator('viewsChange', performance.growth.views);
+                updateGrowthIndicator('engagementsChange', performance.growth.engagements);
+
+                // Update breakdowns
+                updatePlatformBreakdown(breakdowns.contentByPlatform);
+                updateStatusBreakdown(breakdowns.contentByStatus);
+                updateTopContent(topContent);
+            }
+        }
+
+        function updateGrowthIndicator(elementId, growth) {
+            const element = document.getElementById(elementId);
+            if (growth > 0) {
+                element.textContent = `+${growth}% from last week`;
+                element.className = 'metric-change change-positive';
+            } else if (growth < 0) {
+                element.textContent = `${growth}% from last week`;
+                element.className = 'metric-change change-negative';
+            } else {
+                element.textContent = 'No change from last week';
+                element.className = 'metric-change';
+            }
+        }
+
+        function updatePlatformBreakdown(platforms) {
+            const container = document.getElementById('platformBreakdown');
+            container.innerHTML = platforms.map(item => `
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                    <span class="platform-pill platform-${item.platform.toLowerCase()}">${item.platform}</span>
+                    <strong>${item.count}</strong>
+                </div>
+            `).join('');
+        }
+
+        function updateStatusBreakdown(statuses) {
+            const container = document.getElementById('statusBreakdown');
+            container.innerHTML = statuses.map(item => `
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                    <span style="text-transform: capitalize;">${item.status}</span>
+                    <strong>${item.count}</strong>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${(item.count / Math.max(...statuses.map(s => s.count))) * 100}%"></div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function updateTopContent(content) {
+            const container = document.getElementById('topContentTable');
+            if (content.length === 0) {
+                container.innerHTML = '<p>No content data available. Create some content and add analytics data to see top performers.</p>';
+                return;
+            }
+
+            container.innerHTML = `
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Type</th>
+                            <th>Platform</th>
+                            <th>Status</th>
+                            <th>Total Engagement</th>
+                            <th>Published</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${content.map(item => `
+                            <tr>
+                                <td>${item.title}</td>
+                                <td style="text-transform: capitalize;">${item.type}</td>
+                                <td>
+                                    ${item.platform ? `<span class="platform-pill platform-${item.platform.toLowerCase()}">${item.platform}</span>` : 'N/A'}
+                                </td>
+                                <td style="text-transform: capitalize;">${item.status}</td>
+                                <td><strong>${item.totalEngagement.toLocaleString()}</strong></td>
+                                <td>${item.publishedAt ? new Date(item.publishedAt).toLocaleDateString() : 'Not published'}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        // Load content analytics
+        async function loadContent() {
+            const period = document.getElementById('periodSelect').value;
+            const platform = document.getElementById('platformSelect').value;
+            
+            const params = new URLSearchParams({ period });
+            if (platform) params.append('platform', platform);
+
+            const result = await apiCall(`/analytics/content?${params}`);
+            
+            if (result && result.data) {
+                const { analytics, summary } = result.data;
+                const container = document.getElementById('contentAnalytics');
+                
+                if (analytics.length === 0) {
+                    container.innerHTML = '<p>No analytics data available. Add some analytics data using the form below.</p>';
+                    return;
+                }
+
+                container.innerHTML = `
+                    <div class="metric-grid">
+                        <div class="engagement-item">
+                            <div class="engagement-value">${summary.totalViews.toLocaleString()}</div>
+                            <div class="engagement-label">Total Views</div>
+                        </div>
+                        <div class="engagement-item">
+                            <div class="engagement-value">${summary.totalEngagements.toLocaleString()}</div>
+                            <div class="engagement-label">Total Engagements</div>
+                        </div>
+                        <div class="engagement-item">
+                            <div class="engagement-value">${summary.totalReach.toLocaleString()}</div>
+                            <div class="engagement-label">Total Reach</div>
+                        </div>
+                        <div class="engagement-item">
+                            <div class="engagement-value">${summary.contentCount}</div>
+                            <div class="engagement-label">Content Pieces</div>
+                        </div>
+                    </div>
+
+                    <table class="table" style="margin-top: 2rem;">
+                        <thead>
+                            <tr>
+                                <th>Content</th>
+                                <th>Platform</th>
+                                <th>Views</th>
+                                <th>Likes</th>
+                                <th>Shares</th>
+                                <th>Comments</th>
+                                <th>Engagement Rate</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${analytics.slice(0, 20).map(item => `
+                                <tr>
+                                    <td>${item.content.title}</td>
+                                    <td><span class="platform-pill platform-${item.platform.toLowerCase()}">${item.platform}</span></td>
+                                    <td>${item.views.toLocaleString()}</td>
+                                    <td>${item.likes.toLocaleString()}</td>
+                                    <td>${item.shares.toLocaleString()}</td>
+                                    <td>${item.comments.toLocaleString()}</td>
+                                    <td>${item.engagementRate ? item.engagementRate.toFixed(2) + '%' : 'N/A'}</td>
+                                    <td>${new Date(item.metricDate).toLocaleDateString()}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+            }
+        }
+
+        // Add analytics data
+        async function addAnalyticsData(event) {
+            event.preventDefault();
+            const formData = new FormData(event.target);
+            
+            const data = {
+                platform: formData.get('platform'),
+                views: parseInt(formData.get('views')) || 0,
+                likes: parseInt(formData.get('likes')) || 0,
+                shares: parseInt(formData.get('shares')) || 0,
+                comments: parseInt(formData.get('comments')) || 0,
+                clicks: parseInt(formData.get('clicks')) || 0,
+                reach: parseInt(formData.get('reach')) || null,
+                impressions: parseInt(formData.get('impressions')) || null
+            };
+
+            const contentId = formData.get('contentId');
+            const result = await apiCall(`/analytics/content/${contentId}/metrics`, {
+                method: 'POST',
+                body: JSON.stringify(data)
+            });
+
+            if (result) {
+                showStatus('Analytics data added successfully!');
+                event.target.reset();
+                loadContent();
+                loadDashboard();
+            }
+        }
+
+        // Track engagement
+        async function trackEngagement(event) {
+            event.preventDefault();
+            const formData = new FormData(event.target);
+            
+            const data = {
+                action: formData.get('action'),
+                entityType: formData.get('entityType'),
+                entityId: formData.get('entityId'),
+                platform: formData.get('platform') || null,
+                source: formData.get('source') || null,
+                sessionId: 'web-' + Date.now()
+            };
+
+            const result = await apiCall('/analytics/engagement', {
+                method: 'POST',
+                body: JSON.stringify(data)
+            });
+
+            if (result) {
+                showStatus('Engagement tracked successfully!');
+                event.target.reset();
+                loadEngagement();
+            }
+        }
+
+        // Load engagement data
+        async function loadEngagement() {
+            // Note: This would need a specific endpoint for user engagement analytics
+            const container = document.getElementById('engagementData');
+            container.innerHTML = '<p>Engagement tracking is active. Use the form below to manually track engagement events.</p>';
+        }
+
+        // Generate sample data
+        async function generateSampleData() {
+            const sampleContent = [
+                { title: 'How to Use Social Media for Business', platform: 'linkedin', type: 'post' },
+                { title: 'Top 10 Marketing Trends', platform: 'twitter', type: 'post' },
+                { title: 'Product Launch Announcement', platform: 'instagram', type: 'post' },
+                { title: 'Weekly Newsletter', platform: 'email', type: 'email' },
+                { title: 'Behind the Scenes Video', platform: 'facebook', type: 'video' }
+            ];
+
+            try {
+                // First create some content
+                for (const content of sampleContent) {
+                    const contentResult = await apiCall('/content', {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            title: content.title,
+                            body: `Sample content for ${content.title}`,
+                            type: content.type,
+                            platform: content.platform,
+                            status: 'published'
+                        })
+                    });
+
+                    if (contentResult && contentResult.data.content) {
+                        // Add sample analytics
+                        const analyticsData = {
+                            platform: content.platform,
+                            views: Math.floor(Math.random() * 10000) + 100,
+                            likes: Math.floor(Math.random() * 500) + 10,
+                            shares: Math.floor(Math.random() * 100) + 5,
+                            comments: Math.floor(Math.random() * 50) + 2,
+                            clicks: Math.floor(Math.random() * 200) + 10,
+                            reach: Math.floor(Math.random() * 15000) + 500,
+                            impressions: Math.floor(Math.random() * 20000) + 1000
+                        };
+
+                        await apiCall(`/analytics/content/${contentResult.data.content.id}/metrics`, {
+                            method: 'POST',
+                            body: JSON.stringify(analyticsData)
+                        });
+                    }
+                }
+
+                showStatus('Sample data generated successfully!');
+                loadDashboard();
+                loadContent();
+            } catch (error) {
+                showStatus('Error generating sample data: ' + error.message, 'error');
+            }
+        }
+
+        // Load custom date range
+        function loadCustomRange() {
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            
+            if (startDate && endDate) {
+                // This would modify the API calls to use custom date range
+                showStatus('Custom date range applied');
+                loadDashboard();
+                loadContent();
+            } else {
+                showStatus('Please select both start and end dates', 'error');
+            }
+        }
+
+        // Generate reports
+        function generateReport(type) {
+            const container = document.getElementById('reportOutput');
+            container.innerHTML = `<div class="loading">Generating ${type} report...</div>`;
+            
+            setTimeout(() => {
+                container.innerHTML = `
+                    <div class="card">
+                        <h4>${type.charAt(0).toUpperCase() + type.slice(1)} Report</h4>
+                        <p>Report generated on ${new Date().toLocaleDateString()}</p>
+                        <p>This is a sample report. In a real implementation, this would contain comprehensive analytics data, charts, and insights based on the selected report type.</p>
+                    </div>
+                `;
+            }, 1000);
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadDashboard();
+        });
+    </script>
+</body>
+</html>
