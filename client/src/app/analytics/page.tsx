@@ -1,405 +1,460 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { 
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-  LineChart, Line, PieChart, Pie, Cell, AreaChart, Area
-} from 'recharts';
-import { Calendar, TrendingUp, Users, Eye, Heart, MessageCircle, Share2, DollarSign } from 'lucide-react';
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { Button } from '@/components/ui/Button';
+import { useAuth } from '@/hooks/useAuth';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import apiClient from '@/lib/api';
 
-interface AnalyticsData {
-  overview: {
-    totalContent: number;
-    totalViews: number;
-    totalEngagement: number;
-    conversionRate: number;
+interface SystemMetrics {
+  server: {
+    uptime: number;
+    memoryUsage: number;
+    cpuUsage: number;
+    activeConnections: number;
   };
-  contentPerformance: Array<{
-    id: string;
-    title: string;
-    views: number;
-    engagement: number;
-    platform: string;
-    publishedAt: string;
-  }>;
-  platformStats: Array<{
-    platform: string;
-    posts: number;
-    engagement: number;
-    color: string;
-  }>;
-  engagementOverTime: Array<{
-    date: string;
-    views: number;
-    likes: number;
-    comments: number;
-    shares: number;
-  }>;
-  emailStats: {
-    totalSubscribers: number;
-    campaignsSent: number;
-    openRate: number;
-    clickRate: number;
+  database: {
+    connectionPool: number;
+    queryTime: number;
+    totalQueries: number;
+  };
+  api: {
+    requestsPerMinute: number;
+    averageResponseTime: number;
+    errorRate: number;
   };
 }
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
+interface ContentMetrics {
+  totalContent: number;
+  contentByStatus: Record<string, number>;
+  contentByType: Record<string, number>;
+  contentByPillar: Record<string, number>;
+  recentActivity: Array<{
+    action: string;
+    count: number;
+    timestamp: string;
+  }>;
+}
 
 export default function AnalyticsPage() {
-  const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [dateRange, setDateRange] = useState('30d');
+  const { user, loading } = useAuth();
+  const router = useRouter();
+  const [systemMetrics, setSystemMetrics] = useState<SystemMetrics | null>(null);
+  const [contentMetrics, setContentMetrics] = useState<ContentMetrics | null>(null);
+  const [metricsLoading, setMetricsLoading] = useState(true);
+  const [refreshInterval, setRefreshInterval] = useState<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    fetchAnalyticsData();
-  }, [dateRange]);
+    if (!loading && !user) {
+      router.push('/auth/login');
+    }
+  }, [user, loading, router]);
 
-  const fetchAnalyticsData = async () => {
+  useEffect(() => {
+    if (user) {
+      loadMetrics();
+      // Set up auto-refresh every 30 seconds
+      const interval = setInterval(loadMetrics, 30000);
+      setRefreshInterval(interval);
+      
+      return () => {
+        if (interval) clearInterval(interval);
+      };
+    }
+  }, [user]);
+
+  const loadMetrics = async () => {
     try {
-      setLoading(true);
+      setMetricsLoading(true);
       
-      // Fetch dashboard stats
-      const dashboardResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9002'}/api/v1/dashboard/stats`, {
-        headers: { 
-          'Authorization': `Bearer ${localStorage.getItem('token')}` 
-        }
-      });
+      // Load content metrics
+      const contentResponse = await apiClient.getContent();
+      const content = contentResponse.data || contentResponse || [];
       
-      if (!dashboardResponse.ok) {
-        throw new Error('Failed to fetch analytics');
-      }
-      
-      const dashboardData = await dashboardResponse.json();
-      
-      // Mock additional analytics data (would be real API calls in production)
-      const mockData: AnalyticsData = {
-        overview: {
-          totalContent: dashboardData.data.totalContent || 0,
-          totalViews: Math.floor(Math.random() * 50000) + 10000,
-          totalEngagement: Math.floor(Math.random() * 5000) + 1000,
-          conversionRate: parseFloat((Math.random() * 5 + 2).toFixed(2))
+      // Simulate system metrics (in real app, these would come from monitoring APIs)
+      const mockSystemMetrics: SystemMetrics = {
+        server: {
+          uptime: Math.floor(Date.now() / 1000) - (7 * 24 * 60 * 60), // 7 days ago
+          memoryUsage: 45 + Math.random() * 10, // 45-55%
+          cpuUsage: 15 + Math.random() * 20, // 15-35%
+          activeConnections: Math.floor(10 + Math.random() * 40) // 10-50
         },
-        contentPerformance: [
-          {
-            id: '1',
-            title: 'How to Master Social Media Marketing',
-            views: 12500,
-            engagement: 850,
-            platform: 'LinkedIn',
-            publishedAt: '2024-01-15'
-          },
-          {
-            id: '2', 
-            title: 'The Future of Content Creation',
-            views: 9800,
-            engagement: 720,
-            platform: 'Twitter',
-            publishedAt: '2024-01-12'
-          },
-          {
-            id: '3',
-            title: 'Building Your Personal Brand',
-            views: 15200,
-            engagement: 1200,
-            platform: 'Instagram',
-            publishedAt: '2024-01-10'
-          },
-          {
-            id: '4',
-            title: 'Content Strategy Best Practices',
-            views: 8900,
-            engagement: 650,
-            platform: 'LinkedIn',
-            publishedAt: '2024-01-08'
-          }
-        ],
-        platformStats: [
-          { platform: 'LinkedIn', posts: 24, engagement: 3200, color: '#0077B5' },
-          { platform: 'Twitter', posts: 18, engagement: 2100, color: '#1DA1F2' },
-          { platform: 'Instagram', posts: 15, engagement: 2800, color: '#E4405F' },
-          { platform: 'Facebook', posts: 12, engagement: 1900, color: '#1877F2' }
-        ],
-        engagementOverTime: [
-          { date: '2024-01-01', views: 2400, likes: 240, comments: 45, shares: 12 },
-          { date: '2024-01-02', views: 1398, likes: 180, comments: 32, shares: 8 },
-          { date: '2024-01-03', views: 9800, likes: 890, comments: 120, shares: 45 },
-          { date: '2024-01-04', views: 3908, likes: 420, comments: 78, shares: 22 },
-          { date: '2024-01-05', views: 4800, likes: 510, comments: 65, shares: 18 },
-          { date: '2024-01-06', views: 3800, likes: 380, comments: 55, shares: 15 },
-          { date: '2024-01-07', views: 4300, likes: 450, comments: 72, shares: 28 }
-        ],
-        emailStats: {
-          totalSubscribers: 1245,
-          campaignsSent: 8,
-          openRate: 24.5,
-          clickRate: 3.2
+        database: {
+          connectionPool: Math.floor(8 + Math.random() * 7), // 8-15
+          queryTime: 5 + Math.random() * 10, // 5-15ms
+          totalQueries: Math.floor(1000 + Math.random() * 5000) // 1000-6000
+        },
+        api: {
+          requestsPerMinute: Math.floor(50 + Math.random() * 100), // 50-150
+          averageResponseTime: 50 + Math.random() * 100, // 50-150ms
+          errorRate: Math.random() * 2 // 0-2%
         }
       };
       
-      setAnalyticsData(mockData);
+      // Process content metrics
+      const processedContentMetrics: ContentMetrics = {
+        totalContent: content.length,
+        contentByStatus: content.reduce((acc: Record<string, number>, item: any) => {
+          acc[item.status] = (acc[item.status] || 0) + 1;
+          return acc;
+        }, {}),
+        contentByType: content.reduce((acc: Record<string, number>, item: any) => {
+          acc[item.type] = (acc[item.type] || 0) + 1;
+          return acc;
+        }, {}),
+        contentByPillar: content.reduce((acc: Record<string, number>, item: any) => {
+          acc[item.pillar] = (acc[item.pillar] || 0) + 1;
+          return acc;
+        }, {}),
+        recentActivity: [
+          { action: 'Content Created', count: Math.floor(Math.random() * 10), timestamp: new Date().toISOString() },
+          { action: 'Content Published', count: Math.floor(Math.random() * 5), timestamp: new Date().toISOString() },
+          { action: 'Content Updated', count: Math.floor(Math.random() * 8), timestamp: new Date().toISOString() }
+        ]
+      };
+      
+      setSystemMetrics(mockSystemMetrics);
+      setContentMetrics(processedContentMetrics);
+      
     } catch (error) {
-      console.error('Error fetching analytics:', error);
+      console.error('Failed to load metrics:', error);
     } finally {
-      setLoading(false);
+      setMetricsLoading(false);
     }
+  };
+
+  const formatUptime = (seconds: number) => {
+    const days = Math.floor(seconds / (24 * 60 * 60));
+    const hours = Math.floor((seconds % (24 * 60 * 60)) / (60 * 60));
+    const mins = Math.floor((seconds % (60 * 60)) / 60);
+    return `${days}d ${hours}h ${mins}m`;
+  };
+
+  const getHealthStatus = (value: number, thresholds: {good: number, warning: number}) => {
+    if (value <= thresholds.good) return { status: 'healthy', color: 'text-green-600 bg-green-100' };
+    if (value <= thresholds.warning) return { status: 'warning', color: 'text-yellow-600 bg-yellow-100' };
+    return { status: 'critical', color: 'text-red-600 bg-red-100' };
   };
 
   if (loading) {
     return (
-      <DashboardLayout>
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        </div>
-      </DashboardLayout>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
     );
   }
 
-  if (!analyticsData) {
-    return (
-      <DashboardLayout>
-        <div className="text-center py-12">
-          <p className="text-gray-500">Failed to load analytics data</p>
-          <Button onClick={fetchAnalyticsData} className="mt-4">
-            Retry
-          </Button>
-        </div>
-      </DashboardLayout>
-    );
+  if (!user) {
+    return null;
   }
 
   return (
-    <DashboardLayout>
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Analytics Dashboard</h1>
-            <p className="text-gray-600 mt-1">Track your content performance and engagement metrics</p>
-          </div>
-          <div className="flex space-x-2">
-            <select 
-              value={dateRange} 
-              onChange={(e) => setDateRange(e.target.value)}
-              className="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-            >
-              <option value="7d">Last 7 days</option>
-              <option value="30d">Last 30 days</option>
-              <option value="90d">Last 90 days</option>
-              <option value="1y">Last year</option>
-            </select>
-            <Button variant="secondary">Export Report</Button>
-          </div>
-        </div>
-
-        {/* Overview Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <Eye className="h-6 w-6 text-blue-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">Total Views</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {analyticsData.overview.totalViews.toLocaleString()}
-                </p>
-              </div>
+    <div className="min-h-screen bg-gray-50">
+      {/* Navigation Header */}
+      <nav className="bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between h-16">
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={() => router.push('/dashboard')}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                ← Back
+              </button>
+              <h1 className="text-xl font-semibold text-gray-900">
+                📊 System Analytics
+              </h1>
+              {metricsLoading && (
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+              )}
             </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <Heart className="h-6 w-6 text-green-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">Total Engagement</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {analyticsData.overview.totalEngagement.toLocaleString()}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <TrendingUp className="h-6 w-6 text-purple-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">Content Pieces</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {analyticsData.overview.totalContent}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-yellow-100 rounded-lg">
-                <DollarSign className="h-6 w-6 text-yellow-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">Conversion Rate</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {analyticsData.overview.conversionRate}%
-                </p>
-              </div>
+            
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={loadMetrics}
+                className="px-3 py-2 text-sm bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200"
+              >
+                Refresh
+              </button>
+              <button
+                onClick={() => router.push('/dashboard')}
+                className="px-3 py-2 text-sm bg-gray-600 text-white rounded-md hover:bg-gray-700"
+              >
+                Dashboard
+              </button>
             </div>
           </div>
         </div>
+      </nav>
 
-        {/* Charts Row 1 */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Engagement Over Time */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Engagement Over Time</h3>
-            <ResponsiveContainer width="100%" height={300}>
-              <AreaChart data={analyticsData.engagementOverTime}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Area type="monotone" dataKey="views" stackId="1" stroke="#8884d8" fill="#8884d8" />
-                <Area type="monotone" dataKey="likes" stackId="1" stroke="#82ca9d" fill="#82ca9d" />
-                <Area type="monotone" dataKey="comments" stackId="1" stroke="#ffc658" fill="#ffc658" />
-                <Area type="monotone" dataKey="shares" stackId="1" stroke="#ff7300" fill="#ff7300" />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-
-          {/* Platform Distribution */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Platform Distribution</h3>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={analyticsData.platformStats}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ platform, posts }) => `${platform}: ${posts}`}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="posts"
-                >
-                  {analyticsData.platformStats.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* Charts Row 2 */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Top Performing Content */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Top Performing Content</h3>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={analyticsData.contentPerformance}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="title" angle={-45} textAnchor="end" height={100} />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="views" fill="#8884d8" />
-                <Bar dataKey="engagement" fill="#82ca9d" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-
-          {/* Email Campaign Stats */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Email Campaign Performance</h3>
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600">Total Subscribers</span>
-                <span className="text-2xl font-bold text-gray-900">
-                  {analyticsData.emailStats.totalSubscribers}
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600">Campaigns Sent</span>
-                <span className="text-2xl font-bold text-gray-900">
-                  {analyticsData.emailStats.campaignsSent}
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600">Open Rate</span>
-                <span className="text-2xl font-bold text-green-600">
-                  {analyticsData.emailStats.openRate}%
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600">Click Rate</span>
-                <span className="text-2xl font-bold text-blue-600">
-                  {analyticsData.emailStats.clickRate}%
-                </span>
-              </div>
+      <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        <div className="px-4 py-6 sm:px-0">
+          
+          {/* System Health Overview */}
+          <div className="mb-8">
+            <h2 className="text-lg font-medium text-gray-900 mb-4">System Health Overview</h2>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              
+              {systemMetrics && (
+                <>
+                  <div className="bg-white rounded-lg shadow p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-gray-500">CPU Usage</p>
+                        <p className="text-2xl font-semibold text-gray-900">
+                          {systemMetrics.server.cpuUsage.toFixed(1)}%
+                        </p>
+                      </div>
+                      <div className={`px-2 py-1 rounded text-xs font-medium ${
+                        getHealthStatus(systemMetrics.server.cpuUsage, {good: 50, warning: 80}).color
+                      }`}>
+                        {getHealthStatus(systemMetrics.server.cpuUsage, {good: 50, warning: 80}).status}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-white rounded-lg shadow p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-gray-500">Memory Usage</p>
+                        <p className="text-2xl font-semibold text-gray-900">
+                          {systemMetrics.server.memoryUsage.toFixed(1)}%
+                        </p>
+                      </div>
+                      <div className={`px-2 py-1 rounded text-xs font-medium ${
+                        getHealthStatus(systemMetrics.server.memoryUsage, {good: 60, warning: 85}).color
+                      }`}>
+                        {getHealthStatus(systemMetrics.server.memoryUsage, {good: 60, warning: 85}).status}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-white rounded-lg shadow p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-gray-500">Response Time</p>
+                        <p className="text-2xl font-semibold text-gray-900">
+                          {systemMetrics.api.averageResponseTime.toFixed(0)}ms
+                        </p>
+                      </div>
+                      <div className={`px-2 py-1 rounded text-xs font-medium ${
+                        getHealthStatus(systemMetrics.api.averageResponseTime, {good: 100, warning: 500}).color
+                      }`}>
+                        {getHealthStatus(systemMetrics.api.averageResponseTime, {good: 100, warning: 500}).status}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-white rounded-lg shadow p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-gray-500">Error Rate</p>
+                        <p className="text-2xl font-semibold text-gray-900">
+                          {systemMetrics.api.errorRate.toFixed(2)}%
+                        </p>
+                      </div>
+                      <div className={`px-2 py-1 rounded text-xs font-medium ${
+                        getHealthStatus(systemMetrics.api.errorRate, {good: 1, warning: 5}).color
+                      }`}>
+                        {getHealthStatus(systemMetrics.api.errorRate, {good: 1, warning: 5}).status}
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           </div>
-        </div>
 
-        {/* Content Performance Table */}
-        <div className="bg-white rounded-lg shadow">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900">Content Performance Details</h3>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Content
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Platform
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Views
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Engagement
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Published
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {analyticsData.contentPerformance.map((content) => (
-                  <tr key={content.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{content.title}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                        {content.platform}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            {/* System Metrics */}
+            <div className="lg:col-span-2 space-y-6">
+              
+              {/* Server Metrics */}
+              <div className="bg-white rounded-lg shadow">
+                <div className="px-6 py-4 border-b border-gray-200">
+                  <h3 className="text-lg font-medium text-gray-900">Server Metrics</h3>
+                </div>
+                <div className="p-6">
+                  {systemMetrics && (
+                    <div className="grid grid-cols-2 gap-6">
+                      <div>
+                        <h4 className="font-medium text-gray-900 mb-3">Performance</h4>
+                        <div className="space-y-3">
+                          <div className="flex justify-between">
+                            <span className="text-gray-500">Uptime</span>
+                            <span className="font-medium">{formatUptime(Date.now()/1000 - systemMetrics.server.uptime)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-500">Active Connections</span>
+                            <span className="font-medium">{systemMetrics.server.activeConnections}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-500">Requests/min</span>
+                            <span className="font-medium">{systemMetrics.api.requestsPerMinute}</span>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <h4 className="font-medium text-gray-900 mb-3">Database</h4>
+                        <div className="space-y-3">
+                          <div className="flex justify-between">
+                            <span className="text-gray-500">Connection Pool</span>
+                            <span className="font-medium">{systemMetrics.database.connectionPool}/20</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-500">Avg Query Time</span>
+                            <span className="font-medium">{systemMetrics.database.queryTime.toFixed(1)}ms</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-500">Total Queries</span>
+                            <span className="font-medium">{systemMetrics.database.totalQueries.toLocaleString()}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Content Analytics */}
+              <div className="bg-white rounded-lg shadow">
+                <div className="px-6 py-4 border-b border-gray-200">
+                  <h3 className="text-lg font-medium text-gray-900">Content Analytics</h3>
+                </div>
+                <div className="p-6">
+                  {contentMetrics && (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      
+                      {/* Content by Status */}
+                      <div>
+                        <h4 className="font-medium text-gray-900 mb-3">By Status</h4>
+                        <div className="space-y-2">
+                          {Object.entries(contentMetrics.contentByStatus).map(([status, count]) => (
+                            <div key={status} className="flex justify-between items-center">
+                              <span className="text-sm text-gray-500 capitalize">{status}</span>
+                              <div className="flex items-center space-x-2">
+                                <span className="font-medium">{count}</span>
+                                <div className="w-16 bg-gray-200 rounded-full h-2">
+                                  <div
+                                    className="bg-blue-600 h-2 rounded-full"
+                                    style={{ width: `${(count / contentMetrics.totalContent) * 100}%` }}
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      
+                      {/* Content by Type */}
+                      <div>
+                        <h4 className="font-medium text-gray-900 mb-3">By Type</h4>
+                        <div className="space-y-2">
+                          {Object.entries(contentMetrics.contentByType).map(([type, count]) => (
+                            <div key={type} className="flex justify-between items-center">
+                              <span className="text-sm text-gray-500 capitalize">{type}</span>
+                              <div className="flex items-center space-x-2">
+                                <span className="font-medium">{count}</span>
+                                <div className="w-16 bg-gray-200 rounded-full h-2">
+                                  <div
+                                    className="bg-green-600 h-2 rounded-full"
+                                    style={{ width: `${(count / contentMetrics.totalContent) * 100}%` }}
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      
+                      {/* Content by Pillar */}
+                      <div>
+                        <h4 className="font-medium text-gray-900 mb-3">By Pillar</h4>
+                        <div className="space-y-2">
+                          {Object.entries(contentMetrics.contentByPillar).map(([pillar, count]) => (
+                            <div key={pillar} className="flex justify-between items-center">
+                              <span className="text-sm text-gray-500 capitalize">{pillar.replace('-', ' ')}</span>
+                              <div className="flex items-center space-x-2">
+                                <span className="font-medium">{count}</span>
+                                <div className="w-16 bg-gray-200 rounded-full h-2">
+                                  <div
+                                    className="bg-purple-600 h-2 rounded-full"
+                                    style={{ width: `${(count / contentMetrics.totalContent) * 100}%` }}
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Activity & Status */}
+            <div className="space-y-6">
+              
+              {/* Recent Activity */}
+              <div className="bg-white rounded-lg shadow">
+                <div className="px-6 py-4 border-b border-gray-200">
+                  <h3 className="text-lg font-medium text-gray-900">Recent Activity</h3>
+                </div>
+                <div className="p-6">
+                  {contentMetrics && (
+                    <div className="space-y-3">
+                      {contentMetrics.recentActivity.map((activity, idx) => (
+                        <div key={idx} className="flex justify-between items-center">
+                          <span className="text-sm text-gray-600">{activity.action}</span>
+                          <span className="font-medium text-blue-600">+{activity.count}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* System Status */}
+              <div className="bg-white rounded-lg shadow">
+                <div className="px-6 py-4 border-b border-gray-200">
+                  <h3 className="text-lg font-medium text-gray-900">System Status</h3>
+                </div>
+                <div className="p-6">
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600">API Server</span>
+                      <span className="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded">
+                        Healthy
                       </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {content.views.toLocaleString()}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {content.engagement.toLocaleString()}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(content.publishedAt).toLocaleDateString()}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600">Database</span>
+                      <span className="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded">
+                        Healthy
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600">File Storage</span>
+                      <span className="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded">
+                        Healthy
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600">Authentication</span>
+                      <span className="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded">
+                        Healthy
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
-    </DashboardLayout>
+    </div>
   );
 }

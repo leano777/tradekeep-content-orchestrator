@@ -244,7 +244,7 @@ export default function DashboardPage() {
                   <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
                     Quick Actions
                   </h3>
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
                     <button
                       onClick={() => router.push('/content/create')}
                       className="relative block w-full border-2 border-gray-300 border-dashed rounded-lg p-4 text-center hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
@@ -262,6 +262,26 @@ export default function DashboardPage() {
                       <span className="text-2xl mb-2 block">📅</span>
                       <span className="mt-2 block text-sm font-medium text-gray-900">
                         Content Calendar
+                      </span>
+                    </button>
+
+                    <button
+                      onClick={() => router.push('/workflows')}
+                      className="relative block w-full border-2 border-gray-300 border-dashed rounded-lg p-4 text-center hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    >
+                      <span className="text-2xl mb-2 block">🔄</span>
+                      <span className="mt-2 block text-sm font-medium text-gray-900">
+                        Workflows & AI
+                      </span>
+                    </button>
+
+                    <button
+                      onClick={() => router.push('/brand-guidelines')}
+                      className="relative block w-full border-2 border-gray-300 border-dashed rounded-lg p-4 text-center hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    >
+                      <span className="text-2xl mb-2 block">🎨</span>
+                      <span className="mt-2 block text-sm font-medium text-gray-900">
+                        Brand Guidelines
                       </span>
                     </button>
 
