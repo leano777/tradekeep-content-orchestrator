@@ -183,3 +183,26 @@ prisma/generated/
 
 # Sharp cache
 .sharp/
+
+# Development tools and session tracking
+tools/session-tracker/sessions/
+tools/testing/*.log
+tools/testing/temp/
+
+# Claude/AI development artifacts
+.claude/
+claude-session-tracker/sessions/
+*.claude-backup
+
+# Temporary development files
+*.tmp
+*.temp
+*.draft
+
+# Local configuration overrides
+*.local.json
+config.local.js
+
+# Archive and documentation drafts
+docs/archive-conversations/
+docs/drafts/

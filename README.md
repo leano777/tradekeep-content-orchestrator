@@ -1,8 +1,7 @@
-# 🚀 TradeKeep Content Orchestrator
+# TK Content Orchestrator
 
-> A comprehensive content management system designed specifically for TradeKeep's brand strategy and content creation workflow.
+> Enterprise-grade content management and orchestration platform for modern marketing teams. Built with Next.js, Node.js, and Prisma.
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg)](https://nodejs.org/)
 [![Next.js](https://img.shields.io/badge/Next.js-14-black.svg)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-blue.svg)](https://www.typescriptlang.org/)
