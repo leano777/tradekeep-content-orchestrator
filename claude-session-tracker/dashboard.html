@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claude Session Tracker - Command Center</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Glassmorphic styles */
+        .glass {
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .glass-dark {
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .neon-glow {
+            box-shadow: 0 0 30px rgba(139, 92, 246, 0.3),
+                        0 0 60px rgba(139, 92, 246, 0.1);
+        }
+
+        .gradient-border {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #667eea 100%);
+            background-size: 400% 400%;
+            animation: gradient 15s ease infinite;
+        }
+
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .cyber-grid {
+            background-image: 
+                linear-gradient(rgba(139, 92, 246, 0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(139, 92, 246, 0.1) 1px, transparent 1px);
+            background-size: 50px 50px;
+        }
+
+        .holographic {
+            background: linear-gradient(135deg, 
+                rgba(139, 92, 246, 0.1) 0%,
+                rgba(168, 85, 247, 0.1) 25%,
+                rgba(196, 181, 253, 0.1) 50%,
+                rgba(139, 92, 246, 0.1) 100%);
+            animation: holographic 3s ease-in-out infinite;
+        }
+
+        @keyframes holographic {
+            0%, 100% { opacity: 0.8; }
+            50% { opacity: 1; }
+        }
+
+        .pulse-dot {
+            animation: pulse-animation 2s infinite;
+        }
+
+        @keyframes pulse-animation {
+            0% {
+                box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(139, 92, 246, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(139, 92, 246, 0);
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-950 text-white font-['Inter'] cyber-grid">
+    <!-- Animated Background -->
+    <div class="fixed inset-0 overflow-hidden pointer-events-none">
+        <div class="absolute w-96 h-96 bg-purple-600/20 rounded-full blur-3xl -top-48 -left-48 animate-pulse"></div>
+        <div class="absolute w-96 h-96 bg-blue-600/20 rounded-full blur-3xl -bottom-48 -right-48 animate-pulse"></div>
+        <div class="absolute w-96 h-96 bg-pink-600/10 rounded-full blur-3xl top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"></div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="relative z-10 min-h-screen p-6">
+        <!-- Header -->
+        <header class="glass rounded-2xl p-6 mb-6 neon-glow">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <div class="gradient-border p-0.5 rounded-xl">
+                        <div class="bg-gray-900 rounded-xl p-3">
+                            <i data-lucide="terminal" class="w-8 h-8 text-purple-400"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <h1 class="text-3xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+                            Claude Session Command Center
+                        </h1>
+                        <p class="text-gray-400 text-sm mt-1">Development Session Analytics & Tracking</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <!-- Session Status Indicator -->
+                    <div class="glass-dark rounded-lg px-4 py-2 flex items-center space-x-2">
+                        <div class="w-3 h-3 bg-green-500 rounded-full pulse-dot"></div>
+                        <span class="text-sm">Session Active</span>
+                        <span class="text-xs text-gray-400">2h 15m</span>
+                    </div>
+                    <!-- n8n Status -->
+                    <div class="glass-dark rounded-lg px-4 py-2 flex items-center space-x-2">
+                        <i data-lucide="workflow" class="w-4 h-4 text-orange-400"></i>
+                        <span class="text-sm">n8n Connected</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Quick Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <!-- Monthly Tokens -->
+            <div class="glass rounded-xl p-6 holographic">
+                <div class="flex items-center justify-between mb-4">
+                    <i data-lucide="cpu" class="w-6 h-6 text-blue-400"></i>
+                    <span class="text-xs text-gray-400">This Month</span>
+                </div>
+                <h3 class="text-2xl font-bold mb-1">1.2M</h3>
+                <p class="text-sm text-gray-400">Tokens Used</p>
+                <div class="mt-4 h-1 bg-gray-700 rounded-full overflow-hidden">
+                    <div class="h-full bg-gradient-to-r from-blue-500 to-purple-500" style="width: 65%"></div>
+                </div>
+            </div>
+
+            <!-- Monthly Cost -->
+            <div class="glass rounded-xl p-6 holographic">
+                <div class="flex items-center justify-between mb-4">
+                    <i data-lucide="dollar-sign" class="w-6 h-6 text-green-400"></i>
+                    <span class="text-xs text-gray-400">This Month</span>
+                </div>
+                <h3 class="text-2xl font-bold mb-1">$247.32</h3>
+                <p class="text-sm text-gray-400">Total Cost</p>
+                <div class="mt-4 flex items-center text-xs">
+                    <span class="text-green-400">↓ 12%</span>
+                    <span class="text-gray-500 ml-2">vs last month</span>
+                </div>
+            </div>
+
+            <!-- Active Projects -->
+            <div class="glass rounded-xl p-6 holographic">
+                <div class="flex items-center justify-between mb-4">
+                    <i data-lucide="folder-open" class="w-6 h-6 text-purple-400"></i>
+                    <span class="text-xs text-gray-400">Active</span>
+                </div>
+                <h3 class="text-2xl font-bold mb-1">8</h3>
+                <p class="text-sm text-gray-400">Projects</p>
+                <div class="mt-4 flex space-x-1">
+                    <div class="w-8 h-8 bg-purple-500/20 rounded-lg flex items-center justify-center text-xs">TK</div>
+                    <div class="w-8 h-8 bg-blue-500/20 rounded-lg flex items-center justify-center text-xs">AI</div>
+                    <div class="w-8 h-8 bg-green-500/20 rounded-lg flex items-center justify-center text-xs">DB</div>
+                    <div class="w-8 h-8 bg-gray-500/20 rounded-lg flex items-center justify-center text-xs">+5</div>
+                </div>
+            </div>
+
+            <!-- Sessions Today -->
+            <div class="glass rounded-xl p-6 holographic">
+                <div class="flex items-center justify-between mb-4">
+                    <i data-lucide="activity" class="w-6 h-6 text-pink-400"></i>
+                    <span class="text-xs text-gray-400">Today</span>
+                </div>
+                <h3 class="text-2xl font-bold mb-1">3</h3>
+                <p class="text-sm text-gray-400">Sessions</p>
+                <div class="mt-4 flex items-center text-xs">
+                    <span class="text-pink-400">6h 45m</span>
+                    <span class="text-gray-500 ml-2">total time</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Left Column - Current Session -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Current Session Details -->
+                <div class="glass rounded-2xl p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-xl font-semibold">Current Session</h2>
+                        <button class="glass-dark px-4 py-2 rounded-lg text-sm hover:bg-white/10 transition">
+                            End Session
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4 mb-6">
+                        <div class="glass-dark rounded-lg p-4">
+                            <p class="text-sm text-gray-400 mb-2">Goal</p>
+                            <p class="font-medium">Implement authentication system</p>
+                        </div>
+                        <div class="glass-dark rounded-lg p-4">
+                            <p class="text-sm text-gray-400 mb-2">Project</p>
+                            <p class="font-medium">TK Content Orchestrator</p>
+                        </div>
+                    </div>
+
+                    <!-- Live Activity Feed -->
+                    <div class="space-y-3">
+                        <h3 class="text-sm font-semibold text-gray-400 mb-3">Live Activity</h3>
+                        <div class="space-y-2 max-h-64 overflow-y-auto">
+                            <div class="glass-dark rounded-lg p-3 flex items-start space-x-3">
+                                <div class="w-2 h-2 bg-green-400 rounded-full mt-1.5"></div>
+                                <div class="flex-1">
+                                    <p class="text-sm">Task completed: JWT middleware implementation</p>
+                                    <p class="text-xs text-gray-500">2 minutes ago • code-implementer • 1,245 tokens</p>
+                                </div>
+                            </div>
+                            <div class="glass-dark rounded-lg p-3 flex items-start space-x-3">
+                                <div class="w-2 h-2 bg-blue-400 rounded-full mt-1.5"></div>
+                                <div class="flex-1">
+                                    <p class="text-sm">File modified: server/middleware/auth.js</p>
+                                    <p class="text-xs text-gray-500">5 minutes ago</p>
+                                </div>
+                            </div>
+                            <div class="glass-dark rounded-lg p-3 flex items-start space-x-3">
+                                <div class="w-2 h-2 bg-purple-400 rounded-full mt-1.5"></div>
+                                <div class="flex-1">
+                                    <p class="text-sm">Tests passed: 24/24 auth tests</p>
+                                    <p class="text-xs text-gray-500">8 minutes ago • test-runner</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Token Usage Chart -->
+                <div class="glass rounded-2xl p-6">
+                    <h2 class="text-xl font-semibold mb-6">Token Usage (Last 7 Days)</h2>
+                    <canvas id="tokenChart" class="w-full h-64"></canvas>
+                </div>
+            </div>
+
+            <!-- Right Column -->
+            <div class="space-y-6">
+                <!-- Agent Usage -->
+                <div class="glass rounded-2xl p-6">
+                    <h2 class="text-lg font-semibold mb-4">Agent Usage Today</h2>
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center">
+                                    <i data-lucide="code" class="w-5 h-5 text-purple-400"></i>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-medium">code-implementer</p>
+                                    <p class="text-xs text-gray-500">45,230 tokens</p>
+                                </div>
+                            </div>
+                            <span class="text-sm text-gray-400">$0.68</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center">
+                                    <i data-lucide="search" class="w-5 h-5 text-blue-400"></i>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-medium">code-reviewer</p>
+                                    <p class="text-xs text-gray-500">23,150 tokens</p>
+                                </div>
+                            </div>
+                            <span class="text-sm text-gray-400">$0.35</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center">
+                                    <i data-lucide="bug" class="w-5 h-5 text-green-400"></i>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-medium">debugger</p>
+                                    <p class="text-xs text-gray-500">12,450 tokens</p>
+                                </div>
+                            </div>
+                            <span class="text-sm text-gray-400">$0.19</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- n8n Workflows -->
+                <div class="glass rounded-2xl p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-lg font-semibold">n8n Workflows</h2>
+                        <div class="w-2 h-2 bg-green-400 rounded-full pulse-dot"></div>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="glass-dark rounded-lg p-3">
+                            <div class="flex items-center justify-between mb-2">
+                                <p class="text-sm font-medium">Session Auto-Save</p>
+                                <span class="text-xs text-green-400">Active</span>
+                            </div>
+                            <p class="text-xs text-gray-500">Every 5 minutes</p>
+                        </div>
+                        <div class="glass-dark rounded-lg p-3">
+                            <div class="flex items-center justify-between mb-2">
+                                <p class="text-sm font-medium">Cost Alert</p>
+                                <span class="text-xs text-yellow-400">Triggered</span>
+                            </div>
+                            <p class="text-xs text-gray-500">When daily > $50</p>
+                        </div>
+                        <div class="glass-dark rounded-lg p-3">
+                            <div class="flex items-center justify-between mb-2">
+                                <p class="text-sm font-medium">Daily Summary</p>
+                                <span class="text-xs text-gray-400">Scheduled</span>
+                            </div>
+                            <p class="text-xs text-gray-500">6:00 PM daily</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Projects -->
+                <div class="glass rounded-2xl p-6">
+                    <h2 class="text-lg font-semibold mb-4">Recent Projects</h2>
+                    <div class="space-y-2">
+                        <div class="glass-dark rounded-lg p-3 hover:bg-white/5 cursor-pointer transition">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm font-medium">TK Content Orchestrator</p>
+                                    <p class="text-xs text-gray-500">3 sessions • 245k tokens</p>
+                                </div>
+                                <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400"></i>
+                            </div>
+                        </div>
+                        <div class="glass-dark rounded-lg p-3 hover:bg-white/5 cursor-pointer transition">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm font-medium">AI Assistant API</p>
+                                    <p class="text-xs text-gray-500">2 sessions • 156k tokens</p>
+                                </div>
+                                <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400"></i>
+                            </div>
+                        </div>
+                        <div class="glass-dark rounded-lg p-3 hover:bg-white/5 cursor-pointer transition">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm font-medium">Database Migration Tool</p>
+                                    <p class="text-xs text-gray-500">1 session • 87k tokens</p>
+                                </div>
+                                <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Monthly Overview -->
+        <div class="glass rounded-2xl p-6 mt-6">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-xl font-semibold">Monthly Overview</h2>
+                <select class="glass-dark px-4 py-2 rounded-lg text-sm bg-transparent">
+                    <option>January 2025</option>
+                    <option>December 2024</option>
+                    <option>November 2024</option>
+                </select>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Sessions by Project -->
+                <div class="glass-dark rounded-lg p-4">
+                    <h3 class="text-sm font-semibold text-gray-400 mb-4">Sessions by Project</h3>
+                    <canvas id="projectChart" class="w-full h-48"></canvas>
+                </div>
+                
+                <!-- Cost Breakdown -->
+                <div class="glass-dark rounded-lg p-4">
+                    <h3 class="text-sm font-semibold text-gray-400 mb-4">Cost by Model</h3>
+                    <canvas id="costChart" class="w-full h-48"></canvas>
+                </div>
+                
+                <!-- Productivity Metrics -->
+                <div class="glass-dark rounded-lg p-4">
+                    <h3 class="text-sm font-semibold text-gray-400 mb-4">Productivity</h3>
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm">Tasks Completed</span>
+                            <span class="font-semibold">342</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm">Files Modified</span>
+                            <span class="font-semibold">567</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm">Commits</span>
+                            <span class="font-semibold">89</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm">Avg Session</span>
+                            <span class="font-semibold">2h 15m</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // Token Usage Chart
+        const tokenCtx = document.getElementById('tokenChart').getContext('2d');
+        new Chart(tokenCtx, {
+            type: 'line',
+            data: {
+                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                datasets: [{
+                    label: 'Claude-3',
+                    data: [65000, 78000, 90000, 81000, 95000, 88000, 92000],
+                    borderColor: 'rgb(139, 92, 246)',
+                    backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                    tension: 0.4
+                }, {
+                    label: 'GPT-4',
+                    data: [45000, 52000, 48000, 55000, 61000, 58000, 65000],
+                    borderColor: 'rgb(59, 130, 246)',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        labels: { color: '#fff' }
+                    }
+                },
+                scales: {
+                    y: {
+                        ticks: { color: '#9CA3AF' },
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' }
+                    },
+                    x: {
+                        ticks: { color: '#9CA3AF' },
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' }
+                    }
+                }
+            }
+        });
+
+        // Project Donut Chart
+        const projectCtx = document.getElementById('projectChart').getContext('2d');
+        new Chart(projectCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['TK Orchestrator', 'AI API', 'DB Tool', 'Other'],
+                datasets: [{
+                    data: [45, 25, 15, 15],
+                    backgroundColor: [
+                        'rgba(139, 92, 246, 0.8)',
+                        'rgba(59, 130, 246, 0.8)',
+                        'rgba(16, 185, 129, 0.8)',
+                        'rgba(156, 163, 175, 0.8)'
+                    ],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        });
+
+        // Cost Chart
+        const costCtx = document.getElementById('costChart').getContext('2d');
+        new Chart(costCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Claude-3', 'GPT-4', 'GPT-3.5'],
+                datasets: [{
+                    data: [125.50, 89.30, 32.52],
+                    backgroundColor: [
+                        'rgba(139, 92, 246, 0.8)',
+                        'rgba(59, 130, 246, 0.8)',
+                        'rgba(16, 185, 129, 0.8)'
+                    ],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        ticks: { 
+                            color: '#9CA3AF',
+                            callback: function(value) {
+                                return '$' + value;
+                            }
+                        },
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' }
+                    },
+                    x: {
+                        ticks: { color: '#9CA3AF' },
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' }
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,121 @@
+{
+  "project": {
+    "name": "TK Content Orchestrator",
+    "shortName": "TK",
+    "description": "Comprehensive content management and publishing platform",
+    "logo": "🚀",
+    "primaryColor": "hsl(217.2 91.2% 59.8%)",
+    "theme": "dark"
+  },
+  "features": {
+    "realTimeUpdates": true,
+    "notifications": true,
+    "chartAnimations": true,
+    "autoRefresh": true,
+    "refreshInterval": 30000,
+    "wellnessTracking": true,
+    "goalTracking": true,
+    "insightGeneration": true
+  },
+  "display": {
+    "showProductivityTrends": true,
+    "showTechnologyBreakdown": true,
+    "showWorkLifeBalance": true,
+    "showNextSessionPriorities": true,
+    "showRecentActivity": true,
+    "maxRecentActivities": 10,
+    "maxInsights": 5,
+    "maxPriorities": 8
+  },
+  "metrics": {
+    "productivityWeight": {
+      "commits": 0.25,
+      "linesChanged": 0.25,
+      "tests": 0.25,
+      "files": 0.25
+    },
+    "qualityThresholds": {
+      "excellent": 90,
+      "good": 80,
+      "fair": 70,
+      "poor": 60
+    },
+    "wellnessFactors": {
+      "sessionLength": {
+        "optimal": [60, 180],
+        "good": [45, 240],
+        "weight": 0.3
+      },
+      "breakFrequency": {
+        "optimal": 15,
+        "good": 30,
+        "weight": 0.2
+      },
+      "focusTime": {
+        "optimal": 0.8,
+        "good": 0.6,
+        "weight": 0.3
+      },
+      "stressLevel": {
+        "low": "good",
+        "moderate": "fair",
+        "high": "poor",
+        "weight": 0.2
+      }
+    }
+  },
+  "integrations": {
+    "github": {
+      "enabled": true,
+      "trackCommits": true,
+      "trackPullRequests": true,
+      "trackIssues": true
+    },
+    "timeTracking": {
+      "enabled": true,
+      "provider": "claude-code",
+      "autoDetection": true
+    },
+    "productivity": {
+      "rescueTime": false,
+      "toggl": false,
+      "clockify": false
+    }
+  },
+  "goals": {
+    "sprintDuration": 14,
+    "productivityTarget": 85,
+    "qualityTarget": "A-",
+    "testCoverageTarget": 80,
+    "wellnessTarget": 8.0
+  },
+  "notifications": {
+    "productivity": {
+      "enabled": true,
+      "threshold": 75,
+      "message": "Productivity below target"
+    },
+    "wellness": {
+      "enabled": true,
+      "threshold": 6.0,
+      "message": "Consider taking a break"
+    },
+    "goals": {
+      "enabled": true,
+      "milestoneAlerts": true,
+      "deadlineWarnings": true
+    }
+  },
+  "exports": {
+    "formats": ["json", "csv", "pdf"],
+    "includeSensitiveData": false,
+    "autoBackup": true,
+    "backupInterval": "daily"
+  },
+  "customization": {
+    "allowThemeChange": true,
+    "allowMetricCustomization": true,
+    "allowGoalModification": true,
+    "showAdvancedSettings": true
+  }
+}

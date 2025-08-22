@@ -1,0 +1,87 @@
+// Add these models to your existing schema.prisma file
+
+model Workflow {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  type        String   // CONTENT_APPROVAL, TASK_SEQUENCE, CUSTOM
+  status      String   @default("ACTIVE") // ACTIVE, INACTIVE, ARCHIVED
+  stages      WorkflowStage[]
+  instances   WorkflowInstance[]
+  createdBy   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("workflows")
+}
+
+model WorkflowStage {
+  id          String   @id @default(cuid())
+  workflowId  String
+  name        String
+  order       Int
+  type        String   // APPROVAL, REVIEW, TASK, NOTIFICATION
+  assigneeRole String? // Role required for this stage
+  assigneeId  String?  // Specific user assignment
+  config      String?  // JSON configuration for stage
+  approvals   Approval[]
+  createdAt   DateTime @default(now())
+
+  @@index([workflowId])
+  @@map("workflow_stages")
+}
+
+model WorkflowInstance {
+  id          String   @id @default(cuid())
+  workflowId  String
+  contentId   String?
+  currentStage Int     @default(0)
+  status      String   // PENDING, IN_PROGRESS, APPROVED, REJECTED, COMPLETED
+  metadata    String?  // JSON for additional data
+  approvals   Approval[]
+  startedBy   String
+  startedAt   DateTime @default(now())
+  completedAt DateTime?
+
+  @@index([workflowId])
+  @@index([contentId])
+  @@index([status])
+  @@map("workflow_instances")
+}
+
+model Approval {
+  id         String   @id @default(cuid())
+  instanceId String
+  stageId    String
+  userId     String
+  action     String   // APPROVED, REJECTED, REQUESTED_CHANGES
+  comments   String?
+  createdAt  DateTime @default(now())
+
+  @@index([instanceId])
+  @@index([userId])
+  @@map("approvals")
+}
+
+model Task {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  type        String   // CONTENT_CREATION, REVIEW, APPROVAL, CUSTOM
+  priority    String   @default("MEDIUM") // LOW, MEDIUM, HIGH, URGENT
+  status      String   @default("TODO") // TODO, IN_PROGRESS, BLOCKED, COMPLETED
+  assigneeId  String
+  createdBy   String
+  contentId   String?
+  parentId    String?
+  dueDate     DateTime?
+  completedAt DateTime?
+  metadata    String?  // JSON for custom fields
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([assigneeId])
+  @@index([status])
+  @@index([dueDate])
+  @@map("tasks")
+}

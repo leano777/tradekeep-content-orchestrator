@@ -23,7 +23,11 @@
       "Bash(PORT=9002 node src/server-minimal.js)",
       "Bash(npm run type-check:*)",
       "Bash(git rm:*)",
-      "Bash(del \"server\\src\\websocket\\socketServer.ts\")"
+      "Bash(del \"server\\src\\websocket\\socketServer.ts\")",
+      "Bash(python:*)",
+      "Bash(start index.html)",
+      "Bash(explorer:*)",
+      "Bash(mkdir:*)"
     ],
     "deny": [],
     "ask": []

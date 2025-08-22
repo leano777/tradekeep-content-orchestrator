@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TK Workflow System Test</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto p-8">
+        <h1 class="text-3xl font-bold mb-8">🔄 TK-011: Workflow Automation Test</h1>
+        
+        <!-- Task Management -->
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+            <h2 class="text-2xl font-semibold mb-4">📋 Task Management</h2>
+            
+            <!-- Create Task Form -->
+            <div class="mb-6 p-4 bg-gray-50 rounded">
+                <h3 class="font-semibold mb-3">Create New Task</h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <input type="text" id="taskTitle" placeholder="Task Title" class="p-2 border rounded">
+                    <select id="taskPriority" class="p-2 border rounded">
+                        <option value="LOW">Low Priority</option>
+                        <option value="MEDIUM" selected>Medium Priority</option>
+                        <option value="HIGH">High Priority</option>
+                        <option value="URGENT">Urgent</option>
+                    </select>
+                    <input type="text" id="taskAssignee" placeholder="Assignee Email" class="p-2 border rounded">
+                    <input type="datetime-local" id="taskDueDate" class="p-2 border rounded">
+                    <textarea id="taskDescription" placeholder="Task Description" class="col-span-2 p-2 border rounded" rows="3"></textarea>
+                    <button onclick="createTask()" class="col-span-2 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                        Create Task
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Task List -->
+            <div id="taskList" class="space-y-3">
+                <p class="text-gray-500">Tasks will appear here...</p>
+            </div>
+        </div>
+
+        <!-- Workflow System -->
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+            <h2 class="text-2xl font-semibold mb-4">🔄 Approval Workflows</h2>
+            
+            <!-- Create Workflow -->
+            <div class="mb-6 p-4 bg-gray-50 rounded">
+                <h3 class="font-semibold mb-3">Create Content Approval Workflow</h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <input type="text" id="workflowName" placeholder="Workflow Name" class="p-2 border rounded">
+                    <select id="workflowType" class="p-2 border rounded">
+                        <option value="CONTENT_APPROVAL">Content Approval</option>
+                        <option value="TASK_SEQUENCE">Task Sequence</option>
+                        <option value="CUSTOM">Custom</option>
+                    </select>
+                    <input type="text" id="workflowDescription" placeholder="Description" class="col-span-2 p-2 border rounded">
+                    <button onclick="createWorkflow()" class="col-span-2 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+                        Create Workflow Template
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Pending Approvals -->
+            <div id="pendingApprovals" class="space-y-3">
+                <h3 class="font-semibold mb-2">Pending Approvals</h3>
+                <p class="text-gray-500">No pending approvals</p>
+            </div>
+        </div>
+
+        <!-- Notifications -->
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <h2 class="text-2xl font-semibold mb-4">🔔 Notifications</h2>
+            <div id="notifications" class="space-y-2">
+                <p class="text-gray-500">No new notifications</p>
+            </div>
+        </div>
+
+        <!-- Status Messages -->
+        <div id="statusMessage" class="fixed bottom-4 right-4 max-w-md"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:9000/api/v1';
+        let authToken = localStorage.getItem('tk_auth_token');
+
+        // API Helper
+        async function apiRequest(endpoint, options = {}) {
+            const headers = {
+                'Content-Type': 'application/json',
+                ...options.headers
+            };
+
+            if (authToken) {
+                headers['Authorization'] = `Bearer ${authToken}`;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}${endpoint}`, {
+                    ...options,
+                    headers
+                });
+
+                if (!response.ok) {
+                    const error = await response.json().catch(() => ({ error: 'Request failed' }));
+                    throw new Error(error.error || `HTTP ${response.status}`);
+                }
+
+                return await response.json();
+            } catch (error) {
+                showStatus('error', error.message);
+                throw error;
+            }
+        }
+
+        // Create Task
+        async function createTask() {
+            const title = document.getElementById('taskTitle').value;
+            const description = document.getElementById('taskDescription').value;
+            const priority = document.getElementById('taskPriority').value;
+            const assigneeEmail = document.getElementById('taskAssignee').value;
+            const dueDate = document.getElementById('taskDueDate').value;
+
+            if (!title || !assigneeEmail) {
+                showStatus('error', 'Please fill in required fields');
+                return;
+            }
+
+            try {
+                // First get assignee user ID (in real app, this would be a user search endpoint)
+                const task = await apiRequest('/tasks', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        title,
+                        description,
+                        priority,
+                        assigneeId: assigneeEmail, // In real app, this would be the user ID
+                        dueDate,
+                        type: 'CUSTOM'
+                    })
+                });
+
+                showStatus('success', 'Task created successfully');
+                loadTasks();
+                
+                // Clear form
+                document.getElementById('taskTitle').value = '';
+                document.getElementById('taskDescription').value = '';
+                document.getElementById('taskAssignee').value = '';
+                document.getElementById('taskDueDate').value = '';
+            } catch (error) {
+                console.error('Error creating task:', error);
+            }
+        }
+
+        // Load Tasks
+        async function loadTasks() {
+            try {
+                const tasks = await apiRequest('/tasks/my-tasks');
+                const taskList = document.getElementById('taskList');
+                
+                if (tasks.length === 0) {
+                    taskList.innerHTML = '<p class="text-gray-500">No tasks found</p>';
+                    return;
+                }
+
+                taskList.innerHTML = tasks.map(task => `
+                    <div class="border rounded p-4 ${getPriorityClass(task.priority)}">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h4 class="font-semibold">${task.title}</h4>
+                                <p class="text-sm text-gray-600">${task.description || 'No description'}</p>
+                                <div class="flex gap-4 mt-2 text-sm">
+                                    <span class="text-gray-500">Priority: ${task.priority}</span>
+                                    <span class="text-gray-500">Status: ${task.status}</span>
+                                    ${task.dueDate ? `<span class="text-gray-500">Due: ${new Date(task.dueDate).toLocaleDateString()}</span>` : ''}
+                                </div>
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="updateTaskStatus('${task.id}', 'IN_PROGRESS')" 
+                                    class="px-3 py-1 bg-blue-500 text-white rounded text-sm hover:bg-blue-600">
+                                    Start
+                                </button>
+                                <button onclick="updateTaskStatus('${task.id}', 'COMPLETED')" 
+                                    class="px-3 py-1 bg-green-500 text-white rounded text-sm hover:bg-green-600">
+                                    Complete
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading tasks:', error);
+            }
+        }
+
+        // Update Task Status
+        async function updateTaskStatus(taskId, status) {
+            try {
+                await apiRequest(`/tasks/${taskId}/status`, {
+                    method: 'PATCH',
+                    body: JSON.stringify({ status })
+                });
+
+                showStatus('success', `Task ${status.toLowerCase()}`);
+                loadTasks();
+            } catch (error) {
+                console.error('Error updating task:', error);
+            }
+        }
+
+        // Create Workflow
+        async function createWorkflow() {
+            const name = document.getElementById('workflowName').value;
+            const description = document.getElementById('workflowDescription').value;
+            const type = document.getElementById('workflowType').value;
+
+            if (!name) {
+                showStatus('error', 'Please enter workflow name');
+                return;
+            }
+
+            try {
+                // Example workflow with 3 stages
+                const workflow = await apiRequest('/workflows/templates', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        name,
+                        description,
+                        type,
+                        stages: [
+                            { name: 'Editor Review', type: 'REVIEW', assigneeRole: 'EDITOR' },
+                            { name: 'Manager Approval', type: 'APPROVAL', assigneeRole: 'MANAGER' },
+                            { name: 'Final Publishing', type: 'TASK', assigneeRole: 'PUBLISHER' }
+                        ]
+                    })
+                });
+
+                showStatus('success', 'Workflow template created');
+                
+                // Clear form
+                document.getElementById('workflowName').value = '';
+                document.getElementById('workflowDescription').value = '';
+            } catch (error) {
+                console.error('Error creating workflow:', error);
+            }
+        }
+
+        // Load Pending Approvals
+        async function loadPendingApprovals() {
+            try {
+                const pending = await apiRequest('/workflows/pending');
+                const approvalsList = document.getElementById('pendingApprovals');
+                
+                if (pending.length === 0) {
+                    approvalsList.innerHTML = '<h3 class="font-semibold mb-2">Pending Approvals</h3><p class="text-gray-500">No pending approvals</p>';
+                    return;
+                }
+
+                approvalsList.innerHTML = `
+                    <h3 class="font-semibold mb-2">Pending Approvals (${pending.length})</h3>
+                    ${pending.map(item => `
+                        <div class="border rounded p-4 bg-yellow-50">
+                            <h4 class="font-semibold">${item.workflow.name}</h4>
+                            <p class="text-sm text-gray-600">Stage: ${item.workflow.stages[item.currentStage].name}</p>
+                            <div class="flex gap-2 mt-3">
+                                <button onclick="processApproval('${item.id}', 'APPROVED')" 
+                                    class="px-3 py-1 bg-green-500 text-white rounded text-sm hover:bg-green-600">
+                                    Approve
+                                </button>
+                                <button onclick="processApproval('${item.id}', 'REJECTED')" 
+                                    class="px-3 py-1 bg-red-500 text-white rounded text-sm hover:bg-red-600">
+                                    Reject
+                                </button>
+                            </div>
+                        </div>
+                    `).join('')}
+                `;
+            } catch (error) {
+                console.error('Error loading approvals:', error);
+            }
+        }
+
+        // Process Approval
+        async function processApproval(instanceId, action) {
+            try {
+                await apiRequest(`/workflows/approve/${instanceId}`, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action,
+                        comments: action === 'REJECTED' ? 'Needs revision' : 'Looks good'
+                    })
+                });
+
+                showStatus('success', `Workflow ${action.toLowerCase()}`);
+                loadPendingApprovals();
+            } catch (error) {
+                console.error('Error processing approval:', error);
+            }
+        }
+
+        // Load Notifications
+        async function loadNotifications() {
+            try {
+                const notifications = await apiRequest('/notifications');
+                const notificationsList = document.getElementById('notifications');
+                
+                if (!notifications || notifications.length === 0) {
+                    notificationsList.innerHTML = '<p class="text-gray-500">No new notifications</p>';
+                    return;
+                }
+
+                notificationsList.innerHTML = notifications.slice(0, 5).map(notif => `
+                    <div class="p-3 bg-gray-50 rounded flex justify-between items-center">
+                        <div>
+                            <p class="text-sm">${notif.message}</p>
+                            <p class="text-xs text-gray-500">${new Date(notif.createdAt).toLocaleString()}</p>
+                        </div>
+                        ${!notif.read ? '<span class="w-2 h-2 bg-blue-500 rounded-full"></span>' : ''}
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading notifications:', error);
+            }
+        }
+
+        // Helper Functions
+        function getPriorityClass(priority) {
+            switch(priority) {
+                case 'URGENT': return 'border-red-500 bg-red-50';
+                case 'HIGH': return 'border-orange-500 bg-orange-50';
+                case 'LOW': return 'border-gray-300 bg-gray-50';
+                default: return 'border-blue-300 bg-blue-50';
+            }
+        }
+
+        function showStatus(type, message) {
+            const statusDiv = document.getElementById('statusMessage');
+            const bgColor = type === 'success' ? 'bg-green-500' : 'bg-red-500';
+            
+            statusDiv.innerHTML = `
+                <div class="${bgColor} text-white px-6 py-3 rounded-lg shadow-lg">
+                    ${message}
+                </div>
+            `;
+            
+            setTimeout(() => {
+                statusDiv.innerHTML = '';
+            }, 3000);
+        }
+
+        // Initialize
+        if (authToken) {
+            loadTasks();
+            loadPendingApprovals();
+            loadNotifications();
+            
+            // Refresh periodically
+            setInterval(() => {
+                loadNotifications();
+                loadPendingApprovals();
+            }, 30000);
+        } else {
+            document.body.innerHTML = `
+                <div class="min-h-screen flex items-center justify-center">
+                    <div class="text-center">
+                        <h1 class="text-2xl font-bold mb-4">Authentication Required</h1>
+                        <p class="text-gray-600 mb-4">Please login first at http://localhost:8080</p>
+                        <a href="http://localhost:8080" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">
+                            Go to Login
+                        </a>
+                    </div>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>

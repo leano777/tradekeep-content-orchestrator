@@ -23,8 +23,8 @@ export default function CreateContentPage() {
 
   const handleSave = async (data: any) => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9002'}/api/v1/content`, {
+      const token = localStorage.getItem('tk_auth_token');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9000/api'}/content`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

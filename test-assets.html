@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TK Asset Management Test</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto p-8">
+        <h1 class="text-3xl font-bold mb-8">📁 TK-012: Digital Asset Management</h1>
+        
+        <!-- Upload Section -->
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+            <h2 class="text-2xl font-semibold mb-4">📤 Upload Assets</h2>
+            
+            <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+                <input type="file" id="fileInput" multiple accept="image/*,video/*,audio/*,.pdf,.doc,.docx" class="hidden">
+                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                </svg>
+                <p class="mt-2 text-sm text-gray-600">
+                    <button onclick="document.getElementById('fileInput').click()" class="font-medium text-blue-600 hover:text-blue-500">
+                        Click to upload
+                    </button>
+                    or drag and drop
+                </p>
+                <p class="text-xs text-gray-500">Images, videos, documents up to 100MB</p>
+            </div>
+            
+            <div id="uploadPreview" class="mt-4 grid grid-cols-3 gap-4"></div>
+            
+            <button onclick="uploadFiles()" id="uploadBtn" class="mt-4 bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 disabled:opacity-50" disabled>
+                Upload Selected Files
+            </button>
+        </div>
+
+        <!-- Asset Library -->
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+            <h2 class="text-2xl font-semibold mb-4">🖼️ Asset Library</h2>
+            
+            <!-- Search and Filters -->
+            <div class="mb-4 flex gap-4">
+                <input type="text" id="searchInput" placeholder="Search assets..." class="flex-1 p-2 border rounded">
+                <select id="typeFilter" class="p-2 border rounded">
+                    <option value="">All Types</option>
+                    <option value="image">Images</option>
+                    <option value="video">Videos</option>
+                    <option value="document">Documents</option>
+                </select>
+                <button onclick="loadAssets()" class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700">
+                    Search
+                </button>
+            </div>
+            
+            <!-- Asset Grid -->
+            <div id="assetGrid" class="grid grid-cols-4 gap-4">
+                <p class="col-span-4 text-gray-500 text-center">Loading assets...</p>
+            </div>
+        </div>
+
+        <!-- Asset Details Modal -->
+        <div id="assetModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                <div class="flex justify-between items-start mb-4">
+                    <h3 class="text-xl font-semibold">Asset Details</h3>
+                    <button onclick="closeAssetModal()" class="text-gray-500 hover:text-gray-700">✕</button>
+                </div>
+                <div id="assetDetails"></div>
+            </div>
+        </div>
+
+        <!-- Status Messages -->
+        <div id="statusMessage" class="fixed bottom-4 right-4 max-w-md"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:9000/api/v1';
+        let authToken = localStorage.getItem('tk_auth_token');
+        let selectedFiles = [];
+
+        // File input handling
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            handleFileSelect(e.target.files);
+        });
+
+        // Drag and drop
+        document.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+        });
+
+        document.addEventListener('drop', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            handleFileSelect(e.dataTransfer.files);
+        });
+
+        function handleFileSelect(files) {
+            selectedFiles = Array.from(files);
+            const preview = document.getElementById('uploadPreview');
+            preview.innerHTML = '';
+            
+            selectedFiles.forEach((file, index) => {
+                const div = document.createElement('div');
+                div.className = 'relative border rounded p-2';
+                
+                if (file.type.startsWith('image/')) {
+                    const img = document.createElement('img');
+                    img.src = URL.createObjectURL(file);
+                    img.className = 'w-full h-32 object-cover rounded';
+                    div.appendChild(img);
+                } else {
+                    div.innerHTML = `
+                        <div class="h-32 flex items-center justify-center bg-gray-100 rounded">
+                            <svg class="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                        </div>
+                    `;
+                }
+                
+                div.innerHTML += `
+                    <p class="text-xs mt-1 truncate">${file.name}</p>
+                    <p class="text-xs text-gray-500">${formatFileSize(file.size)}</p>
+                    <button onclick="removeFile(${index})" class="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 text-xs hover:bg-red-600">✕</button>
+                `;
+                
+                preview.appendChild(div);
+            });
+            
+            document.getElementById('uploadBtn').disabled = selectedFiles.length === 0;
+        }
+
+        function removeFile(index) {
+            selectedFiles.splice(index, 1);
+            handleFileSelect(selectedFiles);
+        }
+
+        async function uploadFiles() {
+            if (selectedFiles.length === 0) return;
+            
+            const formData = new FormData();
+            selectedFiles.forEach(file => {
+                formData.append('files', file);
+            });
+            
+            try {
+                const response = await fetch(`${API_BASE}/assets/upload`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Upload failed: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                showStatus('success', `Successfully uploaded ${result.assets.length} file(s)`);
+                
+                // Clear selection
+                selectedFiles = [];
+                document.getElementById('fileInput').value = '';
+                document.getElementById('uploadPreview').innerHTML = '';
+                document.getElementById('uploadBtn').disabled = true;
+                
+                // Reload assets
+                loadAssets();
+            } catch (error) {
+                showStatus('error', 'Upload failed: ' + error.message);
+            }
+        }
+
+        async function loadAssets() {
+            try {
+                const search = document.getElementById('searchInput').value;
+                const type = document.getElementById('typeFilter').value;
+                
+                let url = `${API_BASE}/assets?`;
+                if (search) url += `search=${encodeURIComponent(search)}&`;
+                if (type) url += `type=${encodeURIComponent(type)}&`;
+                
+                const response = await fetch(url, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Failed to load assets: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                displayAssets(data.assets);
+            } catch (error) {
+                showStatus('error', 'Failed to load assets: ' + error.message);
+            }
+        }
+
+        function displayAssets(assets) {
+            const grid = document.getElementById('assetGrid');
+            
+            if (!assets || assets.length === 0) {
+                grid.innerHTML = '<p class="col-span-4 text-gray-500 text-center">No assets found</p>';
+                return;
+            }
+            
+            grid.innerHTML = assets.map(asset => `
+                <div class="border rounded-lg overflow-hidden hover:shadow-lg transition-shadow cursor-pointer" onclick="showAssetDetails('${asset.id}')">
+                    ${asset.thumbnailUrl ? 
+                        `<img src="http://localhost:9000${asset.thumbnailUrl}" class="w-full h-40 object-cover">` :
+                        asset.mimeType.startsWith('image/') ?
+                        `<img src="http://localhost:9000${asset.url}" class="w-full h-40 object-cover">` :
+                        `<div class="h-40 flex items-center justify-center bg-gray-100">
+                            <svg class="h-16 w-16 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                        </div>`
+                    }
+                    <div class="p-3">
+                        <p class="font-medium text-sm truncate">${asset.originalName}</p>
+                        <p class="text-xs text-gray-500">${formatFileSize(asset.size)}</p>
+                        <p class="text-xs text-gray-500">${new Date(asset.createdAt).toLocaleDateString()}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function showAssetDetails(assetId) {
+            try {
+                const response = await fetch(`${API_BASE}/assets/${assetId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to load asset details');
+                }
+                
+                const asset = await response.json();
+                
+                document.getElementById('assetDetails').innerHTML = `
+                    <div class="space-y-4">
+                        ${asset.url ? 
+                            asset.mimeType.startsWith('image/') ?
+                            `<img src="http://localhost:9000${asset.url}" class="w-full rounded">` :
+                            `<div class="p-8 bg-gray-100 rounded text-center">
+                                <svg class="mx-auto h-24 w-24 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                            </div>`
+                            : ''
+                        }
+                        
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-sm font-medium text-gray-700">Filename</label>
+                                <p class="text-sm">${asset.originalName}</p>
+                            </div>
+                            <div>
+                                <label class="text-sm font-medium text-gray-700">Type</label>
+                                <p class="text-sm">${asset.mimeType}</p>
+                            </div>
+                            <div>
+                                <label class="text-sm font-medium text-gray-700">Size</label>
+                                <p class="text-sm">${formatFileSize(asset.size)}</p>
+                            </div>
+                            ${asset.width ? `
+                            <div>
+                                <label class="text-sm font-medium text-gray-700">Dimensions</label>
+                                <p class="text-sm">${asset.width} × ${asset.height}px</p>
+                            </div>
+                            ` : ''}
+                            <div>
+                                <label class="text-sm font-medium text-gray-700">Uploaded By</label>
+                                <p class="text-sm">${asset.uploadedBy?.username || 'Unknown'}</p>
+                            </div>
+                            <div>
+                                <label class="text-sm font-medium text-gray-700">Uploaded</label>
+                                <p class="text-sm">${new Date(asset.createdAt).toLocaleString()}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex gap-2 pt-4">
+                            <a href="http://localhost:9000${asset.url}" download="${asset.originalName}" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                                Download
+                            </a>
+                            <button onclick="deleteAsset('${asset.id}')" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
+                                Delete
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                document.getElementById('assetModal').classList.remove('hidden');
+            } catch (error) {
+                showStatus('error', error.message);
+            }
+        }
+
+        function closeAssetModal() {
+            document.getElementById('assetModal').classList.add('hidden');
+        }
+
+        async function deleteAsset(assetId) {
+            if (!confirm('Are you sure you want to delete this asset?')) return;
+            
+            try {
+                const response = await fetch(`${API_BASE}/assets/${assetId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to delete asset');
+                }
+                
+                showStatus('success', 'Asset deleted successfully');
+                closeAssetModal();
+                loadAssets();
+            } catch (error) {
+                showStatus('error', error.message);
+            }
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+        }
+
+        function showStatus(type, message) {
+            const statusDiv = document.getElementById('statusMessage');
+            const bgColor = type === 'success' ? 'bg-green-500' : 'bg-red-500';
+            
+            statusDiv.innerHTML = `
+                <div class="${bgColor} text-white px-6 py-3 rounded-lg shadow-lg">
+                    ${message}
+                </div>
+            `;
+            
+            setTimeout(() => {
+                statusDiv.innerHTML = '';
+            }, 3000);
+        }
+
+        // Initialize
+        if (authToken) {
+            loadAssets();
+        } else {
+            document.body.innerHTML = `
+                <div class="min-h-screen flex items-center justify-center">
+                    <div class="text-center">
+                        <h1 class="text-2xl font-bold mb-4">Authentication Required</h1>
+                        <p class="text-gray-600 mb-4">Please login first at http://localhost:8080</p>
+                        <a href="http://localhost:8080" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">
+                            Go to Login
+                        </a>
+                    </div>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>

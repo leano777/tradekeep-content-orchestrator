@@ -4,7 +4,7 @@ let socket: Socket | null = null;
 
 export const initSocket = (token: string) => {
   if (!socket) {
-    socket = io(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9002', {
+    socket = io(process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:9000', {
       auth: {
         token
       },

@@ -3,6 +3,7 @@ const cors = require('cors');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const http = require('http');
+const path = require('path');
 const prisma = require('./db');
 const passwordResetRoutes = require('./routes/passwordReset');
 const { validateRegistration, validateLogin, loginRateLimit, passwordResetRateLimit } = require('./middleware/validation');
@@ -34,10 +35,27 @@ if (process.env.ENABLE_COLLABORATION === 'true') {
 
 // Basic middleware
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002', 'http://localhost:3003', 'http://localhost:4200', 'http://localhost:5000', 'http://localhost:7000'],
-  credentials: true
+  origin: function(origin, callback) {
+    // Allow requests with no origin (like mobile apps, Postman, or file://)
+    if (!origin) return callback(null, true);
+    
+    // Allow all localhost origins
+    if (origin.startsWith('http://localhost:') || 
+        origin.startsWith('http://127.0.0.1:') ||
+        origin === 'null') {  // file:// protocol sends 'null' as origin
+      return callback(null, true);
+    }
+    
+    callback(null, true); // Allow all origins for testing
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json());
+
+// Static file serving for uploads
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Health check
 app.get('/health', (req, res) => {
@@ -135,6 +153,12 @@ if (process.env.ENABLE_COLLABORATION === 'true') {
   app.use('/api/v1/activities', activitiesRoutes);
   app.use('/api/v1/notifications', notificationsRoutes);
 }
+
+// Asset management routes
+const assetRoutes = require('./routes/assets');
+const cloudStorageRoutes = require('./routes/cloudStorage');
+app.use('/api/v1/assets', assetRoutes);
+app.use('/api/v1/assets/cloud', cloudStorageRoutes);
 
 // Dashboard stats
 app.get('/api/v1/dashboard/stats', requirePermission('dashboard:view'), async (req, res) => {

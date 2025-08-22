@@ -19,7 +19,7 @@ const commentsRoutes = require('./routes/comments');
 const activitiesRoutes = require('./routes/activities');
 const notificationsRoutes = require('./routes/notifications');
 
-const errorHandler = require('./middleware/errorHandler');
+const { globalErrorHandler } = require('./middleware/errorHandler');
 const { SocketServer } = require('./websocket/socketServer');
 
 const app = express();
@@ -70,7 +70,7 @@ app.use(helmet({
 }));
 
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+  origin: [process.env.CORS_ORIGIN || 'http://localhost:3000', 'http://localhost:3001'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
@@ -129,7 +129,7 @@ app.use(expressWinston.errorLogger({
   winstonInstance: logger
 }));
 
-app.use(errorHandler);
+app.use(globalErrorHandler);
 
 app.use('*', (req, res) => {
   res.status(404).json({

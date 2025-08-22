@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TK Asset Management - Cloud Storage</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .provider-badge {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .provider-google { background: #4285f4; color: white; }
+        .provider-onedrive { background: #0078d4; color: white; }
+        .provider-local { background: #6b7280; color: white; }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto p-8">
+        <h1 class="text-3xl font-bold mb-8">☁️ TK-012: Cloud-Enabled Asset Management</h1>
+        
+        <!-- Cloud Storage Connections -->
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+            <h2 class="text-2xl font-semibold mb-4">🔗 Cloud Storage Connections</h2>
+            
+            <div id="cloudAccounts" class="grid grid-cols-3 gap-4 mb-4">
+                <!-- Cloud account cards will be inserted here -->
+            </div>
+            
+            <div class="flex gap-4">
+                <button onclick="connectCloudStorage('google')" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 flex items-center gap-2">
+                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                    </svg>
+                    Connect Google Drive
+                </button>
+                
+                <button onclick="connectCloudStorage('microsoft')" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center gap-2">
+                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M11.5 11.5v-11h11v11h-11zm0 1h11v11h-11v-11zm-1 0h-11v11h11v-11zm0-1v-11h-11v11h11z"/>
+                    </svg>
+                    Connect OneDrive
+                </button>
+            </div>
+        </div>
+
+        <!-- Storage Provider Tabs -->
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+            <div class="border-b mb-4">
+                <nav class="-mb-px flex space-x-8">
+                    <button onclick="switchProvider('LOCAL')" class="provider-tab active py-2 px-1 border-b-2 font-medium text-sm" data-provider="LOCAL">
+                        📁 Local Storage
+                    </button>
+                    <button onclick="switchProvider('GOOGLE_DRIVE')" class="provider-tab py-2 px-1 border-b-2 font-medium text-sm" data-provider="GOOGLE_DRIVE">
+                        <svg class="inline w-4 h-4 mr-1" viewBox="0 0 24 24" fill="#4285f4">
+                            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                        </svg>
+                        Google Drive
+                    </button>
+                    <button onclick="switchProvider('ONEDRIVE')" class="provider-tab py-2 px-1 border-b-2 font-medium text-sm" data-provider="ONEDRIVE">
+                        <svg class="inline w-4 h-4 mr-1" viewBox="0 0 24 24" fill="#0078d4">
+                            <path d="M11.5 11.5v-11h11v11h-11zm0 1h11v11h-11v-11zm-1 0h-11v11h11v-11zm0-1v-11h-11v11h11z"/>
+                        </svg>
+                        OneDrive
+                    </button>
+                </nav>
+            </div>
+
+            <!-- Upload Section (for Local) -->
+            <div id="uploadSection" class="mb-6">
+                <h3 class="text-lg font-semibold mb-3">📤 Upload Assets</h3>
+                <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+                    <input type="file" id="fileInput" multiple accept="image/*,video/*,audio/*,.pdf,.doc,.docx" class="hidden">
+                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                    </svg>
+                    <p class="mt-2 text-sm text-gray-600">
+                        <button onclick="document.getElementById('fileInput').click()" class="font-medium text-blue-600 hover:text-blue-500">
+                            Click to upload
+                        </button>
+                        or drag and drop
+                    </p>
+                </div>
+                <button onclick="uploadFiles()" id="uploadBtn" class="mt-4 bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 disabled:opacity-50" disabled>
+                    Upload to <span id="uploadTarget">Local Storage</span>
+                </button>
+            </div>
+
+            <!-- Asset Grid -->
+            <div>
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold">🖼️ Assets</h3>
+                    <div class="flex gap-2">
+                        <input type="text" id="searchInput" placeholder="Search..." class="px-3 py-1 border rounded">
+                        <button onclick="loadAssets()" class="bg-gray-600 text-white px-4 py-1 rounded hover:bg-gray-700">
+                            Search
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="assetGrid" class="grid grid-cols-4 gap-4">
+                    <p class="col-span-4 text-gray-500 text-center">Select a storage provider to view assets</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status Messages -->
+        <div id="statusMessage" class="fixed bottom-4 right-4 max-w-md"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:9000/api/v1';
+        let authToken = localStorage.getItem('tk_auth_token');
+        let currentProvider = 'LOCAL';
+        let selectedFiles = [];
+        let connectedAccounts = [];
+
+        // Check for OAuth callback
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('connected')) {
+            showStatus('success', `Successfully connected to ${urlParams.get('connected')}`);
+            window.history.replaceState({}, document.title, window.location.pathname);
+        } else if (urlParams.get('error')) {
+            showStatus('error', 'Failed to connect cloud storage');
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+
+        // File input handling
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            selectedFiles = Array.from(e.target.files);
+            document.getElementById('uploadBtn').disabled = selectedFiles.length === 0;
+        });
+
+        // Load connected accounts
+        async function loadConnectedAccounts() {
+            try {
+                const response = await fetch(`${API_BASE}/assets/cloud/accounts`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                
+                if (response.ok) {
+                    connectedAccounts = await response.json();
+                    displayConnectedAccounts();
+                }
+            } catch (error) {
+                console.error('Error loading accounts:', error);
+            }
+        }
+
+        function displayConnectedAccounts() {
+            const container = document.getElementById('cloudAccounts');
+            
+            // Local storage card (always present)
+            let html = `
+                <div class="border rounded-lg p-4 bg-gray-50">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="font-semibold">📁 Local Storage</span>
+                        <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Active</span>
+                    </div>
+                    <p class="text-sm text-gray-600">Built-in storage</p>
+                </div>
+            `;
+            
+            // Google Drive card
+            const googleAccount = connectedAccounts.find(a => a.provider === 'GOOGLE_DRIVE');
+            if (googleAccount) {
+                html += `
+                    <div class="border rounded-lg p-4 bg-blue-50">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="font-semibold">Google Drive</span>
+                            <button onclick="disconnectCloud('google')" class="text-xs text-red-600 hover:text-red-800">Disconnect</button>
+                        </div>
+                        <p class="text-sm text-gray-600">${googleAccount.email}</p>
+                    </div>
+                `;
+            } else {
+                html += `
+                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                        <p class="text-sm text-gray-500">Google Drive not connected</p>
+                    </div>
+                `;
+            }
+            
+            // OneDrive card
+            const onedriveAccount = connectedAccounts.find(a => a.provider === 'ONEDRIVE');
+            if (onedriveAccount) {
+                html += `
+                    <div class="border rounded-lg p-4 bg-blue-50">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="font-semibold">OneDrive</span>
+                            <button onclick="disconnectCloud('microsoft')" class="text-xs text-red-600 hover:text-red-800">Disconnect</button>
+                        </div>
+                        <p class="text-sm text-gray-600">${onedriveAccount.email}</p>
+                    </div>
+                `;
+            } else {
+                html += `
+                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                        <p class="text-sm text-gray-500">OneDrive not connected</p>
+                    </div>
+                `;
+            }
+            
+            container.innerHTML = html;
+        }
+
+        // Connect to cloud storage
+        async function connectCloudStorage(provider) {
+            try {
+                const response = await fetch(`${API_BASE}/assets/cloud/auth/${provider}`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to get auth URL');
+                }
+                
+                const { authUrl } = await response.json();
+                
+                // Open OAuth popup
+                const width = 500;
+                const height = 600;
+                const left = (screen.width - width) / 2;
+                const top = (screen.height - height) / 2;
+                
+                window.open(
+                    authUrl,
+                    `${provider}_auth`,
+                    `width=${width},height=${height},left=${left},top=${top}`
+                );
+            } catch (error) {
+                showStatus('error', 'Failed to connect: ' + error.message);
+            }
+        }
+
+        // Disconnect cloud storage
+        async function disconnectCloud(provider) {
+            if (!confirm(`Disconnect ${provider}?`)) return;
+            
+            try {
+                const response = await fetch(`${API_BASE}/assets/cloud/accounts/${provider}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                
+                if (response.ok) {
+                    showStatus('success', `Disconnected from ${provider}`);
+                    loadConnectedAccounts();
+                }
+            } catch (error) {
+                showStatus('error', 'Failed to disconnect');
+            }
+        }
+
+        // Switch storage provider
+        function switchProvider(provider) {
+            currentProvider = provider;
+            
+            // Update tab styles
+            document.querySelectorAll('.provider-tab').forEach(tab => {
+                if (tab.dataset.provider === provider) {
+                    tab.classList.add('border-blue-500', 'text-blue-600');
+                    tab.classList.remove('border-transparent', 'text-gray-500');
+                } else {
+                    tab.classList.remove('border-blue-500', 'text-blue-600');
+                    tab.classList.add('border-transparent', 'text-gray-500');
+                }
+            });
+            
+            // Show/hide upload section
+            document.getElementById('uploadSection').style.display = 
+                provider === 'LOCAL' ? 'block' : 'none';
+            
+            // Load assets for selected provider
+            loadAssets();
+        }
+
+        // Load assets
+        async function loadAssets() {
+            try {
+                let url, response;
+                
+                if (currentProvider === 'LOCAL') {
+                    url = `${API_BASE}/assets?`;
+                    const search = document.getElementById('searchInput').value;
+                    if (search) url += `search=${encodeURIComponent(search)}`;
+                    
+                    response = await fetch(url, {
+                        headers: {
+                            'Authorization': `Bearer ${authToken}`
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        displayLocalAssets(data.assets);
+                    }
+                } else if (currentProvider === 'GOOGLE_DRIVE') {
+                    url = `${API_BASE}/assets/cloud/google/files`;
+                    
+                    response = await fetch(url, {
+                        headers: {
+                            'Authorization': `Bearer ${authToken}`
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        displayCloudAssets(data.files, 'GOOGLE_DRIVE');
+                    } else if (response.status === 404) {
+                        document.getElementById('assetGrid').innerHTML = 
+                            '<p class="col-span-4 text-gray-500 text-center">Please connect Google Drive first</p>';
+                    }
+                }
+            } catch (error) {
+                showStatus('error', 'Failed to load assets');
+            }
+        }
+
+        // Display local assets
+        function displayLocalAssets(assets) {
+            const grid = document.getElementById('assetGrid');
+            
+            if (!assets || assets.length === 0) {
+                grid.innerHTML = '<p class="col-span-4 text-gray-500 text-center">No assets found</p>';
+                return;
+            }
+            
+            grid.innerHTML = assets.map(asset => `
+                <div class="border rounded-lg overflow-hidden hover:shadow-lg transition-shadow relative">
+                    <span class="provider-badge provider-local">Local</span>
+                    ${asset.thumbnailUrl ? 
+                        `<img src="http://localhost:9000${asset.thumbnailUrl}" class="w-full h-40 object-cover">` :
+                        `<div class="h-40 flex items-center justify-center bg-gray-100">
+                            <svg class="h-16 w-16 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                        </div>`
+                    }
+                    <div class="p-3">
+                        <p class="font-medium text-sm truncate">${asset.originalName}</p>
+                        <p class="text-xs text-gray-500">${formatFileSize(asset.size)}</p>
+                        ${asset.syncStatus !== 'SYNCED' ? 
+                            `<span class="text-xs text-yellow-600">⚠️ ${asset.syncStatus}</span>` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Display cloud assets
+        function displayCloudAssets(files, provider) {
+            const grid = document.getElementById('assetGrid');
+            
+            if (!files || files.length === 0) {
+                grid.innerHTML = '<p class="col-span-4 text-gray-500 text-center">No files found in cloud storage</p>';
+                return;
+            }
+            
+            const providerClass = provider === 'GOOGLE_DRIVE' ? 'provider-google' : 'provider-onedrive';
+            
+            grid.innerHTML = files.map(file => `
+                <div class="border rounded-lg overflow-hidden hover:shadow-lg transition-shadow relative">
+                    <span class="provider-badge ${providerClass}">${provider.replace('_', ' ')}</span>
+                    ${file.thumbnailUrl ? 
+                        `<img src="${file.thumbnailUrl}" class="w-full h-40 object-cover">` :
+                        `<div class="h-40 flex items-center justify-center bg-gray-100">
+                            ${file.iconUrl ? 
+                                `<img src="${file.iconUrl}" class="h-16 w-16">` :
+                                `<svg class="h-16 w-16 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>`
+                            }
+                        </div>`
+                    }
+                    <div class="p-3">
+                        <p class="font-medium text-sm truncate">${file.name}</p>
+                        <p class="text-xs text-gray-500">${formatFileSize(file.size)}</p>
+                        <div class="mt-2 flex gap-1">
+                            <button onclick="importFromCloud('${file.id}', '${provider}')" 
+                                class="text-xs bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600">
+                                Import
+                            </button>
+                            ${file.webViewUrl ? 
+                                `<a href="${file.webViewUrl}" target="_blank" 
+                                    class="text-xs bg-gray-500 text-white px-2 py-1 rounded hover:bg-gray-600">
+                                    View
+                                </a>` : ''
+                            }
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Import file from cloud
+        async function importFromCloud(fileId, provider) {
+            try {
+                const providerPath = provider.toLowerCase().replace('_', '');
+                const response = await fetch(`${API_BASE}/assets/cloud/${providerPath}/import/${fileId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({})
+                });
+                
+                if (response.ok) {
+                    showStatus('success', 'File imported successfully');
+                    if (currentProvider === 'LOCAL') {
+                        loadAssets();
+                    }
+                } else {
+                    throw new Error('Import failed');
+                }
+            } catch (error) {
+                showStatus('error', 'Failed to import file');
+            }
+        }
+
+        // Upload files
+        async function uploadFiles() {
+            if (selectedFiles.length === 0) return;
+            
+            const formData = new FormData();
+            selectedFiles.forEach(file => {
+                formData.append('files', file);
+            });
+            
+            try {
+                const response = await fetch(`${API_BASE}/assets/upload`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: formData
+                });
+                
+                if (response.ok) {
+                    showStatus('success', 'Files uploaded successfully');
+                    selectedFiles = [];
+                    document.getElementById('fileInput').value = '';
+                    document.getElementById('uploadBtn').disabled = true;
+                    loadAssets();
+                }
+            } catch (error) {
+                showStatus('error', 'Upload failed');
+            }
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+        }
+
+        function showStatus(type, message) {
+            const statusDiv = document.getElementById('statusMessage');
+            const bgColor = type === 'success' ? 'bg-green-500' : 'bg-red-500';
+            
+            statusDiv.innerHTML = `
+                <div class="${bgColor} text-white px-6 py-3 rounded-lg shadow-lg">
+                    ${message}
+                </div>
+            `;
+            
+            setTimeout(() => {
+                statusDiv.innerHTML = '';
+            }, 3000);
+        }
+
+        // Initialize
+        if (authToken) {
+            loadConnectedAccounts();
+            switchProvider('LOCAL');
+        } else {
+            document.body.innerHTML = `
+                <div class="min-h-screen flex items-center justify-center">
+                    <div class="text-center">
+                        <h1 class="text-2xl font-bold mb-4">Authentication Required</h1>
+                        <p class="text-gray-600 mb-4">Please login first</p>
+                        <a href="http://localhost:8080" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">
+                            Go to Login
+                        </a>
+                    </div>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>

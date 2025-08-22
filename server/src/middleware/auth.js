@@ -54,14 +54,8 @@ const protect = catchAsync(async (req, res, next) => {
     select: {
       id: true,
       email: true,
-      username: true,
-      firstName: true,
-      lastName: true,
+      name: true,
       role: true,
-      avatar: true,
-      isActive: true,
-      emailVerified: true,
-      lastLoginAt: true,
       createdAt: true,
       updatedAt: true
     }
@@ -71,9 +65,7 @@ const protect = catchAsync(async (req, res, next) => {
     return next(new AppError('The user belonging to this token does no longer exist.', 401));
   }
 
-  if (!currentUser.isActive) {
-    return next(new AppError('Your account has been deactivated. Please contact support.', 401));
-  }
+  // Check if user is active (can be implemented later if needed)
 
   req.user = currentUser;
   next();
@@ -137,15 +129,12 @@ const comparePassword = async (candidatePassword, userPassword) => {
 };
 
 const logActivity = catchAsync(async (userId, action, resource, resourceId = null, details = null, req = null) => {
-  await prisma.activityLog.create({
+  await prisma.activity.create({
     data: {
       userId,
-      action,
-      resource,
-      resourceId,
-      details,
-      ipAddress: req?.ip || req?.connection?.remoteAddress,
-      userAgent: req?.get('User-Agent')
+      type: action,
+      contentId: resource === 'content' ? resourceId : null,
+      details: typeof details === 'object' ? JSON.stringify(details) : details
     }
   });
 });

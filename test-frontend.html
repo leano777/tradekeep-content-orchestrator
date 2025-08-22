@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TK Content Orchestrator - Test Frontend</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white">
+    <div class="container mx-auto p-8">
+        <h1 class="text-3xl font-bold mb-8">🚀 TK Content Orchestrator</h1>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <!-- API Test -->
+            <div class="bg-gray-800 p-6 rounded-lg">
+                <h2 class="text-xl font-semibold mb-4">API Connection Test</h2>
+                <button onclick="testAPI()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                    Test API
+                </button>
+                <div id="api-result" class="mt-4 p-4 bg-gray-700 rounded min-h-[100px]">
+                    Click "Test API" to check backend connection
+                </div>
+            </div>
+
+            <!-- Authentication Test -->
+            <div class="bg-gray-800 p-6 rounded-lg">
+                <h2 class="text-xl font-semibold mb-4">Authentication Test</h2>
+                <div class="text-sm text-gray-400 mb-4">
+                    <p>📧 Email: Valid email address</p>
+                    <p>👤 Name: 2-50 chars (letters only)</p>
+                    <p>🔒 Password: 6+ chars, must have letters & numbers</p>
+                </div>
+                <div class="space-y-4">
+                    <div>
+                        <input type="email" id="email" placeholder="Email (e.g. user@example.com)" class="w-full p-2 bg-gray-700 rounded text-white">
+                    </div>
+                    <div>
+                        <input type="text" id="name" placeholder="Full Name (e.g. John Doe)" class="w-full p-2 bg-gray-700 rounded text-white">
+                    </div>
+                    <div>
+                        <input type="password" id="password" placeholder="Password (e.g. pass123)" class="w-full p-2 bg-gray-700 rounded text-white">
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="testRegister()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+                            Register
+                        </button>
+                        <button onclick="testLogin()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                            Login
+                        </button>
+                    </div>
+                </div>
+                <div id="auth-result" class="mt-4 p-4 bg-gray-700 rounded min-h-[100px]">
+                    Authentication results will appear here
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Data -->
+        <div class="bg-gray-800 p-6 rounded-lg mt-8">
+            <h2 class="text-xl font-semibold mb-4">Dashboard Data</h2>
+            <button onclick="loadDashboard()" class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700">
+                Load Dashboard
+            </button>
+            <div id="dashboard-result" class="mt-4 p-4 bg-gray-700 rounded min-h-[200px]">
+                Dashboard data will appear here
+            </div>
+        </div>
+        
+        <!-- Quick Fill -->
+        <div class="bg-gray-800 p-6 rounded-lg mt-8">
+            <h2 class="text-xl font-semibold mb-4">Quick Test Credentials</h2>
+            <button onclick="fillTestData()" class="bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700">
+                Fill Test Data
+            </button>
+            <p class="text-sm text-gray-400 mt-2">Click to auto-fill valid test credentials</p>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:9000/api/v1';
+        let authToken = localStorage.getItem('tk_auth_token');
+
+        async function apiRequest(endpoint, options = {}) {
+            const headers = {
+                'Content-Type': 'application/json',
+                ...options.headers
+            };
+
+            if (authToken) {
+                headers['Authorization'] = `Bearer ${authToken}`;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}${endpoint}`, {
+                    ...options,
+                    headers
+                });
+
+                if (!response.ok) {
+                    const error = await response.json().catch(() => ({ error: 'Request failed' }));
+                    throw new Error(error.error || `HTTP ${response.status}`);
+                }
+
+                return await response.json();
+            } catch (error) {
+                console.error('API Error:', error);
+                throw error;
+            }
+        }
+
+        async function testAPI() {
+            const resultDiv = document.getElementById('api-result');
+            resultDiv.innerHTML = '<div class="text-yellow-400">Testing API connection...</div>';
+            
+            try {
+                const response = await fetch('http://localhost:9000/health');
+                const data = await response.json();
+                resultDiv.innerHTML = `
+                    <div class="text-green-400">✅ API Connected Successfully!</div>
+                    <pre class="mt-2 text-sm">${JSON.stringify(data, null, 2)}</pre>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="text-red-400">❌ API Connection Failed: ${error.message}</div>`;
+            }
+        }
+
+        async function testRegister() {
+            const email = document.getElementById('email').value;
+            const name = document.getElementById('name').value;
+            const password = document.getElementById('password').value;
+            const resultDiv = document.getElementById('auth-result');
+
+            if (!email || !name || !password) {
+                resultDiv.innerHTML = '<div class="text-yellow-400">Please fill in all fields</div>';
+                return;
+            }
+
+            resultDiv.innerHTML = '<div class="text-yellow-400">Registering...</div>';
+
+            try {
+                const data = await apiRequest('/auth/register', {
+                    method: 'POST',
+                    body: JSON.stringify({ email, name, password })
+                });
+
+                authToken = data.token;
+                localStorage.setItem('tk_auth_token', data.token);
+                localStorage.setItem('tk_refresh_token', data.refreshToken);
+
+                resultDiv.innerHTML = `
+                    <div class="text-green-400">✅ Registration Successful!</div>
+                    <div class="mt-2 text-sm">Welcome, ${data.user.name}!</div>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="text-red-400">❌ Registration Failed: ${error.message}</div>`;
+            }
+        }
+
+        async function testLogin() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const resultDiv = document.getElementById('auth-result');
+
+            if (!email || !password) {
+                resultDiv.innerHTML = '<div class="text-yellow-400">Please fill in email and password</div>';
+                return;
+            }
+
+            resultDiv.innerHTML = '<div class="text-yellow-400">Logging in...</div>';
+
+            try {
+                const data = await apiRequest('/auth/login', {
+                    method: 'POST',
+                    body: JSON.stringify({ email, password })
+                });
+
+                authToken = data.token;
+                localStorage.setItem('tk_auth_token', data.token);
+                localStorage.setItem('tk_refresh_token', data.refreshToken);
+
+                resultDiv.innerHTML = `
+                    <div class="text-green-400">✅ Login Successful!</div>
+                    <div class="mt-2 text-sm">Welcome back, ${data.user.name || data.user.email}!</div>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="text-red-400">❌ Login Failed: ${error.message}</div>`;
+            }
+        }
+
+        async function loadDashboard() {
+            const resultDiv = document.getElementById('dashboard-result');
+            
+            if (!authToken) {
+                resultDiv.innerHTML = '<div class="text-yellow-400">Please login first</div>';
+                return;
+            }
+
+            resultDiv.innerHTML = '<div class="text-yellow-400">Loading dashboard data...</div>';
+
+            try {
+                const data = await apiRequest('/dashboard/stats');
+                resultDiv.innerHTML = `
+                    <div class="text-green-400">✅ Dashboard Data Loaded!</div>
+                    <pre class="mt-2 text-sm overflow-auto">${JSON.stringify(data, null, 2)}</pre>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="text-red-400">❌ Dashboard Load Failed: ${error.message}</div>`;
+            }
+        }
+
+        function fillTestData() {
+            const timestamp = Date.now();
+            document.getElementById('email').value = `test${timestamp}@example.com`;
+            document.getElementById('name').value = 'Test User';
+            document.getElementById('password').value = 'Test123';
+            
+            const authResult = document.getElementById('auth-result');
+            authResult.innerHTML = '<div class="text-blue-400">Test data filled! Click Register to create account.</div>';
+        }
+
+        // Auto-test API on load
+        window.onload = () => {
+            testAPI();
+        };
+    </script>
+</body>
+</html>

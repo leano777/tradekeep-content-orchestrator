@@ -76,20 +76,17 @@ const checkValidationResult = (req, res, next) => {
 // @access  Public
 router.post('/register', signupLimiter, validateSignup, checkValidationResult, catchAsync(async (req, res, next) => {
   const { email, username, firstName, lastName, password } = req.body;
+  const fullName = `${firstName} ${lastName}`.trim();
 
   // Check if user already exists
   const existingUser = await prisma.user.findFirst({
     where: {
-      OR: [
-        { email },
-        { username }
-      ]
+      email
     }
   });
 
   if (existingUser) {
-    const field = existingUser.email === email ? 'email' : 'username';
-    return next(new AppError(`User with this ${field} already exists`, 409));
+    return next(new AppError(`User with this email already exists`, 409));
   }
 
   // Hash password
@@ -99,23 +96,18 @@ router.post('/register', signupLimiter, validateSignup, checkValidationResult, c
   const newUser = await prisma.user.create({
     data: {
       email,
-      username,
-      firstName,
-      lastName,
+      name: fullName,
       password: hashedPassword,
       role: 'EDITOR' // Default role
     },
     select: {
       id: true,
       email: true,
-      username: true,
-      firstName: true,
-      lastName: true,
+      name: true,
       role: true,
       avatar: true,
-      isActive: true,
-      emailVerified: true,
-      createdAt: true
+      createdAt: true,
+      updatedAt: true
     }
   });
 
@@ -141,15 +133,7 @@ router.post('/login', authLimiter, validateLogin, checkValidationResult, catchAs
     return next(new AppError('Incorrect email or password', 401));
   }
 
-  if (!user.isActive) {
-    return next(new AppError('Your account has been deactivated. Please contact support.', 401));
-  }
 
-  // Update last login
-  await prisma.user.update({
-    where: { id: user.id },
-    data: { lastLoginAt: new Date() }
-  });
 
   // Log activity
   await logActivity(user.id, 'USER_LOGIN', 'user', user.id, { email }, req);
@@ -158,14 +142,9 @@ router.post('/login', authLimiter, validateLogin, checkValidationResult, catchAs
   const userWithoutPassword = {
     id: user.id,
     email: user.email,
-    username: user.username,
-    firstName: user.firstName,
-    lastName: user.lastName,
+    name: user.name,
     role: user.role,
     avatar: user.avatar,
-    isActive: user.isActive,
-    emailVerified: user.emailVerified,
-    lastLoginAt: user.lastLoginAt,
     createdAt: user.createdAt,
     updatedAt: user.updatedAt
   };
@@ -201,22 +180,11 @@ router.get('/me', protect, catchAsync(async (req, res) => {
     select: {
       id: true,
       email: true,
-      username: true,
-      firstName: true,
-      lastName: true,
+      name: true,
       role: true,
       avatar: true,
-      isActive: true,
-      emailVerified: true,
-      lastLoginAt: true,
       createdAt: true,
-      updatedAt: true,
-      userPreferences: {
-        select: {
-          key: true,
-          value: true
-        }
-      }
+      updatedAt: true
     }
   });
 

@@ -12,7 +12,7 @@ class SocketServer {
     this.rateLimiters = new EventRateLimiters();
     this.io = new SocketIOServer(server, {
       cors: {
-        origin: process.env.CLIENT_URL || 'http://localhost:3000',
+        origin: process.env.CLIENT_URL || 'http://localhost:3001',
         credentials: true
       }
     });
